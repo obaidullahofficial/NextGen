@@ -5,9 +5,10 @@ const Login = () => {
     const [isLoginMode, setIsLoginMode] = useState(false);
 
     return ( 
-        <div className='w-[500px] bg-white p-8 rounded-2xl shadow'>
-            {/* Logo and Company Name */}
-            <div className='flex flex-col items-center mb-6 space-y-3'>
+        <div className="min-h-screen bg-[#2F3D57] flex items-center justify-center p-4">
+            <div className='w-[500px] bg-white p-8 rounded-2xl shadow-lg'>
+                {/* Logo and Company Name */}
+                <div className='flex flex-col items-center mb-6 space-y-3'>
                 <div className='w-32 h-32'>
                     <img 
                         src={Logo} 
@@ -74,6 +75,7 @@ const Login = () => {
                     </button>
                 </p>
             </form>
+            </div>
         </div>
     );
 };

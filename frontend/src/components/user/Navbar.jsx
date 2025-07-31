@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import logo from '../../assets/logo2.png';
 
-const Footer = () => {
+const Navbar = () => {
   return (
     <footer className="flex items-center justify-between p-6 px-8 bg-[#2F3D57] shadow-sm mt-auto">
       <div className="flex items-center space-x-3">
@@ -20,4 +20,4 @@ const Footer = () => {
   );
 };
 
-export default Footer;
+export default Navbar;
