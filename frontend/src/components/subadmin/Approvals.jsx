@@ -27,7 +27,7 @@ const Approvals = () => {
         architect: "John Doe Architects",
         area: "10 Marla",
         floors: 2,
-        submittedDocuments: ["Site Plan", "Structural Drawings", "Elevations"],
+        submittedDocuments: ["Floor Plan"],
         notes: "Additional parking space requested"
       }
     },
@@ -43,7 +43,7 @@ const Approvals = () => {
         architect: "Jane Smith Designs",
         area: "8 Marla",
         floors: 1,
-        submittedDocuments: ["Layout Plan", "Foundation Plan"],
+        submittedDocuments: ["Floor Plan"],
         notes: "Approved with minor modifications"
       }
     },
@@ -59,7 +59,7 @@ const Approvals = () => {
         architect: "Rural Designs Co.",
         area: "2 Kanal",
         floors: 1,
-        submittedDocuments: ["Site Plan", "Landscape Design", "3D Renderings"],
+        submittedDocuments: ["Floor Plan"],
         notes: "Pending environmental impact assessment"
       }
     }
