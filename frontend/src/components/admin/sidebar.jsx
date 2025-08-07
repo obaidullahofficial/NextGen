@@ -36,6 +36,11 @@ const Sidebar = () => {
       path: "/review-management",
       icon: <MessageSquare size={18} />,
     },
+     {
+      name: "Advertisement Management",
+      path: "/AdvertisementManagement",
+      icon: <MessageSquare size={18} />,
+    },
     {
       name: "Reports",
       path: "/reports",
@@ -93,7 +98,7 @@ const Sidebar = () => {
 
 const styles = {
   sidebar: {
-    width: "270px",
+    width: "310px",
     height: "100vh",
     backgroundColor: "#2f3d57",
     padding: "20px",

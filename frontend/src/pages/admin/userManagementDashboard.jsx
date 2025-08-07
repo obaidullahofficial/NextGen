@@ -64,6 +64,7 @@ function Avatar({ name, avatar }) {
   return (
     <div
       className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${color}`}
+      style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
     >
       {initials}
     </div>
@@ -74,6 +75,7 @@ function StatusBadge({ status }) {
   return (
     <span
       className={`px-2 py-1 rounded-full text-sm font-semibold ${statusColors[status]}`}
+      style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
     >
       {status}
     </span>
@@ -86,20 +88,41 @@ function UserRow({ user }) {
       <td className="flex items-center space-x-4 py-3 px-4">
         <Avatar name={user.name} avatar={user.avatar} />
         <div>
-          <div className="font-semibold text-gray-900">{user.name}</div>
-          <div className="text-sm text-gray-500">{user.email}</div>
+          <div
+            className="font-semibold text-gray-900"
+            style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+          >
+            {user.name}
+          </div>
+          <div
+            className="text-sm text-gray-500"
+            style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+          >
+            {user.email}
+          </div>
         </div>
       </td>
-      <td className="px-4 py-3">{user.role}</td>
+      <td
+        className="px-4 py-3"
+        style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+      >
+        {user.role}
+      </td>
       <td className="px-4 py-3">
         <StatusBadge status={user.status} />
       </td>
-      <td className="px-4 py-3">{user.lastActive}</td>
+      <td
+        className="px-4 py-3"
+        style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+      >
+        {user.lastActive}
+      </td>
       <td className="px-4 py-3 flex space-x-4 text-gray-600">
         <button
           aria-label="Edit User"
           className="hover:text-blue-600"
           title="Edit"
+          style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
         >
           <Edit2 size={18} />
         </button>
@@ -107,6 +130,7 @@ function UserRow({ user }) {
           aria-label="Delete User"
           className="hover:text-red-600"
           title="Delete"
+          style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
         >
           <Trash2 size={18} />
         </button>
@@ -114,6 +138,7 @@ function UserRow({ user }) {
           aria-label="Lock User"
           className="hover:text-yellow-600"
           title="Lock"
+          style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
         >
           <Lock size={18} />
         </button>
@@ -132,6 +157,7 @@ function SearchAndFilter({ search, setSearch }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
         />
         <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
       </div>
@@ -139,6 +165,7 @@ function SearchAndFilter({ search, setSearch }) {
         aria-label="Filter users"
         className="p-2 border rounded-md hover:bg-gray-100"
         title="Filter"
+        style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
       >
         <Filter size={20} />
       </button>
@@ -148,7 +175,10 @@ function SearchAndFilter({ search, setSearch }) {
 
 function Pagination({ currentPage, totalPages, setCurrentPage }) {
   return (
-    <div className="flex items-center justify-between py-3 px-4 border-t">
+    <div
+      className="flex items-center justify-between py-3 px-4 border-t"
+      style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+    >
       <div className="text-gray-600 text-sm">
         Showing {(currentPage - 1) * 6 + 1} to{" "}
         {Math.min(currentPage * 6, usersData.length)} of {usersData.length} users
@@ -158,6 +188,7 @@ function Pagination({ currentPage, totalPages, setCurrentPage }) {
           onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
           disabled={currentPage === 1}
           className="px-3 py-1 border rounded disabled:opacity-50"
+          style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
         >
           &lt;
         </button>
@@ -170,6 +201,7 @@ function Pagination({ currentPage, totalPages, setCurrentPage }) {
                 ? "bg-blue-500 text-white"
                 : "hover:bg-gray-200"
             }`}
+            style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
           >
             {num}
           </button>
@@ -197,22 +229,39 @@ export default function UserManagementDashboard() {
   );
 
   return (
-    <div className="w-full min-h-screen p-6 bg-white rounded shadow-md">
+    <div
+      className="w-full min-h-screen p-6 bg-white rounded shadow-md"
+      style={{
+        fontFamily: "Segoe UI, sans-serif",
+        color: "#333",
+        fontSize: "16px",
+      }}
+    >
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">User Management</h1>
-          <p className="text-gray-600">
+          <h1
+            className="text-2xl font-bold"
+            style={{ fontSize: "28px", fontWeight: "bold" }}
+          >
+            User Management
+          </h1>
+          <p
+            className="text-gray-600"
+            style={{ color: "#666", fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+          >
             Manage user accounts, roles, and permissions.
           </p>
         </div>
-    <button
-  style={{ backgroundColor: "#2f3d57" }}
-  className="text-white px-4 py-2 rounded hover:opacity-90"
->
-  + Add User
-</button>
-
-
+        <button
+          style={{
+            backgroundColor: "#2f3d57",
+            fontFamily: "Segoe UI, sans-serif",
+            fontSize: "16px",
+          }}
+          className="text-white px-4 py-2 rounded hover:opacity-90"
+        >
+          + Add User
+        </button>
       </div>
 
       <SearchAndFilter search={search} setSearch={setSearch} />
@@ -221,17 +270,46 @@ export default function UserManagementDashboard() {
         <table className="w-full text-left border">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
-              <th className="py-3 px-4">User</th>
-              <th className="py-3 px-4">Role</th>
-              <th className="py-3 px-4">Status</th>
-              <th className="py-3 px-4">Last Active</th>
-              <th className="py-3 px-4">Actions</th>
+              <th
+                className="py-3 px-4"
+                style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+              >
+                User
+              </th>
+              <th
+                className="py-3 px-4"
+                style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+              >
+                Role
+              </th>
+              <th
+                className="py-3 px-4"
+                style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+              >
+                Status
+              </th>
+              <th
+                className="py-3 px-4"
+                style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+              >
+                Last Active
+              </th>
+              <th
+                className="py-3 px-4"
+                style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+              >
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
             {displayedUsers.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center py-6 text-gray-500">
+                <td
+                  colSpan={5}
+                  className="text-center py-6 text-gray-500"
+                  style={{ color: "#777", fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+                >
                   No users found.
                 </td>
               </tr>
@@ -242,7 +320,7 @@ export default function UserManagementDashboard() {
         </table>
       </div>
 
-      <Pagination
+        <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         setCurrentPage={setCurrentPage}

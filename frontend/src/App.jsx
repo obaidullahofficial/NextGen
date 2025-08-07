@@ -21,6 +21,7 @@ import Dashboard from "./pages/admin/dashboard";
 import UserManagementDashboard from "./pages/admin/userManagementDashboard";
 import SocietyManagement from "./pages/admin/SocietyManagement";
 import ReviewManagement from "./pages/admin/ReviewManagement";  
+import AdvertisementManagement from "./pages/admin/AdvertisementManagement";
 import ReportManagement from "./pages/admin/ReportManagement";
 
 function App() {
@@ -59,6 +60,8 @@ function App() {
                     <Route path="/userManagementDashboard" element={<UserManagementDashboard />} />
                     <Route path="/society-management" element={<SocietyManagement />} />
                     <Route path="/review-management" element={<ReviewManagement />} />
+<Route path="/AdvertisementManagement" element={<AdvertisementManagement />} />
+            
                     <Route path="/reports" element={<ReportManagement />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>

@@ -51,6 +51,7 @@ const StatusBadge = ({ status }) => {
 export default function SocietyManagement() {
   const [searchTerm, setSearchTerm] = useState("");
 
+
   // Filter logic
   const filteredSocieties = societiesData.filter((society) =>
     society.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -58,33 +59,49 @@ export default function SocietyManagement() {
   );
 
   return (
-    <div className="p-6">
+    <div
+      className="p-6"
+      style={{
+        fontFamily: "Segoe UI, sans-serif",
+        color: "#333",
+        fontSize: "16px",
+      }}
+    >
       {/* Header */}
-      <h1 className="text-2xl font-semibold mb-1">Society Management</h1>
-      <p className="text-gray-500 mb-6">
+      <h1
+        className="text-2xl font-semibold mb-1"
+        style={{ fontSize: "28px", fontWeight: "bold" }}
+      >
+        Society Management
+      </h1>
+      <p
+        className="text-gray-500 mb-6"
+        style={{ color: "#666" }}
+      >
         Review and manage housing societies on the platform.
       </p>
-{/* Search and Filter */}
+      {/* Search and Filter */}
 
-<div className="flex items-center space-x-3 mb-6">
-  <div className="relative flex-1">
-    <input
-      type="text"
-      placeholder="Search societies..."
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-    <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-  </div>
-  <button
-    aria-label="Filter societies"
-    className="p-2 border rounded-md hover:bg-gray-100"
-    title="Filter"
-  >
-    <Filter size={20} />
-  </button>
-</div>
+      <div className="flex items-center space-x-3 mb-6">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Search societies..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            style={{ fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+          />
+          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+        </div>
+        <button
+          aria-label="Filter societies"
+          className="p-2 border rounded-md hover:bg-gray-100"
+          title="Filter"
+        >
+          <Filter size={20} />
+        </button>
+      </div>
 
       {/* Cards Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -92,6 +109,7 @@ export default function SocietyManagement() {
           <div
             key={society.id}
             className="border rounded-xl shadow-sm overflow-hidden bg-white flex flex-col h-[420px]"
+            style={{ fontFamily: "Segoe UI, sans-serif" }}
           >
             <img
               src={society.image}
@@ -102,13 +120,24 @@ export default function SocietyManagement() {
             <div className="p-4 flex flex-col justify-between flex-grow">
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <h2 className="font-semibold text-lg">{society.name}</h2>
+                  <h2
+                    className="font-semibold text-lg"
+                    style={{ fontSize: "20px", fontWeight: "bold" }}
+                  >
+                    {society.name}
+                  </h2>
                   <StatusBadge status={society.status} />
                 </div>
 
-                <p className="text-sm text-gray-500 mb-1">📍 {society.location}</p>
-                <p className="text-sm text-gray-500 mb-1">{society.units} Units</p>
-                <p className="text-sm text-gray-500 mb-4">📅 {society.date}</p>
+                <p className="text-sm text-gray-500 mb-1" style={{ color: "#777" }}>
+                  📍 {society.location}
+                </p>
+                <p className="text-sm text-gray-500 mb-1" style={{ color: "#777" }}>
+                  {society.units} Units
+                </p>
+                <p className="text-sm text-gray-500 mb-4" style={{ color: "#777" }}>
+                  📅 {society.date}
+                </p>
               </div>
 
               {/* Conditional Buttons */}
@@ -116,13 +145,21 @@ export default function SocietyManagement() {
                 <div className="flex space-x-2">
                   <button
                     className="flex-1 text-white py-2 rounded-md text-sm hover:opacity-90"
-                    style={{ backgroundColor: "#2f3d57" }}
+                    style={{
+                      backgroundColor: "#2f3d57",
+                      fontFamily: "Segoe UI, sans-serif",
+                      fontSize: "16px",
+                    }}
                   >
                     Approve
                   </button>
                   <button
                     className="flex-1 text-white py-2 rounded-md text-sm hover:opacity-90"
-                    style={{ backgroundColor: "#2f3d57" }}
+                    style={{
+                      backgroundColor: "#2f3d57",
+                      fontFamily: "Segoe UI, sans-serif",
+                      fontSize: "16px",
+                    }}
                   >
                     Reject
                   </button>
@@ -130,7 +167,11 @@ export default function SocietyManagement() {
               ) : (
                 <button
                   className="w-full text-white py-2 rounded-md text-sm hover:opacity-90"
-                  style={{ backgroundColor: "#2f3d57" }}
+                  style={{
+                    backgroundColor: "#2f3d57",
+                    fontFamily: "Segoe UI, sans-serif",
+                    fontSize: "16px",
+                  }}
                 >
                   View Details
                 </button>
@@ -141,7 +182,10 @@ export default function SocietyManagement() {
 
         {/* No results message */}
         {filteredSocieties.length === 0 && (
-          <p className="text-gray-500 col-span-full text-center mt-10">
+          <p
+            className="text-gray-500 col-span-full text-center mt-10"
+            style={{ color: "#777", fontFamily: "Segoe UI, sans-serif", fontSize: "16px" }}
+          >
             No societies match your search.
           </p>
         )}
