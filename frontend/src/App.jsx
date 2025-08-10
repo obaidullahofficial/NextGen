@@ -3,16 +3,19 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Subadmin imports
 import SubadminDashboard from './pages/subadmin/SubAdminDashboard';
-import PlotManager from './components/subadmin/PlotManager';
-import Approvals from './components/subadmin/Approvals';
-import ComplianceManagement from './components/subadmin/ComplianceManagement';
+import SocietyProfile from './pages/subadmin/SocietyProfile';
+import PlotManager from './pages/subadmin/PlotManager';
+import Approvals from './pages/subadmin/Approvals';
+import ComplianceManagement from './pages/subadmin/ComplianceManagement';
+import FloorPlanGenerator from './pages/subadmin/FloorPlanGenerator';
 
-// User imports
+// User imports 
 import Login from './pages/auth/Login';
 import UserLayout from './layouts/UserLayout';
 import HomePage from './pages/user/HomePage';
 import PlotDetail from './pages/user/PlotDetail';
 import SocietiesPage from './pages/user/SocietiesPage';
+import RegistrationForm from './pages/RegistrationForm/RegistrationForm';
 
 // Admin imports
 import Sidebar from "./components/admin/sidebar";
@@ -21,7 +24,6 @@ import Dashboard from "./pages/admin/dashboard";
 import UserManagementDashboard from "./pages/admin/userManagementDashboard";
 import SocietyManagement from "./pages/admin/SocietyManagement";
 import ReviewManagement from "./pages/admin/ReviewManagement";  
-import AdvertisementManagement from "./pages/admin/AdvertisementManagement";
 import ReportManagement from "./pages/admin/ReportManagement";
 
 function App() {
@@ -30,6 +32,7 @@ function App() {
       <Routes>
         {/* Auth Route */}
         <Route path="/login" element={<Login />} />
+        <Route path="/registration-form" element={<RegistrationForm />} />
 
         {/* User Routes */}
         <Route path="/" element={<UserLayout />}>
@@ -42,9 +45,10 @@ function App() {
         <Route path="/subadmin" element={<SubadminDashboard />}>
           <Route index element={<PlotManager />} />
           <Route path="plotManagement" element={<PlotManager />} />
-          <Route path="floorPlan" element={<div>Floor Plan Component</div>} />
+          <Route path="floorPlan" element={<FloorPlanGenerator/>} /> 
           <Route path="approvals" element={<Approvals />} />
           <Route path="compliance" element={<ComplianceManagement />} />
+          <Route path="society-profile" element={<SocietyProfile />} />
         </Route>
 
         {/* Admin Routes with Sidebar + Layout */}
@@ -60,8 +64,6 @@ function App() {
                     <Route path="/userManagementDashboard" element={<UserManagementDashboard />} />
                     <Route path="/society-management" element={<SocietyManagement />} />
                     <Route path="/review-management" element={<ReviewManagement />} />
-<Route path="/AdvertisementManagement" element={<AdvertisementManagement />} />
-            
                     <Route path="/reports" element={<ReportManagement />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>

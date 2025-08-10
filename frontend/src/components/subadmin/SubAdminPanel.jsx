@@ -18,7 +18,16 @@ const SubAdminPanel = ({ activeTab, setActiveTab }) => {
       <div className="p-6 text-2xl font-bold border-b border-gray-700">
         Societies Dashboard
       </div>
-      <nav className="flex flex-col mt-6 space-y-1 flex-grow">
+  <nav className="flex flex-col mt-6 space-y-1 flex-grow">
+        <button
+          onClick={() => handleTabClick('society-profile')}
+          className={`flex items-center px-6 py-3 text-left w-full hover:bg-[#ED7600] hover:text-white transition-colors ${
+            activeTab === 'society-profile' ? 'bg-[#ED7600] text-white font-semibold' : 'text-gray-300'
+          }`}
+        >
+          <FiUsers className="mr-3 text-lg" />
+          Society Profile
+        </button>
         <button
           onClick={() => handleTabClick('plotManagement')}
           className={`flex items-center px-6 py-3 text-left w-full hover:bg-[#ED7600] hover:text-white transition-colors ${

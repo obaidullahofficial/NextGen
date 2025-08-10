@@ -11,13 +11,18 @@ const SubadminDashboard = () => {
     if (location.pathname.includes('floorPlan')) return 'floorPlan';
     if (location.pathname.includes('approvals')) return 'approvals';
     if (location.pathname.includes('compliance')) return 'compliance';
+    if (location.pathname.includes('society-profile')) return 'society-profile';
     return 'plotManagement';
   };
 
   const activeTab = getActiveTab();
 
   const handleTabChange = (tab) => {
-    navigate(`/subadmin/${tab === 'plotManagement' ? '' : tab}`);
+    if (tab === 'society-profile') {
+      navigate('/subadmin/society-profile');
+    } else {
+      navigate(`/subadmin/${tab === 'plotManagement' ? '' : tab}`);
+    }
   };
 
   return (
@@ -32,3 +37,5 @@ const SubadminDashboard = () => {
   );
 };
 export default SubadminDashboard;
+
+
