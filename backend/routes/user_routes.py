@@ -12,7 +12,7 @@ def register_society():
     required_fields = ['name', 'type', 'regNo', 'established', 'authority', 'contact', 'website', 'plots']
     if not all(field in data and data[field] for field in required_fields):
         return jsonify({"error": "All fields are required"}), 400
-
+    data['status'] = "pending"
     db = get_db()
     reg_forms = registration_form_collection(db)
     reg_id = reg_forms.insert_one(data).inserted_id

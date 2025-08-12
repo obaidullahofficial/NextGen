@@ -15,6 +15,11 @@ pip install flask-jwt-extended
   "password": "12345Aa#",
   "role": "society"
 
+  "username": "testuser5",
+  "email": "abcf@example.com",
+  "password": "12345Aa#",
+  "role": "society"
+
   "username": "testuser",
   "email": "testuser@example.com",
   "password": "password123",

@@ -1,5 +1,5 @@
 class RegistrationForm:
-    def __init__(self, name, type, regNo, established, authority, contact, website, plots):
+    def __init__(self, name, type, regNo, established, authority, contact, website, plots, status="pending"):
         self.name = name
         self.type = type
         self.regNo = regNo
@@ -8,6 +8,7 @@ class RegistrationForm:
         self.contact = contact
         self.website = website
         self.plots = plots
+        self.status = status  # new variable added
 
     def to_dict(self):
         return {
@@ -18,8 +19,10 @@ class RegistrationForm:
             "authority": self.authority,
             "contact": self.contact,
             "website": self.website,
-            "plots": self.plots
+            "plots": self.plots,
+            "status": self.status  # include in dict
         }
+
 
 def registration_form_collection(db):
     return db['registration_forms']
