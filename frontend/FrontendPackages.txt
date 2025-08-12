@@ -1,0 +1,13 @@
+npm install react-router-dom
+npm install tailwindcss lucide-react @tailwindcss/forms
+npm install tailwindcss postcss autoprefixer
+
+npm install lucide-react
+npm install recharts
+npm install react-icons
+
+npm install tailwindcss recharts
+npm install react-datepicker
+
+npm install jspdf
+npm install html2canvas
