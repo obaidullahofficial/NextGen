@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-// Subadmin imports
+// Subadmin imports 
 import SubadminDashboard from './pages/subadmin/SubAdminDashboard';
 import SocietyProfile from './pages/subadmin/SocietyProfile';
 import SocietyProfileSetup from './pages/subadmin/SocietyProfileSetup';
@@ -23,7 +23,7 @@ import UserProfileLayout from './layouts/UserProfileLayout';
 import SocietyPlots from "./pages/user/SocietyPlots";
 import GenerateFloorPlan from './pages/user/GenerateFloorPlan';
 
-// Admin imports
+// Admin imports are here 
 import Sidebar from "./components/admin/sidebar";
 import Layout from "./components/admin/layout";
 import Dashboard from "./pages/admin/dashboard";
