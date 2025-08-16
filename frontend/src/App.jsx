@@ -23,7 +23,7 @@ import UserProfileLayout from './layouts/UserProfileLayout';
 import SocietyPlots from "./pages/user/SocietyPlots";
 import GenerateFloorPlan from './pages/user/GenerateFloorPlan';
 
-// Admin imports are here 
+// Admin imports
 import Sidebar from "./components/admin/sidebar";
 import Layout from "./components/admin/layout";
 import Dashboard from "./pages/admin/dashboard";
@@ -33,17 +33,28 @@ import ReviewManagement from "./pages/admin/ReviewManagement";
 import ReportManagement from "./pages/admin/ReportManagement";
 import AdvertisementManagement from "./pages/admin/AdvertisementManagement";
 
+// Wrapper for Admin Layout with Sidebar + Topbar
+const AdminLayout = ({ children }) => (
+  <div className="flex">
+    <Sidebar />
+    <div className="flex-1">
+      <Layout>{children}</Layout>
+    </div>
+  </div>
+);
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* User Profile */}
         <Route path="/userprofile" element={<UserProfileLayout />} />
 
-        {/* Auth Routes */}
+        {/* Auth */}
         <Route path="/login" element={<Login />} />
         <Route path="/registration-form" element={<RegistrationForm />} />
 
-        {/* Society Profile Standalone Routes */}
+        {/* Society Profile Standalone */}
         <Route path="/society-profile-setup" element={<SocietyProfileSetup />} />
         <Route path="/society-profile-edit" element={<SocietyProfileEdit />} />
 
@@ -71,25 +82,14 @@ function App() {
         </Route>
 
         {/* Admin Routes */}
-        <Route path="/admin" element={
-          <div className="flex">
-            <Sidebar />
-            <div className="flex-1">
-              <Layout>
-                <Routes>
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="userManagementDashboard" element={<UserManagementDashboard />} />
-                  <Route path="society-management" element={<SocietyManagement />} />
-                  <Route path="review-management" element={<ReviewManagement />} />
-                  <Route path="advertisement-management" element={<AdvertisementManagement />} />
-                  <Route path="reports" element={<ReportManagement />} />
-                </Routes>
-              </Layout>
-            </div>
-          </div>
-        } />
+        <Route path="/dashboard" element={<AdminLayout><Dashboard /></AdminLayout>} />
+        <Route path="/UserManagementDashboard" element={<AdminLayout><UserManagementDashboard /></AdminLayout>} />
+        <Route path="/society-management" element={<AdminLayout><SocietyManagement /></AdminLayout>} />
+        <Route path="/review-management" element={<AdminLayout><ReviewManagement /></AdminLayout>} />
+        <Route path="/advertisement-management" element={<AdminLayout><AdvertisementManagement /></AdminLayout>} />
+        <Route path="/reports" element={<AdminLayout><ReportManagement /></AdminLayout>} />
 
-        {/* Catch-all route */}
+        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
