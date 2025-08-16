@@ -38,20 +38,19 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/userprofile" element={<UserProfileLayout />} />
-        {/* Auth Route */}
+
+        {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/registration-form" element={<RegistrationForm />} />
-        
-        {/* Society Profile Setup Route - Standalone */}
+
+        {/* Society Profile Standalone Routes */}
         <Route path="/society-profile-setup" element={<SocietyProfileSetup />} />
-        
-        {/* Society Profile Edit Route - Standalone but requires authentication */}
         <Route path="/society-profile-edit" element={<SocietyProfileEdit />} />
 
         {/* User Routes */}
         <Route path="/" element={<UserLayout />}>
           <Route index element={<HomePage />} />
-          <Route path="/societies/:societyId/plots/:plotId" element={<PlotDetail />} />
+          <Route path="societies/:societyId/plots/:plotId" element={<PlotDetail />} />
           <Route path="society" element={<SocietiesPage />} />
           <Route path="societies/:societyId/plots" element={<SocietyPlots />} />
           <Route path="generate-floor-plan/:societyId/:plotId" element={<GenerateFloorPlan />} />
@@ -65,34 +64,33 @@ function App() {
         }>
           <Route index element={<PlotManager />} />
           <Route path="plotManagement" element={<PlotManager />} />
-          <Route path="floorPlan" element={<FloorPlanGenerator/>} /> 
+          <Route path="floorPlan" element={<FloorPlanGenerator />} /> 
           <Route path="approvals" element={<Approvals />} />
           <Route path="compliance" element={<ComplianceManagement />} />
           <Route path="society-profile" element={<SocietyProfile />} />
         </Route>
 
-        {/* Admin Routes with Sidebar + Layout */}
-        <Route
-          path="*"
-          element={
-            <div className="flex">
-              <Sidebar />
-              <div className="flex-1">
-                <Layout>
-                  <Routes>
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/userManagementDashboard" element={<UserManagementDashboard />} />
-                    <Route path="/society-management" element={<SocietyManagement />} />
-                    <Route path="/review-management" element={<ReviewManagement />} />
-                    <Route path="/advertisement-management" element={<AdvertisementManagement />} />
-                    <Route path="/reports" element={<ReportManagement />} />
-                    {/* <Route path="*" element={<Navigate to="/dashboard" replace />} /> */}
-                  </Routes>
-                </Layout>
-              </div>
+        {/* Admin Routes */}
+        <Route path="/admin" element={
+          <div className="flex">
+            <Sidebar />
+            <div className="flex-1">
+              <Layout>
+                <Routes>
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="userManagementDashboard" element={<UserManagementDashboard />} />
+                  <Route path="society-management" element={<SocietyManagement />} />
+                  <Route path="review-management" element={<ReviewManagement />} />
+                  <Route path="advertisement-management" element={<AdvertisementManagement />} />
+                  <Route path="reports" element={<ReportManagement />} />
+                </Routes>
+              </Layout>
             </div>
-          }
-        />
+          </div>
+        } />
+
+        {/* Catch-all route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
