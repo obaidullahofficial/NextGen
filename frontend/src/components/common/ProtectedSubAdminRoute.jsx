@@ -14,19 +14,10 @@ const ProtectedSubAdminRoute = ({ children }) => {
 
   const checkProfile = async () => {
     try {
-      const userData = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
       
-      if (!userData) {
-        console.log('[PROTECTED ROUTE] No user data, redirecting to login');
-        navigate('/login');
-        return;
-      }
-
-      const user = JSON.parse(userData);
-      
-      // Check if user is a society user (they access subadmin pages)
-      if (user.role !== 'society') {
-        console.log('[PROTECTED ROUTE] Not a society user, redirecting to login');
+      if (!token) {
+        console.log('[PROTECTED ROUTE] No token, redirecting to login');
         navigate('/login');
         return;
       }
