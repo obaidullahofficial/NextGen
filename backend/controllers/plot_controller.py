@@ -1,12 +1,13 @@
 # Plot Controller
 from utils.db import get_db
-from models.plot import plot_collection
+from models.plot import plot_collection, Plot
 from flask import jsonify, request
 from bson import ObjectId
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.society_profile import society_profile_collection
 import base64
 import json
+from datetime import datetime
 
 class PlotController:
     @staticmethod
@@ -156,7 +157,30 @@ class PlotController:
             print(f"[DEBUG] Plot data prepared: {list(data.keys())}")
             print(f"[DEBUG] Plot number validation passed: {data['plot_number']}")
 
-            plot_id = plot_col.insert_one(data).inserted_id
+            # Create a Plot object using our new class-based model
+            plot = Plot(
+                plot_number=data['plot_number'],
+                societyId=data['societyId'],
+                image=data.get('image'),
+                price=data.get('price', ''),
+                status=data.get('status', 'Available'),
+                type=data.get('type', 'Residential Plot'),
+                area=data.get('area', ''),
+                dimension_x=data.get('dimension_x', 0),
+                dimension_y=data.get('dimension_y', 0),
+                location=data.get('location', ''),
+                description=data.get('description', []),
+                seller=data.get('seller', {}),
+                amenities=data.get('amenities', [])
+            )
+            
+            # Convert Plot object to dictionary
+            plot_dict = plot.to_dict()
+            # Remove plot_id from dict as MongoDB will generate it
+            if 'plot_id' in plot_dict:
+                plot_dict.pop('plot_id')
+                
+            plot_id = plot_col.insert_one(plot_dict).inserted_id
             
             print(f"[DEBUG] Plot created successfully with ID: {plot_id}")
             return jsonify({'plot_id': str(plot_id)}), 201
@@ -205,11 +229,16 @@ class PlotController:
     def get_plot(plot_id):
         db = get_db()
         plot_col = plot_collection(db)
-        plot = plot_col.find_one({'_id': ObjectId(plot_id)})
-        if not plot:
+        plot_data = plot_col.find_one({'_id': ObjectId(plot_id)})
+        if not plot_data:
             return jsonify({'error': 'Plot not found'}), 404
-        plot['_id'] = str(plot['_id'])
-        return jsonify(plot)
+            
+        # Convert MongoDB _id to string
+        plot_data['_id'] = str(plot_data['_id'])
+        # Set plot_id for consistency with our model
+        plot_data['plot_id'] = plot_data['_id']
+        
+        return jsonify(plot_data)
 
     @staticmethod
     def update_plot(plot_id):
@@ -357,6 +386,14 @@ class PlotController:
             
             print(f"[DEBUG] Plot update data prepared: {list(data.keys())}")
             
+            # Get the current plot data first
+            current_plot = plot_col.find_one({'_id': ObjectId(plot_id)})
+            if not current_plot:
+                return jsonify({'error': 'Plot not found'}), 404
+            
+            # Update timestamp
+            data['updated_at'] = datetime.utcnow()
+                
             result = plot_col.update_one({'_id': ObjectId(plot_id)}, {'$set': data})
             
             if result.matched_count == 0:
