@@ -137,9 +137,25 @@ class PlotController:
             # Use the society profile's _id as societyId
             data['societyId'] = str(profile['_id'])
             
-            print(f"[DEBUG] Plot data prepared: {list(data.keys())}")
-
+            # Validate plot number is provided
+            if not data.get('plot_number') or not data['plot_number'].strip():
+                return jsonify({'error': 'Plot number is required'}), 400
+            
+            # Check for duplicate plot number within the same society
             plot_col = plot_collection(db)
+            existing_plot = plot_col.find_one({
+                'societyId': data['societyId'],
+                'plot_number': data['plot_number'].strip()
+            })
+            
+            if existing_plot:
+                return jsonify({
+                    'error': f'Plot number "{data["plot_number"]}" already exists in this society. Please choose a different plot number.'
+                }), 400
+            
+            print(f"[DEBUG] Plot data prepared: {list(data.keys())}")
+            print(f"[DEBUG] Plot number validation passed: {data['plot_number']}")
+
             plot_id = plot_col.insert_one(data).inserted_id
             
             print(f"[DEBUG] Plot created successfully with ID: {plot_id}")
@@ -314,9 +330,33 @@ class PlotController:
             # Remove empty fields to avoid overwriting with empty values
             data = {k: v for k, v in data.items() if v is not None and v != ''}
             
+            plot_col = plot_collection(db)
+            
+            # If plot_number is being updated, check for duplicates
+            if 'plot_number' in data and data['plot_number']:
+                # Get the current plot to find its societyId and current plot_number
+                current_plot = plot_col.find_one({'_id': ObjectId(plot_id)})
+                if not current_plot:
+                    return jsonify({'error': 'Plot not found'}), 404
+                
+                # Only check for duplicates if the plot number is actually changing
+                if current_plot.get('plot_number') != data['plot_number'].strip():
+                    # Check for duplicate plot number within the same society
+                    existing_plot = plot_col.find_one({
+                        'societyId': current_plot.get('societyId'),
+                        'plot_number': data['plot_number'].strip(),
+                        '_id': {'$ne': ObjectId(plot_id)}  # Exclude current plot
+                    })
+                    
+                    if existing_plot:
+                        return jsonify({
+                            'error': f'Plot number "{data["plot_number"]}" already exists in this society. Please choose a different plot number.'
+                        }), 400
+                    
+                    print(f"[DEBUG] Plot number validation passed for update: {data['plot_number']}")
+            
             print(f"[DEBUG] Plot update data prepared: {list(data.keys())}")
             
-            plot_col = plot_collection(db)
             result = plot_col.update_one({'_id': ObjectId(plot_id)}, {'$set': data})
             
             if result.matched_count == 0:

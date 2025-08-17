@@ -472,13 +472,36 @@ def debug_society_profile():
 
 @society_profile_bp.route('/society-profiles', methods=['GET'])
 def get_all_society_profiles():
-    """Get all society profiles (public endpoint)"""
+    """Get all society profiles with plot counts (public endpoint)"""
     try:
         db = get_db()
         profiles = society_profile_collection(db)
+        
+        # Get all society profiles
         all_profiles = list(profiles.find())
+        
+        # Import plot collection to count plots
+        from models.plot import plot_collection
+        plots = plot_collection(db)
+        
+        # Add plot counts to each profile
         for profile in all_profiles:
             profile['_id'] = str(profile['_id'])
+            society_id = profile['_id']
+            
+            # Count total plots for this society
+            total_plots = plots.count_documents({'societyId': society_id})
+            
+            # Count available plots (status = 'Available')
+            available_plots = plots.count_documents({
+                'societyId': society_id,
+                'status': 'Available'
+            })
+            
+            # Add plot counts to profile
+            profile['totalPlots'] = total_plots
+            profile['availablePlots'] = available_plots
+            
         return jsonify(all_profiles), 200
     except Exception as e:
         return jsonify({"error": f"Failed to get all profiles: {str(e)}"}), 500

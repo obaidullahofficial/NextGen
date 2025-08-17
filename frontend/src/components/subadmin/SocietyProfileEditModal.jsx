@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getSocietyProfile, updateSocietyProfile } from '../../services/apiService';
 import PopupModal from '../common/PopupModal';
-import { FiX, FiUpload, FiImage, FiUser, FiMapPin, FiHome, FiDollarSign, FiEdit2, FiLoader, FiCheckCircle } from 'react-icons/fi';
+import { FiX, FiUpload, FiImage, FiUser, FiMapPin, FiHome, FiEdit2, FiLoader, FiCheckCircle } from 'react-icons/fi';
+import { FaCoins } from 'react-icons/fa';
 
 const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
   const [profile, setProfile] = useState({
@@ -376,7 +377,7 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
                         {/* Price Range */}
                         <div className="md:col-span-2">
                           <label className="flex items-center gap-2 text-sm font-semibold text-[#2F3D57] mb-2">
-                            <FiDollarSign className="w-4 h-4" />
+                            <FaCoins className="w-4 h-4" />
                             Price Range *
                           </label>
                           <input

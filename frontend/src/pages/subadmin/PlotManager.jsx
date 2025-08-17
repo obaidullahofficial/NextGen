@@ -152,7 +152,16 @@ const PlotManager = () => {
       
     } catch (err) {
       console.error('Error creating plot:', err);
-      setError(err.message);
+      
+      // Enhanced error handling for duplicate plot numbers
+      if (err.message && err.message.includes('already exists')) {
+        // This is a duplicate plot number error - let the AddPlot component handle it
+        setError(null); // Don't show error in manager, let AddPlot show it
+      } else {
+        // For other errors, show in manager
+        setError(err.message);
+      }
+      
       throw err; // Re-throw so component can handle it
     } finally {
       setSubmitting(false);
@@ -180,7 +189,16 @@ const PlotManager = () => {
       
     } catch (err) {
       console.error('Error updating plot:', err);
-      setError(err.message);
+      
+      // Enhanced error handling for duplicate plot numbers
+      if (err.message && err.message.includes('already exists')) {
+        // This is a duplicate plot number error - let the EditPlot component handle it
+        setError(null); // Don't show error in manager, let EditPlot show it
+      } else {
+        // For other errors, show in manager
+        setError(err.message);
+      }
+      
       throw err; // Re-throw so component can handle it
     } finally {
       setSubmitting(false);

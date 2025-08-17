@@ -118,7 +118,7 @@ const Societies = () => {
                             {society.description}
                           </p>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
                           <div className="bg-white/5 rounded-xl p-3 md:p-4 border border-white/10 hover:bg-white/10 transition-colors">
                             <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
                               <FaMapMarkerAlt className="text-[#ED7600] text-base md:text-lg" />
@@ -129,6 +129,13 @@ const Societies = () => {
                           <div className="bg-white/5 rounded-xl p-3 md:p-4 border border-white/10 hover:bg-white/10 transition-colors">
                             <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
                               <FaHome className="text-[#ED7600] text-base md:text-lg" />
+                              <span className="text-gray-300 font-medium">Total Plots</span>
+                            </div>
+                            <span className="text-white font-bold">{society.totalPlots || 0} plots</span>
+                          </div>
+                          <div className="bg-white/5 rounded-xl p-3 md:p-4 border border-white/10 hover:bg-white/10 transition-colors">
+                            <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+                              <FaStar className="text-[#ED7600] text-base md:text-lg" />
                               <span className="text-gray-300 font-medium">Available</span>
                             </div>
                             <span className="text-white font-bold">{society.availablePlots || 0} plots</span>
