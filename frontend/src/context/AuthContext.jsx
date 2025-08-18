@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { loginUser as loginUserService, logout as logoutService, API_URL } from '../services/apiService.js';
 
 const AuthContext = createContext(null);
 
@@ -17,22 +18,13 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Login failed');
-      }
-
-      const data = await response.json();
+      const data = await loginUserService({ email, password });
       console.log('Login response:', data); // Debug log
+      
+      // Check if login was successful
+      if (!data.success) {
+        throw new Error(data.error || data.message || 'Login failed');
+      }
       
       // Store user data including societyId
       const userData = {
@@ -63,20 +55,24 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Call logout endpoint
-      await fetch('http://localhost:5000/api/logout', {
+      // Call logout endpoint using service (for server-side logout)
+      await fetch(`${API_URL}/logout`, {
         method: 'POST',
         credentials: 'include',
       });
 
-      // Clear local storage
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
+      // Use auth service logout function
+      logoutService();
       
-      // Clear context
+      // Clear context user data
+      localStorage.removeItem('user');
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
+      // Even if server logout fails, clear local state
+      logoutService();
+      localStorage.removeItem('user');
+      setUser(null);
       throw error;
     }
   };
@@ -84,7 +80,7 @@ export const AuthProvider = ({ children }) => {
   // Check if the current user session is still valid
   const checkAuth = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/check-auth', {
+      const response = await fetch(`${API_URL}/check-auth`, {
         credentials: 'include',
       });
 

@@ -3,6 +3,7 @@ import NavBar from '../../components/user/Navbar';
 import Footer from '../../components/user/Footer';
 import { FaMapMarkerAlt, FaHome, FaStar, FaChevronRight } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { getAllSocietyProfiles } from '../../services/societyService.js';
 
 import societiesImg from '../../assets/societies.png';
 import ghauri from '../../assets/Ghauri.png';
@@ -21,17 +22,18 @@ const Societies = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Replace with your actual API endpoint
-    fetch('http://localhost:5000/api/society-profiles')
-      .then(res => res.json())
-      .then(data => {
+    const fetchSocieties = async () => {
+      try {
+        const data = await getAllSocietyProfiles();
         setSocieties(data);
         setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to fetch societies:', err);
+      } catch (error) {
+        console.error('Failed to fetch societies:', error);
         setLoading(false);
-      });
+      }
+    };
+
+    fetchSocieties();
   }, []);
 
   return (

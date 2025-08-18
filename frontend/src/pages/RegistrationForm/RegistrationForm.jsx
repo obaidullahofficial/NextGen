@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, Grid, TextField, Button, MenuItem, Typography, Alert } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import PopupModal from '../../components/common/PopupModal';
+import { societySignup } from '../../services/authService.js';
 
 const authorityOptions = ["LDA", "CDA", "Bahria Group"];
 const typeOptions = ["Private", "Public"];
@@ -90,15 +91,9 @@ const RegistrationForm = () => {
         ...form
       };
 
-      const res = await fetch("http://localhost:5000/api/signup-society", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(societyData)
-      });
+      const data = await societySignup(societyData);
 
-      const data = await res.json();
-
-      if (res.ok) {
+      if (data.success || data.message) {
         const handleRegistrationSuccess = () => {
           navigate('/login');
         };

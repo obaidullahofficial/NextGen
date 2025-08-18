@@ -1,6 +1,7 @@
 cd backend
 pip install flask flask-cors pymongo
 pip install flask-jwt-extended
+python app.py
 
 {
   "username": "admin",
