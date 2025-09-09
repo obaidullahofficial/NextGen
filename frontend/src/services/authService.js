@@ -33,22 +33,19 @@ export async function signupUser({ username, email, password, role = "user" }) {
 }
 
 /**
- * User login
+ * User login - Optimized for speed
  * @param {Object} credentials - Login credentials
  * @param {string} credentials.email - Email address
  * @param {string} credentials.password - Password
  * @returns {Promise<Object>} Login response with token and user data
  */
 export async function loginUser({ email, password }) {
-  console.log('[API] Attempting login with:', { email });
-  
-  try {
-    // Check if email and password are provided
-    if (!email || !password) {
-      console.error('[API] Missing email or password');
-      throw new Error('Email and password are required');
-    }
+  // Quick validation
+  if (!email || !password) {
+    throw new Error('Email and password are required');
+  }
 
+  try {
     const response = await fetch(`${API_URL}/login`, {
       method: "POST",
       headers: { 
@@ -59,19 +56,10 @@ export async function loginUser({ email, password }) {
     });
 
     const data = await response.json();
-    console.log('[API] Login response:', {
-      status: response.status,
-      success: data.success,
-      hasToken: !!data.access_token,
-      role: data.role,
-      error: data.error
-    });
 
-    // For authentication/authorization errors (401, 403), return the data with error info
-    // so the frontend can handle specific error types (like registration status)
+    // Handle errors efficiently
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        // Return error data for proper handling in frontend
         return {
           success: false,
           error: data.error,
@@ -79,14 +67,16 @@ export async function loginUser({ email, password }) {
           status: response.status
         };
       } else {
-        // For other errors, throw exception
         throw new Error(data.error || 'Login failed');
       }
     }
 
+    // Quick success log
+    console.log(`[Auth] Login successful for ${data.user?.role || 'user'}`);
     return data;
+    
   } catch (error) {
-    console.error('[API] Login error:', error.message);
+    console.error('[Auth] Login error:', error.message);
     throw error;
   }
 }

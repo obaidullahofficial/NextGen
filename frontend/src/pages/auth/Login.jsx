@@ -166,7 +166,8 @@ const Login = () => {
             console.log('[LOGIN] Server response:', {
                 success: result.success,
                 hasToken: !!result.access_token,
-                role: result.role,
+                userRole: result.user?.role,
+                isAdmin: result.user?.is_admin,
                 profileComplete: result.profile_complete,
                 error: result.error,
                 status: result.status
@@ -185,8 +186,8 @@ const Login = () => {
                 // Store user data for ProtectedSubAdminRoute
                 const userData = {
                     email: loginForm.email,
-                    role: result.role,
-                    is_admin: result.is_admin,
+                    role: result.user?.role || result.role,
+                    is_admin: result.user?.is_admin || (result.user?.role === 'admin'),
                     profile_complete: result.profile_complete,
                     profile_exists: result.profile_exists,
                     missing_fields: result.missing_fields
@@ -217,9 +218,10 @@ const Login = () => {
                 
                 // Show success popup and wait for user to click OK before navigating
                 const handleLoginSuccess = () => {
-                    if (result.is_admin) {
+                    if (result.user?.is_admin || result.user?.role === 'admin') {
+                        console.log('[LOGIN] Redirecting to admin dashboard');
                         navigate('/dashboard');
-                    } else if (result.role === 'society') {
+                    } else if (result.user?.role === 'society') {
                         // Always check profile completeness for society users
                         console.log('Society user login - profile complete:', result.profile_complete);
                         
@@ -235,6 +237,7 @@ const Login = () => {
                             navigate('/subadmin');
                         }
                     } else {
+                        console.log('[LOGIN] Redirecting to user profile');
                         navigate('/userprofile');
                     }
                 };

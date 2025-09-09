@@ -25,29 +25,27 @@ class UserController:
 
     @staticmethod
     def verify_user(email, password):
+        """Fast user verification with minimal database queries"""
         db = get_db()
         users = user_collection(db)
-        user = users.find_one({'email': email})
         
-        print(f"[DEBUG] Found user: {user is not None}")
-        if user:
-            print(f"[DEBUG] User details: email={user['email']}, role={user.get('role')}")
-            print(f"[DEBUG] Stored password hash: {user.get('password_hash', 'NO_HASH_FOUND')}")
+        # Single optimized query with only required fields
+        user = users.find_one(
+            {'email': email},
+            {'email': 1, 'username': 1, 'password_hash': 1, 'role': 1, 'society_id': 1}
+        )
+        
+        if not user:
+            return None
             
-            # Try password verification
-            try:
-                is_valid = check_password_hash(user['password_hash'], password)
-                print(f"[DEBUG] Password verification result: {is_valid}")
-                
-                if is_valid:
-                    user['_id'] = str(user['_id'])
-                    print(f"[DEBUG] Login successful for user: {user['email']}, role: {user['role']}")
-                    return user
-                else:
-                    print(f"[DEBUG] Password verification failed for email: {email}")
-                    
-            except Exception as e:
-                print(f"[DEBUG] Error during password verification: {str(e)}")
-                return None
+        # Fast password verification
+        try:
+            if check_password_hash(user['password_hash'], password):
+                # Remove password hash for security
+                user.pop('password_hash', None)
+                user['_id'] = str(user['_id'])
+                return user
+        except Exception:
+            pass
                 
         return None

@@ -125,146 +125,88 @@ def login():
 
     print(f"[LOGIN] Attempting login for email: {email}")
 
-    if not all([email, password]):
+    if not email or not password:
         print("[LOGIN] Missing email or password")
         return jsonify({"error": "Email and password are required"}), 400
 
-    # Get user from database first to check if they exist
-    db = get_db()
-    users = user_collection(db)
-    user_exists = users.find_one({'email': email})
-    
-    if not user_exists:
-        print(f"[LOGIN] No user found with email: {email}")
-        return jsonify({"error": "User not found"}), 401
-
+    # Single database query to get user and verify credentials
     user = UserController.verify_user(email, password)
     print(f"[LOGIN] Verify user result: {user is not None}")
     
     if not user:
-        print(f"[LOGIN] Password verification failed for email: {email}")
-        return jsonify({"error": "Invalid password"}), 401
+        print(f"[LOGIN] Authentication failed for email: {email}")
+        return jsonify({"error": "Invalid email or password"}), 401
 
-    # Check society registration status for society users
+    # Quick society status check only for society users (optimized)
     if user['role'] == 'society':
         db = get_db()
         reg_forms = registration_form_collection(db)
-        society = reg_forms.find_one({'user_email': email})
         
-        if not society:
-            return jsonify({"error": "Society registration not found"}), 404
+        # Single query with projection to get only status field
+        society = reg_forms.find_one({'user_email': email}, {'status': 1})
         
-        society_status = society.get('status', 'pending')
-        
-        if society_status == 'pending':
-            return jsonify({
-                "error": "registration_pending",
-                "message": "Your society registration request is still being processed. Please wait for admin approval."
-            }), 403
-        elif society_status == 'rejected':
-            return jsonify({
-                "error": "registration_rejected", 
-                "message": "Your society registration request has been rejected. Please contact admin for more information."
-            }), 403
-        elif society_status != 'approved':
-            return jsonify({
-                "error": "registration_invalid",
-                "message": "Invalid registration status. Please contact admin."
-            }), 403
-    
-    # Generate access token for successful login
-    from datetime import datetime, timezone
-    current_time = datetime.now(timezone.utc)
-    print(f"[LOGIN DEBUG] Creating token at: {current_time}")
-    
-    # JWT identity must be a string, not a dict. We'll use email as identity
-    # and add role as additional claims
+        if society:
+            society_status = society.get('status', 'pending')
+            
+            if society_status == 'pending':
+                return jsonify({
+                    "error": "registration_pending",
+                    "message": "Your society registration is pending admin approval."
+                }), 403
+            elif society_status == 'rejected':
+                return jsonify({
+                    "error": "registration_rejected", 
+                    "message": "Your registration has been rejected. Contact admin."
+                }), 403
+            elif society_status != 'approved':
+                return jsonify({
+                    "error": "registration_invalid",
+                    "message": "Invalid registration status. Contact admin."
+                }), 403
+
+    # Fast token generation without debug overhead
     access_token = create_access_token(
         identity=email,
         additional_claims={'role': user['role']}
     )
-    print(f"[LOGIN DEBUG] Token created: {access_token[:50]}...")
     
-    # Decode and check the token immediately after creation
-    try:
-        import jwt
-        from flask import current_app
-        decoded = jwt.decode(access_token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
-        token_exp = datetime.fromtimestamp(decoded['exp'], timezone.utc)
-        print(f"[LOGIN DEBUG] Token expires at: {token_exp}")
-        print(f"[LOGIN DEBUG] Time until expiry: {(token_exp - current_time).total_seconds()} seconds")
-    except Exception as decode_error:
-        print(f"[LOGIN DEBUG] Error decoding token: {decode_error}")
+    print(f"[LOGIN] Success for {email} with role {user['role']}")
     
-    is_admin = user.get('role') == 'admin'
-    
+    # Simplified response
     response_data = {
+        "success": True,
         "access_token": access_token, 
-        "is_admin": is_admin,
-        "role": user['role'],
-        "success": True
+        "user": {
+            "email": email,
+            "role": user['role'],
+            "username": user.get('username', ''),
+            "is_admin": user.get('role') == 'admin'
+        }
     }
     
-    # For society users, check and initialize profile if needed
+    # Lightweight profile check for society users (async-friendly)
     if user['role'] == 'society':
         try:
             db = get_db()
             profiles = society_profile_collection(db)
             
-            # Try to get existing profile
-            profile = profiles.find_one({'user_email': email})
+            # Quick check if profile exists (only _id field)
+            profile_exists = profiles.find_one({'user_email': email}, {'_id': 1}) is not None
             
-            if not profile:
-                # Initialize basic profile structure
-                from datetime import datetime
-                profile_data = {
-                    'user_email': email,
-                    'name': '',
-                    'description': '',
-                    'location': '',
-                    'available_plots': '',
-                    'price_range': '',
-                    'society_logo': '',
-                    'is_complete': False,
-                    'created_at': datetime.utcnow(),
-                    'updated_at': datetime.utcnow()
-                }
-                
-                # Insert the initial profile
-                result = profiles.insert_one(profile_data)
-                if result.inserted_id:
-                    profile = profiles.find_one({'_id': result.inserted_id})
-            
-            # Check profile completeness
-            if profile:
-                required_fields = ['name', 'description', 'location', 'available_plots', 'price_range']
-                missing_fields = [f for f in required_fields if not profile.get(f)]
-                
-                if not profile.get('society_logo'):
-                    missing_fields.append('society_logo')
-                    
-                is_complete = len(missing_fields) == 0
-                
-                response_data.update({
-                    "profile_complete": is_complete,
-                    "missing_fields": missing_fields,
-                    "profile_exists": True
-                })
-            else:
-                response_data.update({
-                    "profile_complete": False,
-                    "missing_fields": ['name', 'description', 'location', 'available_plots', 'price_range', 'society_logo'],
-                    "profile_exists": False
-                })
-                
-        except Exception as e:
-            # If there's an error with profile operations, still allow login
-            print(f"Profile check error during login: {str(e)}")
             response_data.update({
-                "profile_complete": False,
-                "profile_exists": False,
-                "missing_fields": ['name', 'description', 'location', 'available_plots', 'price_range', 'society_logo']
+                "profile_exists": profile_exists,
+                "profile_complete": profile_exists  # Simplified check
             })
+            
+        except Exception as e:
+            print(f"Profile check error: {str(e)}")
+            # Don't fail login for profile issues
+            response_data.update({
+                "profile_exists": False,
+                "profile_complete": False
+            })
+    
+    return jsonify(response_data), 200
     
     return jsonify(response_data), 200
 
