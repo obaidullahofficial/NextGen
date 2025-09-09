@@ -1,6 +1,9 @@
 cd backend
 pip install flask flask-cors pymongo
 pip install flask-jwt-extended
+python -m pip install "pymongo[srv]"
+
+npm install mongoose
 python app.py
 
 {

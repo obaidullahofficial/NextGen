@@ -293,3 +293,399 @@ def logout():
     response = jsonify({'msg': 'Logout successful'})
     unset_jwt_cookies(response)
     return response, 200
+
+@user_bp.route('/users', methods=['GET'])
+def get_all_users():
+    """Get all users from the database"""
+    try:
+        db = get_db()
+        users = user_collection(db)
+        
+        # Get all users from database
+        all_users = list(users.find())
+        
+        # Remove sensitive information (password hash) and convert ObjectId to string
+        for user in all_users:
+            user['_id'] = str(user['_id'])
+            user.pop('password_hash', None)  # Remove password hash for security
+            
+        return jsonify({
+            "success": True,
+            "users": all_users,
+            "total_count": len(all_users),
+            "message": f"Retrieved {len(all_users)} users successfully"
+        }), 200
+        
+    except Exception as e:
+        print(f"[GET USERS ERROR] {str(e)}")
+        return jsonify({"error": "Failed to retrieve users. Please try again."}), 500
+
+@user_bp.route('/register', methods=['POST'])
+@jwt_required()
+def register_user():
+    """Admin-only endpoint to create new users"""
+    try:
+        # Check if current user is admin
+        current_user_email = get_jwt_identity()  # JWT identity is email
+        db = get_db()
+        users = user_collection(db)
+        
+        current_user = users.find_one({'email': current_user_email})
+        if not current_user or current_user.get('role') != 'admin':
+            return jsonify({"success": False, "message": "Admin access required"}), 403
+        
+        data = request.json
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
+        role = data.get('role', 'user')
+
+        if not all([username, email, password]):
+            return jsonify({"success": False, "message": "All fields are required"}), 400
+
+        # Validate role
+        valid_roles = ['user', 'society', 'admin']
+        if role not in valid_roles:
+            return jsonify({"success": False, "message": "Invalid role specified"}), 400
+
+        user_id, message = UserController.create_user(username, email, password, role)
+        if not user_id:
+            return jsonify({"success": False, "message": message}), 400
+
+        return jsonify({"success": True, "message": f"User created successfully", "user_id": user_id}), 201
+        
+    except Exception as e:
+        print(f"[REGISTER USER ERROR] {str(e)}")
+        return jsonify({"success": False, "message": "Failed to create user. Please try again."}), 500
+
+# 🔹 COMPLETE CRUD OPERATIONS FOR USERS API
+
+@user_bp.route('/users/<user_id>', methods=['GET'])
+@jwt_required()
+def get_user_by_id(user_id):
+    """Get a specific user by ID (Admin only)"""
+    try:
+        from bson import ObjectId
+        
+        # Check if current user is admin
+        current_user_email = get_jwt_identity()
+        db = get_db()
+        users = user_collection(db)
+        
+        current_user = users.find_one({'email': current_user_email})
+        if not current_user or current_user.get('role') != 'admin':
+            return jsonify({"success": False, "message": "Admin access required"}), 403
+        
+        # Validate ObjectId format
+        if not ObjectId.is_valid(user_id):
+            return jsonify({"success": False, "message": "Invalid user ID format"}), 400
+        
+        # Find user by ID
+        user = users.find_one({'_id': ObjectId(user_id)})
+        if not user:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        
+        # Remove sensitive information and convert ObjectId to string
+        user['_id'] = str(user['_id'])
+        user.pop('password_hash', None)
+        
+        return jsonify({
+            "success": True,
+            "user": user,
+            "message": "User retrieved successfully"
+        }), 200
+        
+    except Exception as e:
+        print(f"[GET USER BY ID ERROR] {str(e)}")
+        return jsonify({"success": False, "message": "Failed to retrieve user"}), 500
+
+@user_bp.route('/users/<user_id>', methods=['PUT'])
+@jwt_required()
+def update_user(user_id):
+    """Update a specific user by ID (Admin only)"""
+    try:
+        from bson import ObjectId
+        from werkzeug.security import generate_password_hash
+        
+        # Check if current user is admin
+        current_user_email = get_jwt_identity()
+        db = get_db()
+        users = user_collection(db)
+        
+        current_user = users.find_one({'email': current_user_email})
+        if not current_user or current_user.get('role') != 'admin':
+            return jsonify({"success": False, "message": "Admin access required"}), 403
+        
+        # Validate ObjectId format
+        if not ObjectId.is_valid(user_id):
+            return jsonify({"success": False, "message": "Invalid user ID format"}), 400
+        
+        # Check if user exists
+        existing_user = users.find_one({'_id': ObjectId(user_id)})
+        if not existing_user:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        
+        data = request.json
+        update_data = {}
+        
+        # Validate and prepare update data
+        if 'username' in data and data['username'].strip():
+            update_data['username'] = data['username'].strip()
+        
+        if 'email' in data and data['email'].strip():
+            # Check if email is already taken by another user
+            email_check = users.find_one({'email': data['email'].strip(), '_id': {'$ne': ObjectId(user_id)}})
+            if email_check:
+                return jsonify({"success": False, "message": "Email already exists"}), 400
+            update_data['email'] = data['email'].strip()
+        
+        if 'role' in data:
+            valid_roles = ['user', 'society', 'admin']
+            if data['role'] not in valid_roles:
+                return jsonify({"success": False, "message": "Invalid role specified"}), 400
+            update_data['role'] = data['role']
+        
+        if 'password' in data and data['password']:
+            if len(data['password']) < 6:
+                return jsonify({"success": False, "message": "Password must be at least 6 characters"}), 400
+            update_data['password_hash'] = generate_password_hash(data['password'])
+        
+        if not update_data:
+            return jsonify({"success": False, "message": "No valid fields to update"}), 400
+        
+        # Update user
+        result = users.update_one({'_id': ObjectId(user_id)}, {'$set': update_data})
+        
+        if result.modified_count == 0:
+            return jsonify({"success": False, "message": "No changes made"}), 400
+        
+        # Get updated user
+        updated_user = users.find_one({'_id': ObjectId(user_id)})
+        updated_user['_id'] = str(updated_user['_id'])
+        updated_user.pop('password_hash', None)
+        
+        return jsonify({
+            "success": True,
+            "user": updated_user,
+            "message": "User updated successfully"
+        }), 200
+        
+    except Exception as e:
+        print(f"[UPDATE USER ERROR] {str(e)}")
+        return jsonify({"success": False, "message": "Failed to update user"}), 500
+
+@user_bp.route('/users/<user_id>', methods=['DELETE'])
+@jwt_required()
+def delete_user(user_id):
+    """Delete a specific user by ID (Admin only)"""
+    try:
+        from bson import ObjectId
+        
+        # Check if current user is admin
+        current_user_email = get_jwt_identity()
+        db = get_db()
+        users = user_collection(db)
+        
+        current_user = users.find_one({'email': current_user_email})
+        if not current_user or current_user.get('role') != 'admin':
+            return jsonify({"success": False, "message": "Admin access required"}), 403
+        
+        # Validate ObjectId format
+        if not ObjectId.is_valid(user_id):
+            return jsonify({"success": False, "message": "Invalid user ID format"}), 400
+        
+        # Check if user exists
+        existing_user = users.find_one({'_id': ObjectId(user_id)})
+        if not existing_user:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        
+        # Prevent admin from deleting themselves
+        if existing_user['email'] == current_user_email:
+            return jsonify({"success": False, "message": "Cannot delete your own account"}), 400
+        
+        # Delete user
+        result = users.delete_one({'_id': ObjectId(user_id)})
+        
+        if result.deleted_count == 0:
+            return jsonify({"success": False, "message": "Failed to delete user"}), 500
+        
+        return jsonify({
+            "success": True,
+            "message": f"User '{existing_user['username']}' deleted successfully"
+        }), 200
+        
+    except Exception as e:
+        print(f"[DELETE USER ERROR] {str(e)}")
+        return jsonify({"success": False, "message": "Failed to delete user"}), 500
+
+@user_bp.route('/users/search', methods=['GET'])
+@jwt_required()
+def search_users():
+    """Search users by username or email (Admin only)"""
+    try:
+        # Check if current user is admin
+        current_user_email = get_jwt_identity()
+        db = get_db()
+        users = user_collection(db)
+        
+        current_user = users.find_one({'email': current_user_email})
+        if not current_user or current_user.get('role') != 'admin':
+            return jsonify({"success": False, "message": "Admin access required"}), 403
+        
+        # Get search parameters
+        query = request.args.get('q', '').strip()
+        role = request.args.get('role', '').strip()
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 10))
+        
+        if limit > 100:  # Prevent excessive queries
+            limit = 100
+        
+        # Build search filter
+        search_filter = {}
+        
+        if query:
+            search_filter['$or'] = [
+                {'username': {'$regex': query, '$options': 'i'}},
+                {'email': {'$regex': query, '$options': 'i'}}
+            ]
+        
+        if role:
+            search_filter['role'] = role
+        
+        # Calculate skip value for pagination
+        skip = (page - 1) * limit
+        
+        # Get users with search filter
+        user_cursor = users.find(search_filter).skip(skip).limit(limit)
+        found_users = list(user_cursor)
+        
+        # Get total count for pagination
+        total_count = users.count_documents(search_filter)
+        
+        # Remove sensitive information and convert ObjectId to string
+        for user in found_users:
+            user['_id'] = str(user['_id'])
+            user.pop('password_hash', None)
+        
+        return jsonify({
+            "success": True,
+            "users": found_users,
+            "pagination": {
+                "current_page": page,
+                "per_page": limit,
+                "total_items": total_count,
+                "total_pages": (total_count + limit - 1) // limit
+            },
+            "message": f"Found {len(found_users)} users"
+        }), 200
+        
+    except Exception as e:
+        print(f"[SEARCH USERS ERROR] {str(e)}")
+        return jsonify({"success": False, "message": "Failed to search users"}), 500
+
+@user_bp.route('/users/stats', methods=['GET'])
+@jwt_required()
+def get_user_stats():
+    """Get user statistics (Admin only)"""
+    try:
+        # Check if current user is admin
+        current_user_email = get_jwt_identity()
+        db = get_db()
+        users = user_collection(db)
+        
+        current_user = users.find_one({'email': current_user_email})
+        if not current_user or current_user.get('role') != 'admin':
+            return jsonify({"success": False, "message": "Admin access required"}), 403
+        
+        # Get role-based counts
+        total_users = users.count_documents({})
+        admin_count = users.count_documents({'role': 'admin'})
+        society_count = users.count_documents({'role': 'society'})
+        regular_user_count = users.count_documents({'role': 'user'})
+        
+        # Get recent users (last 30 days) - simplified version
+        from datetime import datetime, timedelta
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        
+        # Note: This assumes you have a 'created_at' field in your user documents
+        # If not, you can remove this or add the field when creating users
+        recent_users = 0
+        try:
+            recent_users = users.count_documents({
+                'created_at': {'$gte': thirty_days_ago}
+            })
+        except:
+            # If created_at field doesn't exist, skip this stat
+            pass
+        
+        return jsonify({
+            "success": True,
+            "stats": {
+                "total_users": total_users,
+                "admin_count": admin_count,
+                "society_count": society_count,
+                "regular_user_count": regular_user_count,
+                "recent_users_30_days": recent_users,
+                "role_distribution": {
+                    "admin": admin_count,
+                    "society": society_count,
+                    "user": regular_user_count
+                }
+            },
+            "message": "User statistics retrieved successfully"
+        }), 200
+        
+    except Exception as e:
+        print(f"[USER STATS ERROR] {str(e)}")
+        return jsonify({"success": False, "message": "Failed to retrieve user statistics"}), 500
+
+@user_bp.route('/users/bulk-delete', methods=['DELETE'])
+@jwt_required()
+def bulk_delete_users():
+    """Delete multiple users by IDs (Admin only)"""
+    try:
+        from bson import ObjectId
+        
+        # Check if current user is admin
+        current_user_email = get_jwt_identity()
+        db = get_db()
+        users = user_collection(db)
+        
+        current_user = users.find_one({'email': current_user_email})
+        if not current_user or current_user.get('role') != 'admin':
+            return jsonify({"success": False, "message": "Admin access required"}), 403
+        
+        data = request.json
+        user_ids = data.get('user_ids', [])
+        
+        if not user_ids or not isinstance(user_ids, list):
+            return jsonify({"success": False, "message": "user_ids array is required"}), 400
+        
+        # Validate all user IDs
+        valid_ids = []
+        for user_id in user_ids:
+            if ObjectId.is_valid(user_id):
+                valid_ids.append(ObjectId(user_id))
+        
+        if not valid_ids:
+            return jsonify({"success": False, "message": "No valid user IDs provided"}), 400
+        
+        # Check if any of the users to delete is the current admin
+        users_to_delete = list(users.find({'_id': {'$in': valid_ids}}))
+        for user in users_to_delete:
+            if user['email'] == current_user_email:
+                return jsonify({"success": False, "message": "Cannot delete your own account"}), 400
+        
+        # Delete users
+        result = users.delete_many({'_id': {'$in': valid_ids}})
+        
+        return jsonify({
+            "success": True,
+            "deleted_count": result.deleted_count,
+            "message": f"Successfully deleted {result.deleted_count} users"
+        }), 200
+        
+    except Exception as e:
+        print(f"[BULK DELETE ERROR] {str(e)}")
+        return jsonify({"success": False, "message": "Failed to delete users"}), 500

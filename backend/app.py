@@ -48,7 +48,6 @@ app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(society_profile_bp, url_prefix='/api')
 app.register_blueprint(plot_bp, url_prefix='/api')
 app.register_blueprint(review_bp, url_prefix='/api')
-app.register_blueprint(plot_bp, url_prefix='/api')
 
 
 @app.route('/api/db-test')
