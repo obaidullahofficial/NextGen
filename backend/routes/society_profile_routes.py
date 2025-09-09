@@ -502,6 +502,363 @@ def get_all_society_profiles():
             profile['totalPlots'] = total_plots
             profile['availablePlots'] = available_plots
             
-        return jsonify(all_profiles), 200
+            # Format dates
+            if profile.get('created_at'):
+                profile['created_at'] = profile['created_at'].isoformat() if hasattr(profile['created_at'], 'isoformat') else str(profile['created_at'])
+            if profile.get('updated_at'):
+                profile['updated_at'] = profile['updated_at'].isoformat() if hasattr(profile['updated_at'], 'isoformat') else str(profile['updated_at'])
+            
+        return jsonify({
+            "success": True,
+            "data": all_profiles,
+            "count": len(all_profiles),
+            "message": f"Retrieved {len(all_profiles)} society profiles"
+        }), 200
     except Exception as e:
-        return jsonify({"error": f"Failed to get all profiles: {str(e)}"}), 500
+        return jsonify({
+            "success": False,
+            "error": f"Failed to get all profiles: {str(e)}"
+        }), 500
+
+@society_profile_bp.route('/society-profiles/<society_id>', methods=['GET'])
+def get_society_profile_by_id(society_id):
+    """Get a single society profile by ID (public endpoint)"""
+    try:
+        from bson import ObjectId
+        
+        # Validate ObjectId format
+        if not ObjectId.is_valid(society_id):
+            return jsonify({
+                "success": False,
+                "error": "Invalid society ID format"
+            }), 400
+        
+        db = get_db()
+        profiles = society_profile_collection(db)
+        
+        # Find the society profile
+        profile = profiles.find_one({'_id': ObjectId(society_id)})
+        
+        if not profile:
+            return jsonify({
+                "success": False,
+                "error": "Society profile not found"
+            }), 404
+        
+        # Convert ObjectId to string
+        profile['_id'] = str(profile['_id'])
+        
+        # Import plot collection to count plots
+        from models.plot import plot_collection
+        plots = plot_collection(db)
+        
+        society_id_str = profile['_id']
+        
+        # Count total plots for this society
+        total_plots = plots.count_documents({'societyId': society_id_str})
+        
+        # Count available plots (status = 'Available')
+        available_plots = plots.count_documents({
+            'societyId': society_id_str,
+            'status': 'Available'
+        })
+        
+        # Add plot counts to profile
+        profile['totalPlots'] = total_plots
+        profile['availablePlots'] = available_plots
+        
+        # Format dates
+        if profile.get('created_at'):
+            profile['created_at'] = profile['created_at'].isoformat() if hasattr(profile['created_at'], 'isoformat') else str(profile['created_at'])
+        if profile.get('updated_at'):
+            profile['updated_at'] = profile['updated_at'].isoformat() if hasattr(profile['updated_at'], 'isoformat') else str(profile['updated_at'])
+        
+        return jsonify({
+            "success": True,
+            "data": profile,
+            "message": "Society profile retrieved successfully"
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Failed to get society profile: {str(e)}"
+        }), 500
+
+@society_profile_bp.route('/society-profiles', methods=['POST'])
+@jwt_required()
+def create_society_profile():
+    """Create a new society profile (admin only)"""
+    try:
+        # Check if current user is admin
+        current_user_email = get_jwt_identity()
+        db = get_db()
+        
+        from models.user import user_collection
+        users = user_collection(db)
+        current_user = users.find_one({'email': current_user_email})
+        
+        if not current_user or current_user.get('role') != 'admin':
+            return jsonify({
+                "success": False,
+                "error": "Admin access required"
+            }), 403
+        
+        # Get request data
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                "success": False,
+                "error": "Request data is required"
+            }), 400
+        
+        # Validate required fields
+        required_fields = ['name', 'user_email']
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        
+        if missing_fields:
+            return jsonify({
+                "success": False,
+                "error": f"Missing required fields: {', '.join(missing_fields)}"
+            }), 400
+        
+        # Check if user exists
+        target_user = users.find_one({'email': data['user_email']})
+        if not target_user:
+            return jsonify({
+                "success": False,
+                "error": "User not found"
+            }), 404
+        
+        # Check if society profile already exists for this user
+        profiles = society_profile_collection(db)
+        existing_profile = profiles.find_one({'user_email': data['user_email']})
+        
+        if existing_profile:
+            return jsonify({
+                "success": False,
+                "error": "Society profile already exists for this user"
+            }), 409
+        
+        # Create new society profile
+        new_profile = {
+            'user_email': data['user_email'],
+            'name': data['name'],
+            'description': data.get('description', ''),
+            'location': data.get('location', ''),
+            'available_plots': data.get('available_plots', ''),
+            'price_range': data.get('price_range', ''),
+            'society_logo': data.get('society_logo', ''),
+            'is_complete': False,
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow()
+        }
+        
+        # Check completeness
+        required_profile_fields = ['name', 'description', 'location', 'available_plots', 'price_range']
+        complete_fields = [f for f in required_profile_fields if new_profile.get(f)]
+        has_logo = bool(new_profile.get('society_logo'))
+        
+        new_profile['is_complete'] = len(complete_fields) == len(required_profile_fields) and has_logo
+        
+        # Insert into database
+        result = profiles.insert_one(new_profile)
+        new_profile['_id'] = str(result.inserted_id)
+        
+        # Format dates for response
+        new_profile['created_at'] = new_profile['created_at'].isoformat()
+        new_profile['updated_at'] = new_profile['updated_at'].isoformat()
+        
+        return jsonify({
+            "success": True,
+            "data": new_profile,
+            "message": "Society profile created successfully"
+        }), 201
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Failed to create society profile: {str(e)}"
+        }), 500
+
+@society_profile_bp.route('/society-profiles/<society_id>', methods=['PUT'])
+@jwt_required()
+def update_society_profile_by_id(society_id):
+    """Update a society profile by ID (admin or owner)"""
+    try:
+        from bson import ObjectId
+        
+        # Validate ObjectId format
+        if not ObjectId.is_valid(society_id):
+            return jsonify({
+                "success": False,
+                "error": "Invalid society ID format"
+            }), 400
+        
+        current_user_email = get_jwt_identity()
+        db = get_db()
+        
+        # Get current user info
+        from models.user import user_collection
+        users = user_collection(db)
+        current_user = users.find_one({'email': current_user_email})
+        
+        if not current_user:
+            return jsonify({
+                "success": False,
+                "error": "User not found"
+            }), 401
+        
+        # Find the society profile
+        profiles = society_profile_collection(db)
+        profile = profiles.find_one({'_id': ObjectId(society_id)})
+        
+        if not profile:
+            return jsonify({
+                "success": False,
+                "error": "Society profile not found"
+            }), 404
+        
+        # Check permissions (admin or owner)
+        is_admin = current_user.get('role') == 'admin'
+        is_owner = profile.get('user_email') == current_user_email
+        
+        if not (is_admin or is_owner):
+            return jsonify({
+                "success": False,
+                "error": "Insufficient permissions"
+            }), 403
+        
+        # Get request data
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                "success": False,
+                "error": "Request data is required"
+            }), 400
+        
+        # Prepare update data
+        update_data = {
+            'updated_at': datetime.utcnow()
+        }
+        
+        # Update allowed fields
+        allowed_fields = ['name', 'description', 'location', 'available_plots', 'price_range', 'society_logo']
+        
+        for field in allowed_fields:
+            if field in data:
+                update_data[field] = data[field]
+        
+        # Only admin can change user_email
+        if 'user_email' in data and is_admin:
+            # Verify new user exists
+            new_user = users.find_one({'email': data['user_email']})
+            if new_user:
+                update_data['user_email'] = data['user_email']
+        
+        # Check completeness
+        updated_profile = {**profile, **update_data}
+        required_fields = ['name', 'description', 'location', 'available_plots', 'price_range']
+        complete_fields = [f for f in required_fields if updated_profile.get(f)]
+        has_logo = bool(updated_profile.get('society_logo'))
+        
+        update_data['is_complete'] = len(complete_fields) == len(required_fields) and has_logo
+        
+        # Update database
+        result = profiles.update_one(
+            {'_id': ObjectId(society_id)},
+            {'$set': update_data}
+        )
+        
+        if result.modified_count == 0:
+            return jsonify({
+                "success": False,
+                "error": "No changes were made"
+            }), 400
+        
+        # Get updated profile
+        updated_profile = profiles.find_one({'_id': ObjectId(society_id)})
+        updated_profile['_id'] = str(updated_profile['_id'])
+        
+        # Format dates
+        if updated_profile.get('created_at'):
+            updated_profile['created_at'] = updated_profile['created_at'].isoformat() if hasattr(updated_profile['created_at'], 'isoformat') else str(updated_profile['created_at'])
+        if updated_profile.get('updated_at'):
+            updated_profile['updated_at'] = updated_profile['updated_at'].isoformat() if hasattr(updated_profile['updated_at'], 'isoformat') else str(updated_profile['updated_at'])
+        
+        return jsonify({
+            "success": True,
+            "data": updated_profile,
+            "message": "Society profile updated successfully"
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Failed to update society profile: {str(e)}"
+        }), 500
+
+@society_profile_bp.route('/society-profiles/<society_id>', methods=['DELETE'])
+@jwt_required()
+def delete_society_profile_by_id(society_id):
+    """Delete a society profile by ID (admin only)"""
+    try:
+        from bson import ObjectId
+        
+        # Validate ObjectId format
+        if not ObjectId.is_valid(society_id):
+            return jsonify({
+                "success": False,
+                "error": "Invalid society ID format"
+            }), 400
+        
+        current_user_email = get_jwt_identity()
+        db = get_db()
+        
+        # Check if current user is admin
+        from models.user import user_collection
+        users = user_collection(db)
+        current_user = users.find_one({'email': current_user_email})
+        
+        if not current_user or current_user.get('role') != 'admin':
+            return jsonify({
+                "success": False,
+                "error": "Admin access required"
+            }), 403
+        
+        # Find the society profile
+        profiles = society_profile_collection(db)
+        profile = profiles.find_one({'_id': ObjectId(society_id)})
+        
+        if not profile:
+            return jsonify({
+                "success": False,
+                "error": "Society profile not found"
+            }), 404
+        
+        # Delete the profile
+        result = profiles.delete_one({'_id': ObjectId(society_id)})
+        
+        if result.deleted_count == 0:
+            return jsonify({
+                "success": False,
+                "error": "Failed to delete society profile"
+            }), 500
+        
+        return jsonify({
+            "success": True,
+            "message": "Society profile deleted successfully",
+            "deleted_profile": {
+                "id": society_id,
+                "name": profile.get('name'),
+                "user_email": profile.get('user_email')
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Failed to delete society profile: {str(e)}"
+        }), 500
