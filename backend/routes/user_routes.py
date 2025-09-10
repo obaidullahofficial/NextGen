@@ -742,3 +742,39 @@ def bulk_delete_users():
     except Exception as e:
         print(f"[BULK DELETE ERROR] {str(e)}")
         return jsonify({"success": False, "message": "Failed to delete users"}), 500
+
+@user_bp.route('/registration-forms', methods=['GET'])
+@jwt_required()
+def get_registration_forms():
+    """Get all registration forms (Admin only)"""
+    try:
+        # Check if current user is admin
+        current_user_email = get_jwt_identity()
+        db = get_db()
+        users = user_collection(db)
+        
+        current_user = users.find_one({'email': current_user_email})
+        if not current_user or current_user.get('role') != 'admin':
+            return jsonify({"success": False, "message": "Admin access required"}), 403
+        
+        # Get all registration forms
+        reg_forms = registration_form_collection(db)
+        registration_list = list(reg_forms.find({}))
+        
+        # Convert ObjectId to string
+        for registration in registration_list:
+            registration['_id'] = str(registration['_id'])
+            # Add created date if not present
+            if 'created_at' not in registration:
+                registration['created_at'] = datetime.now().isoformat()
+        
+        return jsonify({
+            "success": True,
+            "data": registration_list,
+            "total": len(registration_list),
+            "message": f"Retrieved {len(registration_list)} registration forms successfully"
+        }), 200
+        
+    except Exception as e:
+        print(f"[GET REGISTRATION FORMS ERROR] {str(e)}")
+        return jsonify({"success": False, "message": "Failed to fetch registration forms"}), 500
