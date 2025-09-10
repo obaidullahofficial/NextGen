@@ -1,61 +1,25 @@
+# NextGenArchitect 🏗️
 
-<div align="center">
-  <img src="https://user-images.githubusercontent.com/placeholder/nextgenarchitect-banner.png" alt="NextGenArchitect Banner" width="80%"/>
-  <h1>NextGenArchitect 🏗️</h1>
-  <p><b>AI-powered platform for custom floor plan generation and seamless plot purchasing</b></p>
-  <p>
-    <a href="https://reactjs.org/"><img src="https://img.shields.io/badge/React-18.0+-61DAFB?style=flat&logo=react" alt="React"/></a>
-    <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-4.0+-646CFF?style=flat&logo=vite" alt="Vite"/></a>
-    <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind%20CSS-3.0+-06B6D4?style=flat&logo=tailwindcss" alt="Tailwind CSS"/></a>
-    <img src="https://img.shields.io/github/license/Aashfa/NextGenArchitect?style=flat" alt="License"/>
-    <img src="https://img.shields.io/github/issues/Aashfa/NextGenArchitect?style=flat" alt="Issues"/>
-  </p>
-</div>
+NextGenArchitect is an AI-powered platform for custom floor plan generation and seamless plot purchasing. The platform provides tools for designing, validating, and approving architectural projects with advanced compliance management.
 
----
-
-<p align="center">
-  <b>Design, validate, and approve architectural projects with advanced compliance management.</b>
-</p>
-
----
-
+[![React](https://img.shields.io/badge/React-18.0+-61DAFB?style=flat&logo=react)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-4.0+-646CFF?style=flat&logo=vite)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.0+-06B6D4?style=flat&logo=tailwindcss)](https://tailwindcss.com/)
 
 ## 📋 Table of Contents
 
-- [✨ Screenshots](#-screenshots)
-- [✅ Prerequisites](#-prerequisites)
-- [🚀 Quick Start](#-quick-start-5-minutes-setup)
-- [🔧 Detailed Setup](#-detailed-setup)
-- [📁 Project Structure](#-project-structure)
-- [📜 Available Scripts](#-available-scripts)
-- [🛠️ Technology Stack](#️-technology-stack)
-- [🎯 Key Features](#-key-features)
-- [🐛 Troubleshooting](#-troubleshooting)
-- [🌐 Accessing the Application](#-accessing-the-application)
-- [🤝 Contributing](#-contributing)
-- [📞 Support & Help](#-support--help)
-- [🎯 Next Steps After Setup](#-next-steps-after-setup)
-- [📄 License](#-license)
-- [✅ Setup Verification Checklist](#-setup-verification-checklist)
-
----
-
-## ✨ Screenshots
-
-<!-- Add screenshots/gifs of your app below -->
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/placeholder/screenshot1.png" width="70%" alt="Homepage Screenshot"/>
-  <br/>
-  <i>Modern UI for floor plan generation and plot management</i>
-</p>
-
----
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Detailed Setup](#detailed-setup)
+- [Project Structure](#project-structure)
+- [Available Scripts](#available-scripts)
+- [Troubleshooting](#troubleshooting)
+- [Features](#features)
+- [Contributing](#contributing)
 
 ## ✅ Prerequisites
 
-
-> **IMPORTANT:** Install these before proceeding:
+**IMPORTANT:** Install these before proceeding:
 
 ### Required Software:
 - **Node.js** (version 16.0 or higher) - [Download here](https://nodejs.org/)
@@ -63,19 +27,17 @@
 - **Git** - [Download here](https://git-scm.com/)
 
 ### Verify Installation:
-
 ```bash
 node --version    # Should show v16.0.0 or higher
 npm --version     # Should show 8.0.0 or higher
 git --version     # Should show version info
 ```
 
-> If any command fails, install the missing software before continuing.
+If any command fails, install the missing software before continuing.
 
 ## 🚀 Quick Start (5 Minutes Setup)
 
-
-> **Copy and paste these commands one by one:**
+**Copy and paste these commands one by one:**
 
 ```bash
 # 1. Clone the repository
@@ -100,11 +62,7 @@ npx tailwindcss init -p
 npm run dev
 ```
 
-
-> **🎉 That's it! Your project should now be running at `http://localhost:5173`**
-
-
----
+**🎉 That's it! Your project should now be running at `http://localhost:5173`**
 
 ## 🔧 Detailed Setup
 
@@ -177,9 +135,6 @@ Make sure `src/index.css` contains:
 npm run dev
 ```
 
-
----
-
 ## 📁 Project Structure
 
 ```
@@ -220,9 +175,6 @@ NextGenArchitect/
 └── .gitignore                  # Git ignore rules
 ```
 
-
----
-
 ## 📜 Available Scripts
 
 In the `frontend` directory, you can run:
@@ -244,9 +196,6 @@ In the `frontend` directory, you can run:
 - Runs ESLint to check code quality
 - Fix issues automatically with `npm run lint -- --fix`
 
-
----
-
 ## 🛠️ Technology Stack
 
 ### Core Technologies
@@ -267,9 +216,6 @@ In the `frontend` directory, you can run:
 - **ESLint** - Code linting
 - **Hot Module Replacement** - Fast development
 
-
----
-
 ## 🎯 Key Features
 
 ### 🏠 User Features
@@ -289,9 +235,6 @@ In the `frontend` directory, you can run:
 - **Consistent Color Scheme** - Primary (#2F3D57) and Secondary (#ED7600)
 - **Modern UI Components** - Cards, buttons, forms, tables
 - **Responsive Layouts** - Mobile-first design approach
-
-
----
 
 ## 🐛 Troubleshooting
 
@@ -373,9 +316,6 @@ npm run dev
 - You might need to use `sudo` for global npm installs
 - Ensure you have the latest version of Node.js
 
-
----
-
 ## 🌐 Accessing the Application
 
 Once the development server starts:
@@ -390,9 +330,6 @@ Once the development server starts:
 - `/login` - User login
 - `/subadmin` - Sub-admin dashboard
 - `/plot-details` - Plot information
-
-
----
 
 ## 🤝 Contributing
 
@@ -422,9 +359,6 @@ Once the development server starts:
 - Keep components small and reusable
 - Add comments for complex logic
 
-
----
-
 ## 📞 Support & Help
 
 ### Getting Help:
@@ -444,9 +378,6 @@ npm list react react-dom
 # Steps that led to the error
 ```
 
-
----
-
 ## 🎯 Next Steps After Setup
 
 1. **Explore the codebase** - Start with `src/App.jsx`
@@ -455,15 +386,9 @@ npm list react react-dom
 4. **Read the component docs** - Understand the project structure
 5. **Start contributing** - Pick an issue or add a feature
 
-
----
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 
 ---
 
@@ -471,24 +396,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 After following this guide, verify your setup:
 
-- [ ] ✅ Node.js version 16+ installed
-- [ ] ✅ Repository cloned successfully
-- [ ] ✅ Dependencies installed without errors
-- [ ] ✅ Tailwind CSS configured
-- [ ] ✅ Development server starts on port 5173
-- [ ] ✅ Homepage loads correctly
-- [ ] ✅ Navigation works between pages
-- [ ] ✅ No console errors in browser
-- [ ] ✅ Hot reload works (make a small change and see it update)
+- [ ] Node.js version 16+ installed
+- [ ] Repository cloned successfully
+- [ ] Dependencies installed without errors
+- [ ] Tailwind CSS configured
+- [ ] Development server starts on port 5173
+- [ ] Homepage loads correctly
+- [ ] Navigation works between pages
+- [ ] No console errors in browser
+- [ ] Hot reload works (make a small change and see it update)
 
-> **🎉 If all checkboxes are checked, you're ready to start developing!**
-
----
-
+**🎉 If all checkboxes are checked, you're ready to start developing!**
 
 ---
 
-<div align="center">
-  <b>Happy Coding! 🚀</b><br/>
-  <sub>Need help? Open an issue on GitHub or contact the development team.</sub>
-</div>
+**Happy Coding! 🚀**
+
+> **Need help?** Open an issue on GitHub or contact the development team.
