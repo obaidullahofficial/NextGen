@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import NavBar from '../../components/user/Navbar';
+import Navbar from '../../components/user/Navbar';
 import Footer from '../../components/user/Footer';
 import { FaMapMarkerAlt, FaHome, FaStar, FaChevronRight } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -24,11 +24,13 @@ const Societies = () => {
   useEffect(() => {
     const fetchSocieties = async () => {
       try {
-        const data = await getAllSocietyProfiles();
-        setSocieties(data);
+        const response = await getAllSocietyProfiles();
+        // Extract the data array from the API response
+        setSocieties(response.data || []);
         setLoading(false);
       } catch (error) {
         console.error('Failed to fetch societies:', error);
+        setSocieties([]); // Set empty array on error
         setLoading(false);
       }
     };
@@ -39,7 +41,7 @@ const Societies = () => {
   return (
     <div className="min-h-screen flex flex-col bg-[#2F3D57] text-white">
       <div className="sticky top-0 z-50">
-        <NavBar />
+        <Navbar />
       </div>
 
       <main className="flex-grow">
@@ -88,11 +90,12 @@ const Societies = () => {
             <div className="text-center text-lg text-gray-200">Loading societies...</div>
           ) : (
             <div className="space-y-8 md:space-y-12">
-              {societies.map((society) => (
-                <div
-                  key={society._id}
-                  className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-white/20"
-                >
+              {Array.isArray(societies) && societies.length > 0 ? (
+                societies.map((society) => (
+                  <div
+                    key={society._id}
+                    className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-white/20"
+                  >
                   <div className="flex flex-col lg:flex-row">
                     {/* Image Section */}
                     <div className="lg:w-2/5 relative overflow-hidden">
@@ -161,7 +164,12 @@ const Societies = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+              ))
+              ) : (
+                <div className="text-center text-lg text-gray-200">
+                  No societies available at the moment.
+                </div>
+              )}
             </div>
           )}
         </section>
