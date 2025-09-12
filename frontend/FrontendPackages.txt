@@ -13,4 +13,4 @@ npm install jspdf
 npm install html2canvas
 
 npm install react-toastify
-install jspdf html2canvas
+nm jspdf html2canvas

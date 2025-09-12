@@ -12,29 +12,12 @@ python app.py
   "password": "Admin#123",
   "role": "admin"
 }
-
-
-  "username": "testuser3",
-  "email": "abce@example.com",
-  "password": "12345Aa#",
-  "role": "society"
-
   "username": "testuser5",
   "email": "abcf@example.com",
-  "password": "12345Aa#",
+  "password": "abcf@example.com",
   "role": "society"
 
   "username": "testuser",
-  "email": "testuser@example.com",
-  "password": "password123",
-  "role": "user"
-
- "username": "testuser2",
-  "email": "abc@gmail.com",
-  "password": "12345Aa#",
-  "role": "user"
-
-   "username": "testuser3",
-  "email": "abcd@gmail.com",
-  "password": "12345Aa#",
+  "email": "usertesting@gmail.com",
+  "password": "usertesting@gmail.com",
   "role": "user"
