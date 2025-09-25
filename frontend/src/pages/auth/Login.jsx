@@ -1,9 +1,11 @@
  import React, { useState } from 'react';
 import Logo from '../../assets/Logo.png';
 import { useNavigate } from 'react-router-dom';
-import { signupUser, loginUser, checkEmail } from '../../services/apiService';
+import { signupUser, loginUser, checkEmail, googleLogin } from '../../services/apiService';
 import PopupModal from '../../components/common/PopupModal';
 import { useAuth } from '../../context/AuthContext';
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
+import ForgotPasswordModal from '../../components/auth/ForgotPasswordModal';
 
 const Login = () => {
     const [isLoginMode, setIsLoginMode] = useState(false);
@@ -12,6 +14,7 @@ const Login = () => {
     const [loginForm, setLoginForm] = useState({ email: '', password: '' });
     const [loginError, setLoginError] = useState('');
     const [showSignupType, setShowSignupType] = useState(false);
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
     
     // Popup modal state with navigation callback
     const [popup, setPopup] = useState({
@@ -24,6 +27,126 @@ const Login = () => {
     
     const navigate = useNavigate();
     const { login } = useAuth(); // Use AuthContext login method
+
+    // Handle Google OAuth Success (works for both login and signup)
+    const handleGoogleSuccess = async (credentialResponse) => {
+        try {
+            const mode = isLoginMode ? 'LOGIN' : 'SIGNUP';
+            console.log(`[GOOGLE ${mode}] Starting Google authentication...`);
+            console.log(`[GOOGLE ${mode}] Credential response:`, credentialResponse);
+            
+            if (!credentialResponse.credential) {
+                throw new Error('No credential received from Google');
+            }
+            
+            // Call Google login API (this handles both login and signup)
+            const intent = isLoginMode ? 'login' : 'signup';
+            const result = await googleLogin(credentialResponse.credential, intent);
+            console.log(`[GOOGLE ${mode}] Backend response:`, result);
+            
+            if (result.success) {
+                console.log(`[GOOGLE ${mode}] Authentication successful:`, result.user);
+                
+                // Store token in localStorage
+                localStorage.setItem('token', result.access_token);
+                
+                // Show success popup
+                const handleGoogleAuthSuccess = () => {
+                    if (result.user.role === 'admin') {
+                        console.log(`[GOOGLE ${mode}] Redirecting to admin dashboard`);
+                        navigate('/dashboard');
+                    } else if (result.user.role === 'society') {
+                        console.log(`[GOOGLE ${mode}] Redirecting to society dashboard`);
+                        navigate('/subadmin');
+                    } else {
+                        console.log(`[GOOGLE ${mode}] Redirecting to user profile`);
+                        navigate('/userprofile');
+                    }
+                };
+                
+                let title, message;
+                if (result.new_user) {
+                    title = 'Welcome to NextGenArchitect!';
+                    message = 'Your account has been created successfully with Google. You can now access all features of our platform.';
+                } else {
+                    title = isLoginMode ? 'Welcome Back!' : 'Account Found!';
+                    message = isLoginMode 
+                        ? 'You have been signed in successfully with Google.' 
+                        : 'We found your existing account and signed you in automatically.';
+                }
+                
+                showPopup(
+                    title,
+                    message,
+                    'success',
+                    handleGoogleAuthSuccess
+                );
+            } else {
+                console.error(`[GOOGLE ${mode}] Backend returned error:`, result);
+                // Handle Google auth errors
+                if (result.error?.includes('registration_pending')) {
+                    showPopup(
+                        'Registration Pending',
+                        'Your society registration request is still being processed. Please wait for admin approval.',
+                        'warning'
+                    );
+                } else if (result.error?.includes('registration_rejected')) {
+                    showPopup(
+                        'Registration Rejected',
+                        'Unfortunately, your society registration request has been rejected. Please contact support.',
+                        'error'
+                    );
+                } else {
+                    const errorMessage = isLoginMode 
+                        ? 'Google sign-in failed. Please try again.'
+                        : 'Google sign-up failed. Please try again.';
+                    setLoginError(result.message || result.error || errorMessage);
+                    setSignupError(result.message || result.error || errorMessage);
+                }
+            }
+        } catch (error) {
+            console.error(`[GOOGLE ${isLoginMode ? 'LOGIN' : 'SIGNUP'}] Error:`, error);
+            const errorMessage = isLoginMode 
+                ? `Google sign-in failed: ${error.message}`
+                : `Google sign-up failed: ${error.message}`;
+            setLoginError(errorMessage);
+            setSignupError(errorMessage);
+        }
+    };
+
+    // Handle Google OAuth Error
+    const handleGoogleError = (error) => {
+        const mode = isLoginMode ? 'sign-in' : 'sign-up';
+        console.error(`[GOOGLE ${mode.toUpperCase()}] Google ${mode} error:`, error);
+        const errorMessage = `Google ${mode} was cancelled or failed. Please try again.`;
+        setLoginError(errorMessage);
+        setSignupError(errorMessage);
+    };
+
+    // Handle forgot password
+    const handleForgotPasswordClick = () => {
+        setShowForgotPassword(true);
+    };
+
+    const handleForgotPasswordSuccess = (message) => {
+        showPopup(
+            'Password Reset Successful!',
+            message,
+            'success'
+        );
+    };
+
+    // Handle Enter key press for form submission
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (isLoginMode) {
+                handleLoginSubmit(e);
+            } else {
+                handleSignupSubmit(e);
+            }
+        }
+    };
 
     // Handle input for signup and login
     const handleSignupInput = (e) => {
@@ -270,13 +393,23 @@ const Login = () => {
                 {/* Form Section */}
                 <form className='space-y-4' onSubmit={isLoginMode ? handleLoginSubmit : handleSignupSubmit}>
                     {!isLoginMode && (
-                        <input type="text" name="name" value={signupForm.name} onChange={handleSignupInput} placeholder="Name" required className='w-full p-3 border-b-2 border-gray-300 outline-none focus:border-[#ED7600] placeholder-gray-400' />
+                        <input 
+                            type="text" 
+                            name="name" 
+                            value={signupForm.name} 
+                            onChange={handleSignupInput} 
+                            onKeyDown={handleKeyDown}
+                            placeholder="Name" 
+                            required 
+                            className='w-full p-3 border-b-2 border-gray-300 outline-none focus:border-[#ED7600] placeholder-gray-400' 
+                        />
                     )}
                     <input
                         type="email"
                         name="email"
                         value={isLoginMode ? loginForm.email : signupForm.email}
                         onChange={isLoginMode ? handleLoginInput : handleSignupInput}
+                        onKeyDown={handleKeyDown}
                         placeholder="Email Address"
                         required
                         className='w-full p-3 border-b-2 border-gray-300 outline-none focus:border-[#ED7600] placeholder-gray-400'
@@ -286,12 +419,22 @@ const Login = () => {
                         name="password"
                         value={isLoginMode ? loginForm.password : signupForm.password}
                         onChange={isLoginMode ? handleLoginInput : handleSignupInput}
+                        onKeyDown={handleKeyDown}
                         placeholder="Password"
                         required
                         className='w-full p-3 border-b-2 border-gray-300 outline-none focus:border-[#ED7600] placeholder-gray-400'
                     />
                     {!isLoginMode && (
-                        <input type="password" name="confirmPassword" value={signupForm.confirmPassword} onChange={handleSignupInput} placeholder="Confirm Password" required className='w-full p-3 border-b-2 border-gray-300 outline-none focus:border-[#ED7600] placeholder-gray-400'/>
+                        <input 
+                            type="password" 
+                            name="confirmPassword" 
+                            value={signupForm.confirmPassword} 
+                            onChange={handleSignupInput} 
+                            onKeyDown={handleKeyDown}
+                            placeholder="Confirm Password" 
+                            required 
+                            className='w-full p-3 border-b-2 border-gray-300 outline-none focus:border-[#ED7600] placeholder-gray-400'
+                        />
                     )}
                     {signupError && !isLoginMode && (
                         <div className="text-red-600 text-sm font-semibold text-center">{signupError}</div>
@@ -301,12 +444,46 @@ const Login = () => {
                     )}
                     {isLoginMode && (
                         <div className='text-right'>
-                            <p className='text-[#ED7600] hover:underline cursor-pointer'>Forgot Password?</p>
+                            <button 
+                                type="button"
+                                onClick={handleForgotPasswordClick}
+                                className='text-[#ED7600] hover:underline cursor-pointer focus:outline-none'
+                            >
+                                Forgot Password?
+                            </button>
                         </div>
                     )}
-                    <button className='w-full p-3 bg-gradient-to-r from-[#2F3D57] to-[#ED7600] text-white rounded-full text-lg font-bold hover:opacity-90 transition shadow-lg'>
+                    <button 
+                        type="submit"
+                        className='w-full p-3 bg-gradient-to-r from-[#2F3D57] to-[#ED7600] text-white rounded-full text-lg font-bold hover:opacity-90 transition shadow-lg'
+                    >
                         {isLoginMode ? "Login" : "Sign Up"}
                     </button>
+
+                    {/* Google OAuth - Show for both Login and Signup */}
+                    <>
+                        {/* Divider */}
+                        <div className="flex items-center my-4">
+                            <div className="flex-1 border-t border-gray-300"></div>
+                            <span className="px-4 text-gray-500 text-sm">or</span>
+                            <div className="flex-1 border-t border-gray-300"></div>
+                        </div>
+
+                        {/* Google OAuth Button */}
+                        <div className="w-full">
+                            <GoogleSignInButton
+                                onSuccess={handleGoogleSuccess}
+                                onError={handleGoogleError}
+                                disabled={false}
+                                mode={isLoginMode ? 'signin' : 'signup'}
+                            />
+                            <p className="text-xs text-gray-500 text-center mt-2">
+                                {isLoginMode 
+                                    ? "Sign in securely with your Google account" 
+                                    : "Create your account instantly with Google"}
+                            </p>
+                        </div>
+                    </>
 
                     <p className='text-center text-gray-600'>
                         {isLoginMode ? "Don't have an account?" : "Already have an account?"}
@@ -352,6 +529,13 @@ const Login = () => {
                 title={popup.title}
                 message={popup.message}
                 type={popup.type}
+            />
+
+            {/* Forgot Password Modal */}
+            <ForgotPasswordModal
+                isOpen={showForgotPassword}
+                onClose={() => setShowForgotPassword(false)}
+                onSuccess={handleForgotPasswordSuccess}
             />
         </div>
     );

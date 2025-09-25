@@ -251,9 +251,7 @@ const Dashboard = () => {
       <div style={styles.header}>
         <div>
           <h1 style={styles.heading}>Admin Dashboard</h1>
-          <p style={styles.subheading}>
-            Welcome back! Here's your platform overview with real-time data.
-          </p>
+         
         </div>
         <button onClick={fetchDashboardData} style={styles.refreshButton}>
           <Activity size={16} />
@@ -324,30 +322,10 @@ const Dashboard = () => {
         ]} />
       </div>
 
-      {/* Recent Activity */}
-      <div style={styles.activitySection}>
-        <h2 style={styles.sectionTitle}>Recent Activity</h2>
-        <div style={styles.activityContainer}>
-          {dashboardData.recentActivity.length > 0 ? (
-            dashboardData.recentActivity.map((activity, index) => (
-              <ActivityItem 
-                key={index} 
-                message={activity.message} 
-                time={activity.time} 
-                user={activity.user}
-                icon={activity.icon}
-                type={activity.type}
-              />
-            ))
-          ) : (
-            <div style={styles.noActivity}>
-              <Calendar size={48} color="#ccc" />
-              <p>No recent activity to display</p>
-            </div>
-          )}
+     
         </div>
-      </div>
-    </div>
+    
+ 
   );
 };
 

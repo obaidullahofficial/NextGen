@@ -14,3 +14,4 @@ npm install html2canvas
 
 npm install react-toastify
 nm jspdf html2canvas
+ npm install @react-oauth/google jwt-decode

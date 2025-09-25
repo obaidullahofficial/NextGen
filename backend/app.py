@@ -7,8 +7,12 @@ from utils.db import test_connection
 from routes.review_routes import review_bp
 from routes.plot_routes import plot_bp  # Import the blueprint
 from routes.advertisement_routes import advertisement_bp  # Import advertisement routes
-
 from datetime import timedelta
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
 

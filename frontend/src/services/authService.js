@@ -82,6 +82,56 @@ export async function loginUser({ email, password }) {
 }
 
 /**
+ * Google OAuth login
+ * @param {string} googleCredential - Google OAuth credential token
+ * @param {string} intent - 'login' or 'signup' to indicate user intent
+ * @returns {Promise<Object>} Login response with token and user data
+ */
+export async function googleLogin(googleCredential, intent = 'login') {
+  if (!googleCredential) {
+    throw new Error('Google credential is required');
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/google-login`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ 
+        credential: googleCredential,
+        intent: intent 
+      }),
+    });
+
+    const data = await response.json();
+
+    // Handle errors efficiently
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        return {
+          success: false,
+          error: data.error,
+          message: data.message,
+          status: response.status
+        };
+      } else {
+        throw new Error(data.error || 'Google authentication failed');
+      }
+    }
+
+    // Quick success log
+    console.log(`[Auth] Google ${intent} successful for ${data.user?.role || 'user'}`);
+    return data;
+    
+  } catch (error) {
+    console.error(`[Auth] Google ${intent} error:`, error.message);
+    throw error;
+  }
+}
+
+/**
  * Register a new society
  * @param {Object} societyData - Society registration data
  * @returns {Promise<Object>} Society registration response
@@ -110,6 +160,77 @@ export async function testTokenValidity() {
     method: 'POST',
     body: JSON.stringify({ test: "data" })
   }, 'testTokenValidity');
+}
+
+/**
+ * Forgot password request
+ * @param {string} email - Email address to send reset link to
+ * @returns {Promise<Object>} Response with success status
+ */
+export async function forgotPassword(email) {
+  if (!email) {
+    throw new Error('Email is required');
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/forgot-password`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to process password reset request');
+    }
+
+    console.log('[Auth] Forgot password request successful');
+    return data;
+    
+  } catch (error) {
+    console.error('[Auth] Forgot password error:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Reset password with token
+ * @param {string} token - Reset token from email
+ * @param {string} password - New password
+ * @returns {Promise<Object>} Response with success status
+ */
+export async function resetPassword(token, password) {
+  if (!token || !password) {
+    throw new Error('Token and password are required');
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/reset-password`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ token, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to reset password');
+    }
+
+    console.log('[Auth] Password reset successful');
+    return data;
+    
+  } catch (error) {
+    console.error('[Auth] Password reset error:', error.message);
+    throw error;
+  }
 }
 
 /**

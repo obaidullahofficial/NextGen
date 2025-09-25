@@ -822,12 +822,6 @@ function UserRow({ user, index, selectedUsers, onSelectUser, onViewUser, onEditU
         <StatusBadge status={"Active"} />
       </td>
 
-      {/* Last Active */}
-      <td className="px-6 py-4">
-        <div className="text-sm text-gray-600">Just now</div>
-        <div className="text-xs text-gray-400">Online</div>
-      </td>
-
       {/* Actions */}
       <td className="px-6 py-4">
         <div className="relative">
@@ -1197,9 +1191,6 @@ export default function UserManagementDashboard() {
                     Status
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Last Active
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -1207,7 +1198,7 @@ export default function UserManagementDashboard() {
               <tbody className="bg-white divide-y divide-gray-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12">
+                    <td colSpan={5} className="text-center py-12">
                       <div className="flex items-center justify-center space-x-2">
                         <RefreshCw size={20} className="animate-spin text-blue-500" />
                         <span className="text-gray-500">Loading users...</span>
@@ -1216,7 +1207,7 @@ export default function UserManagementDashboard() {
                   </tr>
                 ) : displayedUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12">
+                    <td colSpan={5} className="text-center py-12">
                       <div className="flex flex-col items-center space-y-2">
                         <Users size={48} className="text-gray-300" />
                         <span className="text-gray-500">No users found.</span>

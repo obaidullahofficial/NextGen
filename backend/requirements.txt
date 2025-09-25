@@ -3,6 +3,8 @@ pip install flask flask-cors pymongo
 pip install flask-jwt-extended
 python -m pip install "pymongo[srv]"
 npm install jspdf html2canvas
+pip install google-auth google-auth-oauthlib google-auth-httplib2
+pip install python-dotenv
 
 python app.py
 

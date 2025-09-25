@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import GoogleOAuthProvider from './components/auth/GoogleOAuthProvider';
 
 // Subadmin imports 
 import SubadminDashboard from './pages/subadmin/SubAdminDashboard';
@@ -46,78 +47,80 @@ const AdminLayout = ({ children }) => (
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* User Profile */}
-        <Route path="/userprofile" element={<UserProfileLayout />} />
+    <GoogleOAuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* User Profile */}
+          <Route path="/userprofile" element={<UserProfileLayout />} />
 
-        {/* Auth */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/registration-form" element={<RegistrationForm />} />
+          {/* Auth */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/registration-form" element={<RegistrationForm />} />
 
-        {/* Society Profile Standalone */}
-        <Route path="/society-profile-setup" element={<SocietyProfileSetup />} />
-        <Route path="/society-profile-edit" element={<SocietyProfileEdit />} />
+          {/* Society Profile Standalone */}
+          <Route path="/society-profile-setup" element={<SocietyProfileSetup />} />
+          <Route path="/society-profile-edit" element={<SocietyProfileEdit />} />
 
-        {/* User Routes */}
-        <Route path="/" element={<UserLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="societies/:societyId/plots/:plotId" element={<PlotDetail />} />
-          <Route path="society" element={<SocietiesPage />} />
-          <Route path="societies/:societyId/plots" element={<SocietyPlots />} />
-          <Route path="generate-floor-plan/:societyId/:plotId" element={<GenerateFloorPlan />} />
-        </Route>
+          {/* User Routes */}
+          <Route path="/" element={<UserLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="societies/:societyId/plots/:plotId" element={<PlotDetail />} />
+            <Route path="society" element={<SocietiesPage />} />
+            <Route path="societies/:societyId/plots" element={<SocietyPlots />} />
+            <Route path="generate-floor-plan/:societyId/:plotId" element={<GenerateFloorPlan />} />
+          </Route>
 
-        {/* Subadmin Routes - Protected */}
-        <Route path="/subadmin" element={
-          <ProtectedSubAdminRoute>
-            <SubadminDashboard />
-          </ProtectedSubAdminRoute>
-        }>
-          <Route index element={<PlotManager />} />
-          <Route path="plotManagement" element={<PlotManager />} />
-          <Route path="floorPlan" element={<FloorPlanGenerator />} /> 
-          <Route path="approvals" element={<Approvals />} />
-          <Route path="compliance" element={<ComplianceManagement />} />
-          <Route path="society-profile" element={<SocietyProfile />} />
-        </Route>
+          {/* Subadmin Routes - Protected */}
+          <Route path="/subadmin" element={
+            <ProtectedSubAdminRoute>
+              <SubadminDashboard />
+            </ProtectedSubAdminRoute>
+          }>
+            <Route index element={<PlotManager />} />
+            <Route path="plotManagement" element={<PlotManager />} />
+            <Route path="floorPlan" element={<FloorPlanGenerator />} /> 
+            <Route path="approvals" element={<Approvals />} />
+            <Route path="compliance" element={<ComplianceManagement />} />
+            <Route path="society-profile" element={<SocietyProfile />} />
+          </Route>
 
-        {/* Admin Routes - Protected */}
-        <Route path="/dashboard" element={
-          <ProtectedAdminRoute>
-            <AdminLayout><Dashboard /></AdminLayout>
-          </ProtectedAdminRoute>
-        } />
-        <Route path="/UserManagementDashboard" element={
-          <ProtectedAdminRoute>
-            <AdminLayout><UserManagementDashboard /></AdminLayout>
-          </ProtectedAdminRoute>
-        } />
-        <Route path="/society-management" element={
-          <ProtectedAdminRoute>
-            <AdminLayout><SocietyManagement /></AdminLayout>
-          </ProtectedAdminRoute>
-        } />
-        <Route path="/review-management" element={
-          <ProtectedAdminRoute>
-            <AdminLayout><ReviewManagement /></AdminLayout>
-          </ProtectedAdminRoute>
-        } />
-        <Route path="/advertisement-management" element={
-          <ProtectedAdminRoute>
-            <AdminLayout><AdvertisementManagement /></AdminLayout>
-          </ProtectedAdminRoute>
-        } />
-        <Route path="/reports" element={
-          <ProtectedAdminRoute>
-            <AdminLayout><ReportManagement /></AdminLayout>
-          </ProtectedAdminRoute>
-        } />
+          {/* Admin Routes - Protected */}
+          <Route path="/dashboard" element={
+            <ProtectedAdminRoute>
+              <AdminLayout><Dashboard /></AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/UserManagementDashboard" element={
+            <ProtectedAdminRoute>
+              <AdminLayout><UserManagementDashboard /></AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/society-management" element={
+            <ProtectedAdminRoute>
+              <AdminLayout><SocietyManagement /></AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/review-management" element={
+            <ProtectedAdminRoute>
+              <AdminLayout><ReviewManagement /></AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/advertisement-management" element={
+            <ProtectedAdminRoute>
+              <AdminLayout><AdvertisementManagement /></AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/reports" element={
+            <ProtectedAdminRoute>
+              <AdminLayout><ReportManagement /></AdminLayout>
+            </ProtectedAdminRoute>
+          } />
 
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }
 

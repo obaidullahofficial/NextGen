@@ -7,6 +7,9 @@ from models.society_profile import society_profile_collection
 from utils.db import get_db
 from datetime import datetime, timedelta
 from bson import ObjectId
+from google.oauth2 import id_token
+from google.auth.transport import requests
+import os
 
 user_bp = Blueprint('user', __name__)
 
@@ -400,6 +403,305 @@ def login():
     return jsonify(response_data), 200
     
     return jsonify(response_data), 200
+
+@user_bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    """Handle forgot password request"""
+    try:
+        data = request.json
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({"error": "Email is required"}), 400
+        
+        print(f"[FORGOT PASSWORD] Request for email: {email}")
+        
+        db = get_db()
+        users = user_collection(db)
+        
+        # Check if user exists
+        user = users.find_one({'email': email})
+        
+        if not user:
+            # Don't reveal whether email exists or not for security
+            return jsonify({
+                "success": True,
+                "message": "If an account with this email exists, a password reset link has been sent."
+            }), 200
+        
+        # Generate a temporary reset token (in production, use a more secure method)
+        import secrets
+        import hashlib
+        reset_token = secrets.token_urlsafe(32)
+        reset_token_hash = hashlib.sha256(reset_token.encode()).hexdigest()
+        
+        # Store reset token in database with expiration
+        from datetime import datetime, timedelta
+        expiration = datetime.now() + timedelta(hours=1)  # Token expires in 1 hour
+        
+        users.update_one(
+            {'email': email},
+            {
+                '$set': {
+                    'reset_token': reset_token_hash,
+                    'reset_token_expires': expiration.isoformat()
+                }
+            }
+        )
+        
+        print(f"[FORGOT PASSWORD] Reset token generated for: {email}")
+        
+        # In a real application, you would send an email here
+        # For now, we'll return the token (REMOVE THIS IN PRODUCTION)
+        return jsonify({
+            "success": True,
+            "message": "If an account with this email exists, a password reset link has been sent.",
+            "debug_token": reset_token  # REMOVE THIS IN PRODUCTION
+        }), 200
+        
+    except Exception as e:
+        print(f"[FORGOT PASSWORD] Error: {str(e)}")
+        return jsonify({"error": "Failed to process password reset request"}), 500
+
+@user_bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    """Handle password reset with token"""
+    try:
+        data = request.json
+        token = data.get('token')
+        new_password = data.get('password')
+        
+        if not token or not new_password:
+            return jsonify({"error": "Token and new password are required"}), 400
+        
+        if len(new_password) < 6:
+            return jsonify({"error": "Password must be at least 6 characters long"}), 400
+        
+        print(f"[RESET PASSWORD] Attempting password reset with token")
+        
+        # Hash the provided token
+        import hashlib
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        
+        db = get_db()
+        users = user_collection(db)
+        
+        # Find user with valid reset token
+        from datetime import datetime
+        current_time = datetime.now()
+        
+        user = users.find_one({
+            'reset_token': token_hash,
+            'reset_token_expires': {'$gt': current_time.isoformat()}
+        })
+        
+        if not user:
+            return jsonify({"error": "Invalid or expired reset token"}), 400
+        
+        # Update password and remove reset token
+        from werkzeug.security import generate_password_hash
+        password_hash = generate_password_hash(new_password)
+        
+        users.update_one(
+            {'_id': user['_id']},
+            {
+                '$set': {'password_hash': password_hash},
+                '$unset': {'reset_token': '', 'reset_token_expires': ''}
+            }
+        )
+        
+        print(f"[RESET PASSWORD] Password reset successful for: {user['email']}")
+        
+        return jsonify({
+            "success": True,
+            "message": "Password has been reset successfully. You can now login with your new password."
+        }), 200
+        
+    except Exception as e:
+        print(f"[RESET PASSWORD] Error: {str(e)}")
+        return jsonify({"error": "Failed to reset password"}), 500
+
+@user_bp.route('/test-google-config', methods=['GET'])
+def test_google_config():
+    """Test Google OAuth configuration"""
+    try:
+        GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', 'not-set')
+        return jsonify({
+            "success": True,
+            "google_client_id_configured": GOOGLE_CLIENT_ID != 'not-set' and GOOGLE_CLIENT_ID != 'your-google-client-id-here',
+            "client_id_preview": GOOGLE_CLIENT_ID[:20] + "..." if len(GOOGLE_CLIENT_ID) > 20 else GOOGLE_CLIENT_ID,
+            "message": "Google configuration test"
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@user_bp.route('/google-login', methods=['POST'])
+def google_login():
+    """Handle Google OAuth login and signup"""
+    try:
+        data = request.json
+        google_token = data.get('credential')
+        intent = data.get('intent', 'login')  # 'login' or 'signup'
+        
+        print(f"[GOOGLE {intent.upper()}] Received request with data: {data}")
+        
+        if not google_token:
+            print(f"[GOOGLE {intent.upper()}] No Google token provided")
+            return jsonify({"error": "Google token is required"}), 400
+        
+        # Google Client ID
+        GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', 'your-google-client-id-here')
+        print(f"[GOOGLE {intent.upper()}] Using Google Client ID: {GOOGLE_CLIENT_ID[:20]}...")
+        
+        try:
+            # Verify the Google token
+            print(f"[GOOGLE {intent.upper()}] Verifying Google token...")
+            idinfo = id_token.verify_oauth2_token(
+                google_token, 
+                requests.Request(), 
+                GOOGLE_CLIENT_ID
+            )
+            
+            print(f"[GOOGLE {intent.upper()}] Token verified. User info: {idinfo}")
+            
+            # Extract user information from Google
+            google_email = idinfo.get('email')
+            google_name = idinfo.get('name')
+            google_picture = idinfo.get('picture')
+            
+            if not google_email:
+                print(f"[GOOGLE {intent.upper()}] No email in Google token")
+                return jsonify({"error": "Unable to get email from Google"}), 400
+            
+            print(f"[GOOGLE {intent.upper()}] Processing for email: {google_email}")
+            
+            db = get_db()
+            users = user_collection(db)
+            
+            # Check if user already exists
+            existing_user = users.find_one({'email': google_email})
+            
+            if existing_user:
+                # User exists - log them in
+                print(f"[GOOGLE {intent.upper()}] Existing user found: {google_email}")
+                
+                # Check society status if applicable
+                if existing_user['role'] == 'society':
+                    reg_forms = registration_form_collection(db)
+                    society = reg_forms.find_one({'user_email': google_email}, {'status': 1})
+                    
+                    if society:
+                        society_status = society.get('status', 'pending')
+                        
+                        if society_status == 'pending':
+                            return jsonify({
+                                "error": "registration_pending",
+                                "message": "Your society registration is pending admin approval."
+                            }), 403
+                        elif society_status == 'rejected':
+                            return jsonify({
+                                "error": "registration_rejected", 
+                                "message": "Your registration has been rejected. Contact admin."
+                            }), 403
+                        elif society_status != 'approved':
+                            return jsonify({
+                                "error": "registration_invalid",
+                                "message": "Invalid registration status. Contact admin."
+                            }), 403
+                
+                # Create access token
+                access_token = create_access_token(
+                    identity=google_email,
+                    additional_claims={'role': existing_user['role']}
+                )
+                
+                response_data = {
+                    "success": True,
+                    "access_token": access_token,
+                    "user": {
+                        "email": google_email,
+                        "role": existing_user['role'],
+                        "username": existing_user.get('username', google_name),
+                        "is_admin": existing_user.get('role') == 'admin'
+                    },
+                    "auth_method": "google",
+                    "new_user": False,
+                    "message": f"Welcome back! Signed in successfully with Google."
+                }
+                
+                # Add profile info for society users
+                if existing_user['role'] == 'society':
+                    try:
+                        profiles = society_profile_collection(db)
+                        profile_exists = profiles.find_one({'user_email': google_email}, {'_id': 1}) is not None
+                        
+                        response_data.update({
+                            "profile_exists": profile_exists,
+                            "profile_complete": profile_exists
+                        })
+                    except Exception as e:
+                        print(f"Profile check error: {str(e)}")
+                        response_data.update({
+                            "profile_exists": False,
+                            "profile_complete": False
+                        })
+                
+                print(f"[GOOGLE {intent.upper()}] Login successful for existing user: {google_email}")
+                return jsonify(response_data), 200
+                
+            else:
+                # New user - create account with Google info
+                print(f"[GOOGLE {intent.upper()}] Creating new user: {google_email}")
+                
+                # Use Google name or email as username
+                username = google_name if google_name else google_email.split('@')[0]
+                
+                # Create user with Google authentication (no password needed)
+                new_user_data = {
+                    'username': username,
+                    'email': google_email,
+                    'role': 'user',  # Default role for Google sign-ups
+                    'auth_method': 'google',
+                    'google_picture': google_picture,
+                    'created_at': datetime.now().isoformat(),
+                    'verified': True  # Google accounts are pre-verified
+                }
+                
+                # Insert user into database
+                result = users.insert_one(new_user_data)
+                user_id = str(result.inserted_id)
+                
+                # Create access token
+                access_token = create_access_token(
+                    identity=google_email,
+                    additional_claims={'role': 'user'}
+                )
+                
+                response_data = {
+                    "success": True,
+                    "access_token": access_token,
+                    "user": {
+                        "email": google_email,
+                        "role": 'user',
+                        "username": username,
+                        "is_admin": False
+                    },
+                    "auth_method": "google",
+                    "new_user": True,
+                    "message": "Account created successfully with Google! Welcome to NextGenArchitect."
+                }
+                
+                print(f"[GOOGLE {intent.upper()}] New user created successfully: {google_email}")
+                return jsonify(response_data), 201
+                
+        except ValueError as e:
+            # Invalid token
+            print(f"[GOOGLE {intent.upper()}] Invalid token error: {str(e)}")
+            return jsonify({"error": "Invalid Google token", "details": str(e)}), 401
+            
+    except Exception as e:
+        print(f"[GOOGLE {intent.upper()}] General error: {str(e)}")
+        return jsonify({"error": "Google authentication failed", "details": str(e)}), 500
 
 @user_bp.route('/my-society', methods=['GET'])
 @jwt_required()
