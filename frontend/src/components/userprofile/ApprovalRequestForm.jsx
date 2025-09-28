@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiUpload, FiFileText, FiSend } from 'react-icons/fi';
+import { userProfileAPI, createApprovalRequestFormData } from '../../services/userProfileAPI';
 
 // MOCK DATA: In a real application, this list of plots would come from an API call.
 const MOCK_AVAILABLE_PLOTS = [
@@ -15,6 +16,8 @@ const ApprovalRequestForm = () => {
   const [designType, setDesignType] = useState('');
   const [floorPlanFile, setFloorPlanFile] = useState(null);
   const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
   
   // State for the derived plot details, to display them in the UI
   const [selectedPlotDetails, setSelectedPlotDetails] = useState(MOCK_AVAILABLE_PLOTS[0]);
@@ -33,35 +36,47 @@ const ApprovalRequestForm = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage({ type: '', text: '' });
 
     // --- Data Validation ---
     if (!selectedPlotId || !designType || !floorPlanFile) {
-      alert('Please fill out all required fields and upload a floor plan.');
+      setMessage({ type: 'error', text: 'Please fill out all required fields and upload a floor plan.' });
+      setLoading(false);
       return;
     }
 
-    // --- Prepare the data for submission ---
-    const requestData = {
-      plotId: selectedPlotId,
-      plotDetails: selectedPlotDetails.details,
-      area: selectedPlotDetails.area,
-      designType,
-      requestDate: new Date().toISOString().split('T')[0], // Automatically sets today's date in YYYY-MM-DD format
-      floorPlanFile: floorPlanFile,
-      notes: notes,
-      status: 'Pending', // This would be set on the backend
-    };
+    try {
+      // --- Prepare the data for submission ---
+      const requestData = {
+        plotId: selectedPlotId,
+        plotDetails: selectedPlotDetails.details,
+        area: selectedPlotDetails.area,
+        designType,
+        notes,
+      };
 
-    // --- Simulate API Submission ---
-    console.log('Submitting Approval Request:', requestData);
-    alert(`Request for Plot ID ${requestData.plotId} has been submitted successfully!`);
-
-    // Optionally, reset the form after submission
-    // setDesignType('');
-    // setFloorPlanFile(null);
-    // setNotes('');
+      const formData = createApprovalRequestFormData(requestData, floorPlanFile);
+      
+      const response = await userProfileAPI.createApprovalRequest(formData);
+      
+      if (response.success) {
+        setMessage({ type: 'success', text: response.message });
+        // Reset form after successful submission
+        setDesignType('');
+        setFloorPlanFile(null);
+        setNotes('');
+        // Reset file input
+        const fileInput = document.getElementById('floorPlanFile');
+        if (fileInput) fileInput.value = '';
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message || 'Failed to submit approval request' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,6 +84,17 @@ const ApprovalRequestForm = () => {
       <h2 className="text-3xl font-bold text-gray-800 mb-8 border-b pb-4">
         Floor Plan Approval Request
       </h2>
+
+      {/* Success/Error Message */}
+      {message.text && (
+        <div className={`mb-6 p-4 rounded-lg ${
+          message.type === 'success' 
+            ? 'bg-green-100 border border-green-400 text-green-700' 
+            : 'bg-red-100 border border-red-400 text-red-700'
+        }`}>
+          {message.text}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* --- Plot Information Section --- */}
@@ -165,9 +191,14 @@ const ApprovalRequestForm = () => {
         <div className="flex justify-end pt-4 border-t">
           <button
             type="submit"
-            className="bg-[#ED7600] text-white font-bold py-3 px-8 rounded-lg flex items-center gap-2 hover:bg-[#d46000] transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            disabled={loading}
+            className={`font-bold py-3 px-8 rounded-lg flex items-center gap-2 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
+              loading 
+                ? 'bg-gray-400 cursor-not-allowed text-white' 
+                : 'bg-[#ED7600] text-white hover:bg-[#d46000]'
+            }`}
           >
-            Submit Request
+            {loading ? 'Submitting...' : 'Submit Request'}
             <FiSend />
           </button>
         </div>
