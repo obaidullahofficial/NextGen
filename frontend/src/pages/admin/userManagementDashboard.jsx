@@ -1064,36 +1064,36 @@ export default function UserManagementDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-4 max-w-7xl mx-auto">
         {/* 🔹 Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-              <p className="text-gray-600 mt-1">Manage and monitor all system users</p>
+              <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+              <p className="text-gray-600 mt-1 text-sm">Manage and monitor all system users</p>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
               <button
                 onClick={fetchUsers}
                 disabled={refreshing}
-                className="inline-flex items-center space-x-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center space-x-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm"
               >
-                <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+                <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
                 <span>Refresh</span>
               </button>
               <button 
                 onClick={() => setIsAddUserModalOpen(true)}
-                className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                className="inline-flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm"
               >
-                <UserPlus size={16} />
+                <UserPlus size={14} />
                 <span>Add User</span>
               </button>
               {selectedUsers.length > 0 && (
                 <button 
                   onClick={handleBulkDelete}
-                  className="inline-flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+                  className="inline-flex items-center space-x-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm text-sm"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={14} />
                   <span>Delete ({selectedUsers.length})</span>
                 </button>
               )}
@@ -1101,7 +1101,7 @@ export default function UserManagementDashboard() {
           </div>
 
           {/* 🔹 Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <StatsCard
               icon={Users}
               title="Total Users"

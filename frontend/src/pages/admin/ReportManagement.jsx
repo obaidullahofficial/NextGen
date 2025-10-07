@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import {
@@ -48,353 +48,96 @@ import {
   Globe,
   DollarSign
 } from "lucide-react";
-import { societyProfileAPI } from "../../services/societyProfileAPI";
-import reviewAPI from "../../services/reviewAPI";
-import advertisementAPI from "../../services/advertisementAPI";
-import userAPI from "../../services/userAPI";
+import { useAdminData } from "../../context/AdminDataContext";
 
 const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#F97316", "#06B6D4", "#84CC16"];
 
 const ReportManagement = () => {
   const reportRef = useRef(); // Ref for PDF export
   const [activeTab, setActiveTab] = useState("overview");
-  const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("7days");
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState("cards");
 
-  // State for all data
-  const [overviewStats, setOverviewStats] = useState({
-    totalUsers: 0,
-    totalSocieties: 0,
-    totalReviews: 0,
-    totalAdvertisements: 0,
-    totalViews: 0,
-    totalContacts: 0,
-    activeUsers: 0,
-    pendingSocieties: 0,
-    approvedSocieties: 0,
-    pendingAds: 0,
-    approvedAds: 0,
-    avgRating: 0
-  });
+  // Get data from global context
+  const {
+    users,
+    societies,
+    reviews,
+    advertisements,
+    stats,
+    loading,
+    errors,
+    refreshData,
+    lastUpdated,
+    hasData
+  } = useAdminData();
 
-  const [societies, setSocieties] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [advertisements, setAdvertisements] = useState([]);
-  const [userStats, setUserStats] = useState({});
-  const [societyStats, setSocietyStats] = useState({});
-  const [reviewStats, setReviewStats] = useState({});
-  const [adStats, setAdStats] = useState({});
-
-  // Fetch all data with improved error handling and data processing
-  const fetchAllData = async () => {
-    try {
-      setLoading(true);
-      console.log('Starting data fetch for ReportManagement...');
-
-      // Initialize default values
-      let usersData = [];
-      let societiesData = [];
-      let reviewsData = [];
-      let advertisementsData = [];
-      let userStatsData = {};
-      let societyStatsData = {};
-      let adStatsData = {};
-
-      // Fetch users data with enhanced error handling
-      try {
-        const [usersResult, userStatsResult] = await Promise.all([
-          userAPI.getAllUsers(),
-          userAPI.getUserStats()
-        ]);
-        
-        if (usersResult.success) {
-          usersData = Array.isArray(usersResult.data) ? usersResult.data : [];
-          console.log(`Fetched ${usersData.length} users`);
-        }
-        
-        if (userStatsResult.success) {
-          userStatsData = userStatsResult.data || {};
-        }
-        
-        setUsers(usersData);
-        setUserStats(userStatsData);
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        setUsers([]);
-        setUserStats({});
-      }
-
-      // Fetch societies data with enhanced processing
-      try {
-        const [societiesResult, societyStatsResult] = await Promise.all([
-          societyProfileAPI.getAllSocieties(),
-          societyProfileAPI.getSocietyStats().catch(() => ({ success: false }))
-        ]);
-        
-        if (societiesResult.success) {
-          societiesData = Array.isArray(societiesResult.data) ? societiesResult.data : [];
-          console.log(`Fetched ${societiesData.length} societies`);
-          console.log('Sample society data:', societiesData.slice(0, 2)); // Log first 2 items to see structure
-          
-          // Debug: Check what status fields and values exist
-          if (societiesData.length > 0) {
-            const statusFields = new Set();
-            const statusValues = new Set();
-            societiesData.forEach(s => {
-              Object.keys(s).forEach(key => {
-                if (key.toLowerCase().includes('status') || key.toLowerCase().includes('approval')) {
-                  statusFields.add(key);
-                  statusValues.add(`${key}: ${s[key]}`);
-                }
-              });
-            });
-            console.log('Available status fields:', Array.from(statusFields));
-            console.log('Status values found:', Array.from(statusValues).slice(0, 10));
-          }
-          
-          // Calculate society statistics with comprehensive status field checks based on actual schema
-          societyStatsData = {
-            total: societiesData.length,
-            // Check for completion status using is_complete field (matches SocietyVerificationDashboard)
-            complete: societiesData.filter(s => s.is_complete === true).length,
-            incomplete: societiesData.filter(s => s.is_complete === false || s.is_complete === null || s.is_complete === undefined).length,
-            
-            // For approval status, check multiple possible fields
-            approved: societiesData.filter(s => {
-              const approvalStatus = (s.approval_status || s.status || s.approvalStatus || '').toString().toLowerCase();
-              return approvalStatus === 'approved' || approvalStatus === 'active' || approvalStatus === 'accept' || approvalStatus === 'accepted';
-            }).length,
-            pending: societiesData.filter(s => {
-              const approvalStatus = (s.approval_status || s.status || s.approvalStatus || '').toString().toLowerCase();
-              return approvalStatus === 'pending' || approvalStatus === 'review' || approvalStatus === 'waiting' || approvalStatus === 'under_review';
-            }).length,
-            suspended: societiesData.filter(s => {
-              const approvalStatus = (s.approval_status || s.status || s.approvalStatus || '').toString().toLowerCase();
-              return approvalStatus === 'suspended' || approvalStatus === 'blocked' || approvalStatus === 'inactive';
-            }).length,
-            rejected: societiesData.filter(s => {
-              const approvalStatus = (s.approval_status || s.status || s.approvalStatus || '').toString().toLowerCase();
-              return approvalStatus === 'rejected' || approvalStatus === 'declined' || approvalStatus === 'denied' || approvalStatus === 'disapproved';
-            }).length,
-            
-            // Price range statistics
-            budget: societiesData.filter(s => s.price_range === 'Budget').length,
-            midRange: societiesData.filter(s => s.price_range === 'Mid-Range').length,
-            premium: societiesData.filter(s => s.price_range === 'Premium').length,
-            luxury: societiesData.filter(s => s.price_range === 'Luxury').length,
-            
-            // Additional metrics
-            withLocation: societiesData.filter(s => s.location && s.location.trim() !== '').length,
-            withLogo: societiesData.filter(s => s.society_logo && s.society_logo.trim() !== '').length,
-            withDescription: societiesData.filter(s => s.description && s.description.trim() !== '').length
-          };
-          
-          console.log('Calculated society stats:', societyStatsData);
-        }
-        
-        setSocieties(societiesData);
-        setSocietyStats(societyStatsData);
-      } catch (error) {
-        console.error('Error fetching society data:', error);
-        setSocieties([]);
-        setSocietyStats({});
-      }
-
-      // Fetch reviews data with enhanced processing
-      try {
-        const reviewsResult = await reviewAPI.getAllReviews();
-        
-        if (reviewsResult.success) {
-          reviewsData = Array.isArray(reviewsResult.data) ? reviewsResult.data : [];
-          console.log(`Fetched ${reviewsData.length} reviews`);
-          
-          // Calculate review statistics with enhanced data processing
-          const reviewStatsData = {
-            total: reviewsData.length,
-            published: reviewsData.filter(r => 
-              r.status === 'Published' || 
-              r.status === 'published' || 
-              r.status === 'approved'
-            ).length,
-            pending: reviewsData.filter(r => 
-              r.status === 'Pending' || 
-              r.status === 'pending'
-            ).length,
-            reported: reviewsData.filter(r => 
-              r.status === 'Reported' || 
-              r.status === 'reported' || 
-              r.status === 'flagged'
-            ).length,
-            avgRating: reviewsData.length > 0 ? 
-              reviewsData.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / reviewsData.length : 0,
-            positive: reviewsData.filter(r => (Number(r.rating) || 0) >= 4).length,
-            neutral: reviewsData.filter(r => (Number(r.rating) || 0) === 3).length,
-            negative: reviewsData.filter(r => (Number(r.rating) || 0) <= 2).length
-          };
-          setReviewStats(reviewStatsData);
-        }
-        
-        setReviews(reviewsData);
-      } catch (error) {
-        console.error('Error fetching review data:', error);
-        setReviews([]);
-        setReviewStats({});
-      }
-
-      // Fetch advertisements data with enhanced processing
-      try {
-        const [adsResult, adStatsResult] = await Promise.all([
-          advertisementAPI.getAllAdvertisements(),
-          advertisementAPI.getAdvertisementStats().catch(() => ({ success: false }))
-        ]);
-        
-        if (adsResult.success) {
-          advertisementsData = Array.isArray(adsResult.data) ? adsResult.data : [];
-          console.log(`Fetched ${advertisementsData.length} advertisements`);
-          
-          // Calculate advertisement statistics
-          adStatsData = {
-            total: advertisementsData.length,
-            active: advertisementsData.filter(ad => 
-              ad.status === 'approved' || 
-              ad.status === 'active'
-            ).length,
-            pending: advertisementsData.filter(ad => 
-              ad.status === 'pending'
-            ).length,
-            rejected: advertisementsData.filter(ad => 
-              ad.status === 'rejected' || 
-              ad.status === 'declined'
-            ).length,
-            totalViews: advertisementsData.reduce((sum, ad) => sum + (Number(ad.view_count) || 0), 0),
-            totalContacts: advertisementsData.reduce((sum, ad) => sum + (Number(ad.contact_count) || 0), 0),
-            avgViews: advertisementsData.length > 0 ? 
-              advertisementsData.reduce((sum, ad) => sum + (Number(ad.view_count) || 0), 0) / advertisementsData.length : 0
-          };
-          
-          // Override with API stats if available
-          if (adStatsResult.success && adStatsResult.data) {
-            adStatsData = {
-              ...adStatsData,
-              total: adStatsResult.data.total_advertisements || adStatsData.total,
-              active: adStatsResult.data.active_advertisements || adStatsData.active,
-              pending: adStatsResult.data.pending_advertisements || adStatsData.pending,
-              totalViews: adStatsResult.data.total_views || adStatsData.totalViews,
-              totalContacts: adStatsResult.data.total_contacts || adStatsData.totalContacts,
-              avgViews: adStatsResult.data.average_views_per_ad || adStatsData.avgViews
-            };
-          }
-        }
-        
-        setAdvertisements(advertisementsData);
-        setAdStats(adStatsData);
-      } catch (error) {
-        console.error('Error fetching advertisement data:', error);
-        setAdvertisements([]);
-        setAdStats({});
-      }
-
-      // Calculate comprehensive overview stats with all fetched data
-      const comprehensiveStats = {
-        totalUsers: userStatsData.total_users || usersData.length,
-        activeUsers: userStatsData.active_users || Math.round(usersData.length * 0.7),
-        newUsersThisMonth: userStatsData.new_users_this_month || usersData.filter(u => {
-          try {
-            const userDate = new Date(u.createdAt || u.dateCreated || u.created_at);
-            const monthAgo = new Date();
-            monthAgo.setMonth(monthAgo.getMonth() - 1);
-            return userDate >= monthAgo;
-          } catch (error) {
-            return false;
-          }
-        }).length,
-        
-        totalSocieties: societiesData.length,
-        // Use completion status (is_complete) as primary status indicator
-        completeSocieties: societyStatsData.complete || 0,
-        incompleteSocieties: societyStatsData.incomplete || 0,
-        
-        // For display purposes, map completion to approval status
-        approvedSocieties: societyStatsData.complete || 0, // Complete = Approved
-        pendingSocieties: societyStatsData.incomplete || 0, // Incomplete = Pending  
-        rejectedSocieties: societyStatsData.rejected || 0, // Actual rejected if available
-        
-        // Price range distribution
-        budgetSocieties: societyStatsData.budget || 0,
-        midRangeSocieties: societyStatsData.midRange || 0,
-        premiumSocieties: societyStatsData.premium || 0,
-        luxurySocieties: societyStatsData.luxury || 0,
-        
-        totalReviews: reviewsData.length,
-        avgRating: reviewsData.length > 0 ? 
-          reviewsData.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / reviewsData.length : 0,
-        positiveReviews: reviewsData.filter(r => (Number(r.rating) || 0) >= 4).length,
-        negativeReviews: reviewsData.filter(r => (Number(r.rating) || 0) <= 2).length,
-        
-        totalAdvertisements: adStatsData.total || advertisementsData.length,
-        approvedAds: adStatsData.active || 0,
-        pendingAds: adStatsData.pending || 0,
-        rejectedAds: adStatsData.rejected || 0,
-        totalViews: adStatsData.totalViews || 0,
-        totalContacts: adStatsData.totalContacts || 0,
-        avgViewsPerAd: adStatsData.avgViews || 0,
-        
-        // Additional calculated metrics
-        userGrowthRate: userStatsData.user_growth_rate || 0,
-        reviewEngagementRate: usersData.length > 0 ? (reviewsData.length / usersData.length) * 100 : 0,
-        listingApprovalRate: advertisementsData.length > 0 ? 
-          ((adStatsData.active || 0) / advertisementsData.length) * 100 : 0,
-        societyApprovalRate: societiesData.length > 0 ? 
-          ((societyStatsData.complete || 0) / societiesData.length) * 100 : 0, // Use completion rate
-        societyCompletionRate: societiesData.length > 0 ? 
-          ((societyStatsData.complete || 0) / societiesData.length) * 100 : 0
-      };
-      
-      setOverviewStats(comprehensiveStats);
-      console.log('Data fetch completed successfully:', comprehensiveStats);
-
-    } catch (error) {
-      console.error('Error in fetchAllData:', error);
-      // Set fallback data to prevent UI crashes
-      setOverviewStats({
-        totalUsers: 0, activeUsers: 0, newUsersThisMonth: 0,
-        totalSocieties: 0, approvedSocieties: 0, pendingSocieties: 0, rejectedSocieties: 0,
-        totalReviews: 0, avgRating: 0, positiveReviews: 0, negativeReviews: 0,
-        totalAdvertisements: 0, approvedAds: 0, pendingAds: 0, rejectedAds: 0,
-        totalViews: 0, totalContacts: 0, avgViewsPerAd: 0,
-        userGrowthRate: 0, reviewEngagementRate: 0, listingApprovalRate: 0, societyApprovalRate: 0
-      });
-    } finally {
-      setLoading(false);
-    }
+  // Use stats directly from context (computed automatically)
+  const overviewStats = {
+    totalUsers: stats.users.total || 0,
+    activeUsers: stats.users.active || 0,
+    newUsersThisMonth: stats.users.newThisMonth || 0,
+    
+    totalSocieties: stats.societies.total || 0,
+    approvedSocieties: stats.societies.approved || 0,
+    pendingSocieties: stats.societies.pending || 0,
+    rejectedSocieties: stats.societies.rejected || 0,
+    suspendedSocieties: stats.societies.suspended || 0,
+    completeSocieties: stats.societies.complete || 0,
+    incompleteSocieties: stats.societies.incomplete || 0,
+    
+    totalReviews: stats.reviews.total || 0,
+    avgRating: stats.reviews.averageRating || 0,
+    positiveReviews: stats.reviews.positive || 0,
+    negativeReviews: stats.reviews.negative || 0,
+    
+    totalAdvertisements: stats.advertisements.total || 0,
+    approvedAds: stats.advertisements.active || 0,
+    pendingAds: stats.advertisements.pending || 0,
+    rejectedAds: stats.advertisements.rejected || 0,
+    totalViews: stats.advertisements.totalViews || 0,
+    totalContacts: stats.advertisements.totalContacts || 0,
+    avgViewsPerAd: stats.advertisements.totalViews > 0 ? 
+      (stats.advertisements.totalViews / stats.advertisements.total) : 0,
+    
+    // Additional calculated metrics
+    userGrowthRate: stats.users.growthRate || 0,
+    reviewEngagementRate: stats.users.total > 0 ? 
+      (stats.reviews.total / stats.users.total) * 100 : 0,
+    listingApprovalRate: stats.advertisements.total > 0 ? 
+      (stats.advertisements.active / stats.advertisements.total) * 100 : 0,
+    societyApprovalRate: stats.societies.total > 0 ? 
+      (stats.societies.approved / stats.societies.total) * 100 : 0,
+    societyCompletionRate: stats.societies.total > 0 ? 
+      (stats.societies.complete / stats.societies.total) * 100 : 0,
+    societyRegistrationRate: stats.societies.total > 0 ? 
+      (stats.societies.approved / stats.societies.total) * 100 : 0
   };
 
-  const refreshData = async () => {
+  // Manual refresh function using global context
+  const handleRefreshData = async () => {
     setRefreshing(true);
-    console.log('Manually refreshing all data...');
+    console.log('[ReportManagement] Manual refresh requested');
     
     try {
-      await fetchAllData();
-      console.log('Data refresh completed successfully');
+      await refreshData('all');
+      console.log('[ReportManagement] Data refresh completed successfully');
       
       // Show a success notification (you can add a toast notification here if you have one)
       setTimeout(() => {
-        console.log('Fresh data loaded from database');
+        console.log('[ReportManagement] Fresh data loaded from database');
       }, 500);
       
     } catch (error) {
-      console.error('Error during data refresh:', error);
+      console.error('[ReportManagement] Error during data refresh:', error);
     } finally {
       setRefreshing(false);
     }
   };
 
-  useEffect(() => {
-    fetchAllData();
-  }, []);
+  // No longer need useEffect for data loading since we use global context
+  // Data is automatically loaded when AdminDataProvider mounts
 
   // Alternative simpler PDF export method
   const exportReportSimple = async () => {
@@ -453,7 +196,7 @@ const ReportManagement = () => {
       
       const stats = [
         `Total Users: ${safeUsers.length}`,
-        `Total Societies: ${safeSocieties.length}`,
+        `Total Society Registrations: ${safeSocieties.length}`,
         `Total Reviews: ${safeReviews.length}`,
         `Total Listings: ${safeAdvertisements.length}`,
         `Average Rating: ${safeReviews.length > 0 ? (safeReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / safeReviews.length).toFixed(1) : '0.0'} Stars`,
@@ -629,7 +372,7 @@ const ReportManagement = () => {
       const safeSocieties = societies || [];
       
       pdf.text(`• Total Users: ${safeUsers.length}`, 15, 95);
-      pdf.text(`• Total Societies: ${safeSocieties.length}`, 15, 105);
+      pdf.text(`• Total Society Registrations: ${safeSocieties.length}`, 15, 105);
       pdf.text(`• Total Reviews: ${safeReviews.length}`, 15, 115);
       pdf.text(`• Total Listings: ${safeAdvertisements.length}`, 15, 125);
       pdf.text(`• Average Rating: ${safeReviews.length > 0 ? (safeReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / safeReviews.length).toFixed(1) : '0.0'} Stars`, 15, 135);
@@ -721,44 +464,6 @@ const ReportManagement = () => {
   const safeAdvertisements = advertisements || [];
   const safeUsers = users || [];
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
-        <div className="text-center p-8 bg-white rounded-2xl shadow-xl border border-gray-100 max-w-md">
-          <div className="relative">
-            <RefreshCw className="animate-spin h-16 w-16 text-blue-600 mx-auto mb-6" />
-            <div className="absolute inset-0 h-16 w-16 bg-blue-100 rounded-full mx-auto animate-pulse"></div>
-          </div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Loading Analytics Dashboard</h3>
-          <p className="text-gray-600 mb-4">Fetching real-time data from database...</p>
-          
-          <div className="space-y-2 text-sm text-gray-500">
-            <div className="flex items-center justify-center space-x-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-              <span>Loading user statistics</span>
-            </div>
-            <div className="flex items-center justify-center space-x-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-              <span>Fetching property data</span>
-            </div>
-            <div className="flex items-center justify-center space-x-2">
-              <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-              <span>Processing reviews</span>
-            </div>
-            <div className="flex items-center justify-center space-x-2">
-              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></div>
-              <span>Analyzing listings</span>
-            </div>
-          </div>
-          
-          <div className="mt-6 w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full animate-pulse" style={{width: '75%'}}></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-100">
       {/* Modern Header Section */}
@@ -771,7 +476,7 @@ const ReportManagement = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                  Analytics Dashboard
+                  Society Registration Analytics Dashboard
                 </h1>
                 <p className="text-gray-600 mt-1">
                   Real-time insights and comprehensive platform analytics
@@ -794,7 +499,7 @@ const ReportManagement = () => {
               </select>
               
               <button
-                onClick={refreshData}
+                onClick={handleRefreshData}
                 disabled={refreshing}
                 className="flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 font-medium"
               >
@@ -804,9 +509,9 @@ const ReportManagement = () => {
               
               <button
                 onClick={exportReport}
-                disabled={loading}
+                disabled={loading.overall}
                 className={`flex items-center px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 shadow-lg hover:shadow-xl font-medium ${
-                  loading ? 'opacity-50 cursor-not-allowed' : ''
+                  loading.overall ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
                 {loading ? (
@@ -867,12 +572,12 @@ const ReportManagement = () => {
                   +{overviewStats.societyApprovalRate ? overviewStats.societyApprovalRate.toFixed(0) : '8'}%
                 </div>
               </div>
-              <h3 className="text-sm font-medium text-emerald-800 mb-1">Properties</h3>
+              <h3 className="text-sm font-medium text-emerald-800 mb-1">Society Registrations</h3>
               <p className="text-3xl font-bold text-emerald-900">{overviewStats.totalSocieties.toLocaleString()}</p>
               <div className="mt-3 space-y-1">
                 <p className="text-sm text-emerald-700 flex items-center">
                   <CheckCircle className="h-3 w-3 mr-1" />
-                  {overviewStats.approvedSocieties} verified
+                  {overviewStats.approvedSocieties} approved
                 </p>
                 <p className="text-xs text-emerald-600">
                   {overviewStats.pendingSocieties} pending approval
@@ -898,7 +603,7 @@ const ReportManagement = () => {
               <div className="mt-3 space-y-1">
                 <p className="text-sm text-amber-700 flex items-center">
                   <Star className="h-3 w-3 mr-1" />
-                  {overviewStats.avgRating.toFixed(1)} avg rating
+                  {(overviewStats.avgRating || 0).toFixed(1)} avg rating
                 </p>
                 <p className="text-xs text-amber-600">
                   {overviewStats.positiveReviews} positive reviews
@@ -1040,7 +745,7 @@ const ReportManagement = () => {
                       <span className="font-medium text-gray-700">Review Engagement Rate</span>
                     </div>
                     <span className="text-lg font-bold text-emerald-600">
-                      {overviewStats.reviewEngagementRate.toFixed(1)}%
+                      {(overviewStats.reviewEngagementRate || 0).toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl">
@@ -1051,7 +756,7 @@ const ReportManagement = () => {
                       <span className="font-medium text-gray-700">Listing Approval Rate</span>
                     </div>
                     <span className="text-lg font-bold text-purple-600">
-                      {overviewStats.listingApprovalRate.toFixed(1)}%
+                      {(overviewStats.listingApprovalRate || 0).toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl">
@@ -1062,7 +767,7 @@ const ReportManagement = () => {
                       <span className="font-medium text-gray-700">Society Approval Rate</span>
                     </div>
                     <span className="text-lg font-bold text-amber-600">
-                      {overviewStats.societyApprovalRate.toFixed(1)}%
+                      {(overviewStats.societyApprovalRate || 0).toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-xl">
@@ -1073,7 +778,7 @@ const ReportManagement = () => {
                       <span className="font-medium text-gray-700">Platform Satisfaction</span>
                     </div>
                     <span className="text-lg font-bold text-indigo-600">
-                      {overviewStats.avgRating.toFixed(1)}/5.0
+                      {(overviewStats.avgRating || 0).toFixed(1)}/5.0
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-rose-50 to-rose-100 rounded-xl">
@@ -1084,7 +789,8 @@ const ReportManagement = () => {
                       <span className="font-medium text-gray-700">Avg Views per Listing</span>
                     </div>
                     <span className="text-lg font-bold text-rose-600">
-                      {overviewStats.avgViewsPerAd ? overviewStats.avgViewsPerAd.toFixed(0) : '0'}
+                      {(overviewStats.avgViewsPerAd && typeof overviewStats.avgViewsPerAd === 'number') ? 
+                        overviewStats.avgViewsPerAd.toFixed(0) : '0'}
                     </span>
                   </div>
                 </div>
@@ -1163,7 +869,7 @@ const ReportManagement = () => {
                 </p>
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <p className="text-xs text-gray-500">
-                    Avg Rating: {overviewStats.avgRating.toFixed(1)}/5.0 | Positive: {overviewStats.positiveReviews}
+                    Avg Rating: {(overviewStats.avgRating || 0).toFixed(1)}/5.0 | Positive: {overviewStats.positiveReviews}
                   </p>
                 </div>
               </div>
@@ -1189,13 +895,13 @@ const ReportManagement = () => {
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
                   <div className="text-2xl font-bold text-gray-900">{overviewStats.totalSocieties.toLocaleString()}</div>
-                  <div className="text-sm text-gray-600 mt-1">Properties</div>
-                  <div className="text-xs text-blue-600 mt-1">{overviewStats.societyApprovalRate.toFixed(0)}% approved</div>
+                  <div className="text-sm text-gray-600 mt-1">Society Registrations</div>
+                  <div className="text-xs text-blue-600 mt-1">{(overviewStats.societyApprovalRate || 0).toFixed(0)}% approved</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
                   <div className="text-2xl font-bold text-gray-900">{overviewStats.totalReviews.toLocaleString()}</div>
                   <div className="text-sm text-gray-600 mt-1">Reviews</div>
-                  <div className="text-xs text-yellow-600 mt-1">{overviewStats.avgRating.toFixed(1)} ⭐ average</div>
+                  <div className="text-xs text-yellow-600 mt-1">{(overviewStats.avgRating || 0).toFixed(1)} ⭐ average</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
                   <div className="text-2xl font-bold text-gray-900">{overviewStats.totalAdvertisements.toLocaleString()}</div>
@@ -1252,7 +958,7 @@ const ReportManagement = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-6">User Engagement</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
-                  <div className="text-2xl font-bold text-blue-600">{overviewStats.reviewEngagementRate.toFixed(1)}%</div>
+                  <div className="text-2xl font-bold text-blue-600">{(overviewStats.reviewEngagementRate || 0).toFixed(1)}%</div>
                   <div className="text-sm text-gray-600">Review Engagement</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl">
@@ -1365,7 +1071,7 @@ const ReportManagement = () => {
                   </div>
                   <div className="flex justify-between items-center p-4 bg-purple-50 rounded-xl">
                     <span className="font-medium text-gray-700">Approval Rate</span>
-                    <span className="text-xl font-bold text-purple-600">{overviewStats.societyApprovalRate.toFixed(1)}%</span>
+                    <span className="text-xl font-bold text-purple-600">{(overviewStats.societyApprovalRate || 0).toFixed(1)}%</span>
                   </div>
                 </div>
               </div>
@@ -1432,7 +1138,7 @@ const ReportManagement = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center p-4 bg-amber-50 rounded-xl">
                     <span className="font-medium text-gray-700">Average Rating</span>
-                    <span className="text-xl font-bold text-amber-600">{overviewStats.avgRating.toFixed(1)} ⭐</span>
+                    <span className="text-xl font-bold text-amber-600">{(overviewStats.avgRating || 0).toFixed(1)} ⭐</span>
                   </div>
                   <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-xl">
                     <span className="font-medium text-gray-700">Total Reviews</span>
@@ -1448,7 +1154,7 @@ const ReportManagement = () => {
                   </div>
                   <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl">
                     <span className="font-medium text-gray-700">Engagement Rate</span>
-                    <span className="text-xl font-bold text-blue-600">{overviewStats.reviewEngagementRate.toFixed(1)}%</span>
+                    <span className="text-xl font-bold text-blue-600">{(overviewStats.reviewEngagementRate || 0).toFixed(1)}%</span>
                   </div>
                 </div>
               </div>
@@ -1510,7 +1216,7 @@ const ReportManagement = () => {
                   </div>
                   <div className="flex justify-between items-center p-4 bg-rose-50 rounded-xl">
                     <span className="font-medium text-gray-700">Approval Rate</span>
-                    <span className="text-xl font-bold text-rose-600">{overviewStats.listingApprovalRate.toFixed(1)}%</span>
+                    <span className="text-xl font-bold text-rose-600">{(overviewStats.listingApprovalRate || 0).toFixed(1)}%</span>
                   </div>
                 </div>
               </div>

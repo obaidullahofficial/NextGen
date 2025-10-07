@@ -15,142 +15,36 @@ import {
   Phone,
   BarChart3
 } from "lucide-react";
-import userAPI from "../../services/userAPI";
-import { societyProfileAPI } from "../../services/societyProfileAPI";
-import reviewAPI from "../../services/reviewAPI";
-import advertisementAPI from "../../services/advertisementAPI";
+import { useAdminData } from "../../context/AdminDataContext";
 
 const Dashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState({
-    users: {
-      total: 0,
-      active: 0,
-      newThisMonth: 0,
-      growthRate: 0
-    },
-    societies: {
-      total: 0,
-      approved: 0,
-      pending: 0,
-      rejected: 0
-    },
-    reviews: {
-      total: 0,
-      averageRating: 0,
-      positive: 0,
-      negative: 0
-    },
-    advertisements: {
-      total: 0,
-      active: 0,
-      featured: 0,
-      totalViews: 0,
-      totalContacts: 0
-    },
-    recentActivity: []
-  });
+  const {
+    users,
+    societies,
+    reviews,
+    advertisements,
+    stats,
+    loading,
+    errors,
+    refreshData,
+    lastUpdated,
+    hasData
+  } = useAdminData();
+
   const [error, setError] = useState(null);
 
-  // Fetch all dashboard data
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
+  // Check if we have any critical errors
+  useEffect(() => {
+    const criticalErrors = Object.values(errors).filter(err => err !== null);
+    if (criticalErrors.length > 0) {
+      setError(`Failed to load some data: ${criticalErrors.join(', ')}`);
+    } else {
       setError(null);
-
-      // Fetch data from all APIs in parallel
-      const [usersResult, societiesResult, reviewsResult, advertisementsResult] = await Promise.allSettled([
-        userAPI.getAllUsers(),
-        societyProfileAPI.getAllSocieties(),
-        reviewAPI.getAllReviews(),
-        advertisementAPI.getAllAdvertisements()
-      ]);
-
-      // Process users data
-      let usersData = { total: 0, active: 0, newThisMonth: 0, growthRate: 0 };
-      if (usersResult.status === 'fulfilled' && usersResult.value.success) {
-        const users = usersResult.value.data || [];
-        const currentDate = new Date();
-        const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-        
-        usersData = {
-          total: users.length,
-          active: users.filter(user => user.status === 'active' || !user.status).length,
-          newThisMonth: users.filter(user => {
-            const userDate = new Date(user.created_at || user.createdAt || user.dateCreated);
-            return userDate >= lastMonth;
-          }).length,
-          growthRate: users.length > 0 ? ((users.filter(user => {
-            const userDate = new Date(user.created_at || user.createdAt || user.dateCreated);
-            return userDate >= lastMonth;
-          }).length / users.length) * 100).toFixed(1) : 0
-        };
-      }
-
-      // Process societies data
-      let societiesData = { total: 0, approved: 0, pending: 0, rejected: 0 };
-      if (societiesResult.status === 'fulfilled' && societiesResult.value.success) {
-        const societies = societiesResult.value.data || [];
-        societiesData = {
-          total: societies.length,
-          approved: societies.filter(society => society.status === 'approved').length,
-          pending: societies.filter(society => society.status === 'pending').length,
-          rejected: societies.filter(society => society.status === 'rejected').length
-        };
-      }
-
-      // Process reviews data
-      let reviewsData = { total: 0, averageRating: 0, positive: 0, negative: 0 };
-      if (reviewsResult.status === 'fulfilled' && reviewsResult.value.success) {
-        const reviews = reviewsResult.value.data || [];
-        const totalRating = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-        reviewsData = {
-          total: reviews.length,
-          averageRating: reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : 0,
-          positive: reviews.filter(review => (review.rating || 0) >= 4).length,
-          negative: reviews.filter(review => (review.rating || 0) <= 2).length
-        };
-      }
-
-      // Process advertisements data
-      let advertisementsData = { total: 0, active: 0, featured: 0, totalViews: 0, totalContacts: 0 };
-      if (advertisementsResult.status === 'fulfilled' && advertisementsResult.value.success) {
-        const advertisements = advertisementsResult.value.data || [];
-        advertisementsData = {
-          total: advertisements.length,
-          active: advertisements.filter(ad => ad.status === 'active').length,
-          featured: advertisements.filter(ad => ad.is_featured).length,
-          totalViews: advertisements.reduce((sum, ad) => sum + (ad.view_count || 0), 0),
-          totalContacts: advertisements.reduce((sum, ad) => sum + (ad.contact_count || 0), 0)
-        };
-      }
-
-      // Generate recent activity from all data
-      const recentActivity = generateRecentActivity(
-        usersResult.value?.data || [],
-        societiesResult.value?.data || [],
-        reviewsResult.value?.data || [],
-        advertisementsResult.value?.data || []
-      );
-
-      setDashboardData({
-        users: usersData,
-        societies: societiesData,
-        reviews: reviewsData,
-        advertisements: advertisementsData,
-        recentActivity
-      });
-
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      setError('Failed to load dashboard data. Please try again.');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [errors]);
 
-  // Generate recent activity from all data sources
-  const generateRecentActivity = (users, societies, reviews, advertisements) => {
+  // Generate recent activity from global data
+  const generateRecentActivity = () => {
     const activities = [];
     const currentTime = new Date();
 
@@ -169,12 +63,15 @@ const Dashboard = () => {
 
     // Recent societies (last 3)
     societies.slice(-3).forEach(society => {
-      const societyDate = new Date(society.created_at || society.createdAt);
+      const societyDate = new Date(society.created_at || society.createdAt || society.registration_date);
       const timeDiff = Math.floor((currentTime - societyDate) / (1000 * 60));
+      const status = society.status || society.registration_status || society.verification_status || 'registered';
+      const societyName = society.society_name || society.name || 'Unknown Society';
+      
       activities.push({
-        message: `Society ${society.status === 'approved' ? 'approved' : 'registered'}: ${society.society_name}`,
+        message: `Society ${status === 'approved' ? 'approved' : 'registered'}: ${societyName}`,
         time: timeDiff < 60 ? `${timeDiff} min ago` : `${Math.floor(timeDiff / 60)} hours ago`,
-        user: society.status === 'approved' ? 'Admin' : society.contact_person || 'Society Manager',
+        user: status === 'approved' ? 'Admin' : society.contact_person || society.representative_name || 'Society Manager',
         type: 'society',
         icon: Building
       });
@@ -210,25 +107,25 @@ const Dashboard = () => {
     return activities.sort((a, b) => a.time.localeCompare(b.time)).slice(0, 10);
   };
 
-  useEffect(() => {
-    fetchDashboardData();
-    
-    // Set up auto-refresh every 5 minutes
-    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   const calculateApprovalRate = () => {
-    const total = dashboardData.societies.total;
-    const approved = dashboardData.societies.approved;
-    return total > 0 ? ((approved / total) * 100).toFixed(1) : 0;
+    return stats.societies.total > 0 ? 
+      ((stats.societies.approved / stats.societies.total) * 100).toFixed(1) : 0;
   };
 
-  if (loading) {
+  // Manual refresh function
+  const handleRefresh = async () => {
+    console.log('[Dashboard] Manual refresh requested');
+    await refreshData('all');
+  };
+
+  if (loading.overall) {
     return (
       <div style={styles.loadingContainer}>
         <div style={styles.spinner}></div>
-        <p>Loading dashboard...</p>
+        <p>Loading dashboard data...</p>
+        <p style={{ fontSize: '14px', color: '#888', marginTop: '8px' }}>
+          Loading all admin data in background...
+        </p>
       </div>
     );
   }
@@ -239,7 +136,7 @@ const Dashboard = () => {
         <AlertTriangle size={48} color="#ff6b6b" />
         <h2>Error Loading Dashboard</h2>
         <p>{error}</p>
-        <button onClick={fetchDashboardData} style={styles.retryButton}>
+        <button onClick={handleRefresh} style={styles.retryButton}>
           Try Again
         </button>
       </div>
@@ -251,9 +148,9 @@ const Dashboard = () => {
       <div style={styles.header}>
         <div>
           <h1 style={styles.heading}>Admin Dashboard</h1>
-         
+          <p style={styles.subheading}>Live data from society registrations and system analytics</p>
         </div>
-        <button onClick={fetchDashboardData} style={styles.refreshButton}>
+        <button onClick={handleRefresh} style={styles.refreshButton}>
           <Activity size={16} />
           Refresh Data
         </button>
@@ -263,69 +160,112 @@ const Dashboard = () => {
       <div style={styles.cardsGrid}>
         <Card 
           title="Total Users" 
-          value={dashboardData.users.total.toLocaleString()} 
-          change={`+${dashboardData.users.growthRate}%`}
+          value={stats.users.total.toLocaleString()} 
+          change={`+${stats.users.growthRate.toFixed(1)}%`}
           icon={Users}
           color="#4CAF50"
-          subtitle={`${dashboardData.users.active} active users`}
+          subtitle={`${stats.users.active} active users`}
         />
         <Card 
-          title="Societies" 
-          value={dashboardData.societies.total.toLocaleString()} 
+          title="Society Registrations" 
+          value={stats.societies.total.toLocaleString()} 
           change={`${calculateApprovalRate()}% approved`}
           icon={Building}
           color="#2196F3"
-          subtitle={`${dashboardData.societies.pending} pending approval`}
+          subtitle={`${stats.societies.pending} pending approval`}
         />
         <Card 
           title="Reviews" 
-          value={dashboardData.reviews.total.toLocaleString()} 
-          change={`${dashboardData.reviews.averageRating}⭐ avg rating`}
+          value={stats.reviews.total.toLocaleString()} 
+          change={`${stats.reviews.averageRating.toFixed(1)}⭐ avg rating`}
           icon={Star}
           color="#FF9800"
-          subtitle={`${dashboardData.reviews.positive} positive reviews`}
+          subtitle={`${stats.reviews.positive} positive reviews`}
         />
         <Card 
           title="Advertisements" 
-          value={dashboardData.advertisements.total.toLocaleString()} 
-          change={`${dashboardData.advertisements.totalViews} total views`}
+          value={stats.advertisements.total.toLocaleString()} 
+          change={`${stats.advertisements.totalViews} total views`}
           icon={FileText}
           color="#9C27B0"
-          subtitle={`${dashboardData.advertisements.active} active listings`}
+          subtitle={`${stats.advertisements.active} active listings`}
         />
       </div>
 
       {/* Detailed Stats Grid */}
       <div style={styles.statsGrid}>
         <StatsCard title="User Statistics" data={[
-          { label: "Total Users", value: dashboardData.users.total, icon: Users },
-          { label: "Active Users", value: dashboardData.users.active, icon: CheckCircle },
-          { label: "New This Month", value: dashboardData.users.newThisMonth, icon: TrendingUp }
+          { label: "Total Users", value: stats.users.total, icon: Users },
+          { label: "Active Users", value: stats.users.active, icon: CheckCircle },
+          { label: "New This Month", value: stats.users.newThisMonth, icon: TrendingUp }
         ]} />
         
-        <StatsCard title="Society Management" data={[
-          { label: "Total Societies", value: dashboardData.societies.total, icon: Building },
-          { label: "Approved", value: dashboardData.societies.approved, icon: CheckCircle },
-          { label: "Pending Review", value: dashboardData.societies.pending, icon: Clock }
+        <StatsCard title="Society Registration Management" data={[
+          { label: "Total Registrations", value: stats.societies.total, icon: Building },
+          { label: "Approved", value: stats.societies.approved, icon: CheckCircle },
+          { label: "Pending Review", value: stats.societies.pending, icon: Clock }
         ]} />
         
         <StatsCard title="Review Analytics" data={[
-          { label: "Total Reviews", value: dashboardData.reviews.total, icon: MessageSquare },
-          { label: "Positive Reviews", value: dashboardData.reviews.positive, icon: Star },
-          { label: "Average Rating", value: `${dashboardData.reviews.averageRating}/5`, icon: BarChart3 }
+          { label: "Total Reviews", value: stats.reviews.total, icon: MessageSquare },
+          { label: "Positive Reviews", value: stats.reviews.positive, icon: Star },
+          { label: "Average Rating", value: `${stats.reviews.averageRating.toFixed(1)}/5`, icon: BarChart3 }
         ]} />
         
         <StatsCard title="Advertisement Metrics" data={[
-          { label: "Total Ads", value: dashboardData.advertisements.total, icon: FileText },
-          { label: "Total Views", value: dashboardData.advertisements.totalViews, icon: Eye },
-          { label: "Total Contacts", value: dashboardData.advertisements.totalContacts, icon: Phone }
+          { label: "Total Ads", value: stats.advertisements.total, icon: FileText },
+          { label: "Total Views", value: stats.advertisements.totalViews, icon: Eye },
+          { label: "Total Contacts", value: stats.advertisements.totalContacts, icon: Phone }
         ]} />
       </div>
 
-     
+      {/* Recent Activity Section */}
+      {hasData('users') || hasData('societies') || hasData('reviews') || hasData('advertisements') ? (
+        <div style={styles.activitySection}>
+          <h2 style={styles.sectionTitle}>Recent Activity</h2>
+          <div style={styles.activityContainer}>
+            {generateRecentActivity().length > 0 ? (
+              generateRecentActivity().map((activity, index) => (
+                <ActivityItem
+                  key={index}
+                  message={activity.message}
+                  time={activity.time}
+                  user={activity.user}
+                  icon={activity.icon}
+                  type={activity.type}
+                />
+              ))
+            ) : (
+              <div style={styles.noActivity}>
+                <Activity size={48} color="#ccc" />
+                <p>No recent activity to display</p>
+              </div>
+            )}
+          </div>
         </div>
-    
- 
+      ) : null}
+
+      {/* Data Freshness Indicator */}
+      <div style={styles.dataFreshness}>
+        <p style={{ fontSize: '12px', color: '#888', textAlign: 'center' }}>
+          Last updated: {lastUpdated.users ? new Date(lastUpdated.users).toLocaleTimeString() : 'Loading...'}
+          {' | '}
+          <button 
+            onClick={handleRefresh} 
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              color: '#007bff', 
+              cursor: 'pointer',
+              fontSize: '12px',
+              textDecoration: 'underline'
+            }}
+          >
+            Refresh now
+          </button>
+        </p>
+      </div>
+    </div>
   );
 };
 
@@ -404,53 +344,55 @@ const getTypeColor = (type) => {
 // Styles
 const styles = {
   container: {
-    padding: "24px",
+    padding: "16px",
     fontFamily: "Segoe UI, sans-serif",
     color: "#333",
     backgroundColor: "#f8f9fa",
-    minHeight: "100vh"
+    minHeight: "100vh",
+    maxWidth: "1400px",
+    margin: "0 auto"
   },
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: "24px"
+    marginBottom: "20px"
   },
   heading: {
-    fontSize: "32px",
+    fontSize: "28px",
     fontWeight: "700",
     color: "#1a1a1a",
-    margin: "0 0 8px 0"
+    margin: "0 0 6px 0"
   },
   subheading: {
     margin: "0",
     color: "#666",
-    fontSize: "16px"
+    fontSize: "14px"
   },
   refreshButton: {
     display: "flex",
     alignItems: "center",
-    gap: "8px",
-    padding: "10px 16px",
+    gap: "6px",
+    padding: "8px 12px",
     backgroundColor: "#007bff",
     color: "white",
     border: "none",
-    borderRadius: "8px",
+    borderRadius: "6px",
     cursor: "pointer",
-    fontSize: "14px",
+    fontSize: "13px",
     fontWeight: "500"
   },
   cardsGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: "20px",
-    marginBottom: "32px"
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gap: "16px",
+    marginBottom: "24px"
   },
   card: {
     background: "white",
-    padding: "24px",
-    borderRadius: "12px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    padding: "18px",
+    borderRadius: "10px",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
     transition: "transform 0.2s ease, box-shadow 0.2s ease"
   },
   cardHeader: {
@@ -459,63 +401,63 @@ const styles = {
     alignItems: "flex-start"
   },
   cardTitle: {
-    fontSize: "14px",
+    fontSize: "13px",
     color: "#666",
-    margin: "0 0 8px 0",
+    margin: "0 0 6px 0",
     fontWeight: "500",
     textTransform: "uppercase"
   },
   cardValue: {
-    fontSize: "28px",
+    fontSize: "24px",
     fontWeight: "700",
     color: "#1a1a1a",
     margin: "0"
   },
   cardSubtitle: {
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#888",
-    margin: "4px 0 0 0"
+    margin: "3px 0 0 0"
   },
   cardIcon: {
-    width: "48px",
-    height: "48px",
-    borderRadius: "12px",
+    width: "40px",
+    height: "40px",
+    borderRadius: "10px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center"
   },
   statsGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-    gap: "20px",
-    marginBottom: "32px"
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: "16px",
+    marginBottom: "24px"
   },
   statsCard: {
     background: "white",
-    padding: "24px",
-    borderRadius: "12px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+    padding: "18px",
+    borderRadius: "10px",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
   },
   statsCardTitle: {
-    fontSize: "18px",
+    fontSize: "16px",
     fontWeight: "600",
     color: "#1a1a1a",
-    margin: "0 0 16px 0"
+    margin: "0 0 12px 0"
   },
   statsCardContent: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px"
+    gap: "10px"
   },
   statItem: {
     display: "flex",
     alignItems: "center",
-    gap: "12px"
+    gap: "10px"
   },
   statIcon: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "8px",
+    width: "28px",
+    height: "28px",
+    borderRadius: "6px",
     backgroundColor: "#f1f3f5",
     display: "flex",
     alignItems: "center",
@@ -523,7 +465,7 @@ const styles = {
     color: "#495057"
   },
   statLabel: {
-    fontSize: "14px",
+    fontSize: "12px",
     color: "#666",
     margin: "0"
   },
@@ -535,35 +477,35 @@ const styles = {
   },
   activitySection: {
     background: "white",
-    padding: "24px",
-    borderRadius: "12px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+    padding: "18px",
+    borderRadius: "10px",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
   },
   sectionTitle: {
-    fontSize: "20px",
-    marginBottom: "16px",
+    fontSize: "18px",
+    marginBottom: "14px",
     fontWeight: "600",
     color: "#1a1a1a"
   },
   activityContainer: {
-    maxHeight: "400px",
+    maxHeight: "350px",
     overflowY: "auto"
   },
   activityItem: {
     background: "#f8f9fa",
-    padding: "16px",
-    marginBottom: "12px",
-    borderRadius: "8px",
+    padding: "12px",
+    marginBottom: "10px",
+    borderRadius: "6px",
     transition: "background-color 0.2s ease"
   },
   activityHeader: {
     display: "flex",
     alignItems: "flex-start",
-    gap: "12px"
+    gap: "10px"
   },
   activityIconContainer: {
-    width: "32px",
-    height: "32px",
+    width: "28px",
+    height: "28px",
     borderRadius: "50%",
     backgroundColor: "white",
     display: "flex",
@@ -575,15 +517,15 @@ const styles = {
     flex: 1
   },
   activityMessage: {
-    margin: "0 0 8px 0",
-    fontSize: "14px",
+    margin: "0 0 6px 0",
+    fontSize: "13px",
     color: "#1a1a1a",
     fontWeight: "500"
   },
   activityMeta: {
     display: "flex",
-    gap: "12px",
-    fontSize: "12px",
+    gap: "10px",
+    fontSize: "11px",
     color: "#666"
   },
   activityTime: {
@@ -592,7 +534,7 @@ const styles = {
   activityUser: {},
   noActivity: {
     textAlign: "center",
-    padding: "40px",
+    padding: "30px",
     color: "#666"
   },
   loadingContainer: {
@@ -604,13 +546,13 @@ const styles = {
     color: "#666"
   },
   spinner: {
-    width: "40px",
-    height: "40px",
-    border: "4px solid #f3f3f3",
-    borderTop: "4px solid #007bff",
+    width: "32px",
+    height: "32px",
+    border: "3px solid #f3f3f3",
+    borderTop: "3px solid #007bff",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
-    marginBottom: "16px"
+    marginBottom: "12px"
   },
   errorContainer: {
     display: "flex",
@@ -622,13 +564,20 @@ const styles = {
     color: "#666"
   },
   retryButton: {
-    padding: "12px 24px",
+    padding: "10px 20px",
     backgroundColor: "#007bff",
     color: "white",
     border: "none",
-    borderRadius: "8px",
+    borderRadius: "6px",
     cursor: "pointer",
-    marginTop: "16px"
+    marginTop: "12px"
+  },
+  dataFreshness: {
+    marginTop: "18px",
+    padding: "12px",
+    backgroundColor: "#f8f9fa",
+    borderRadius: "6px",
+    border: "1px solid #e9ecef"
   }
 };
 

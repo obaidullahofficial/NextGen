@@ -152,6 +152,22 @@ export async function getMySociety() {
 }
 
 /**
+ * Get list of all society registrations (admin function)
+ * @returns {Promise<Object>} List of society registrations
+ */
+export async function getSocietyRegistrations() {
+  return authenticatedRequest('/society-registrations', { method: 'GET' }, 'getSocietyRegistrations');
+}
+
+/**
+ * Get list of pending society registrations (admin function)
+ * @returns {Promise<Object>} List of pending society registrations
+ */
+export async function getPendingSocietyRegistrations() {
+  return authenticatedRequest('/society-registrations/pending', { method: 'GET' }, 'getPendingSocietyRegistrations');
+}
+
+/**
  * Test token validity with a simple API call
  * @returns {Promise<Object>} Token validation response
  */

@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import GoogleOAuthProvider from './components/auth/GoogleOAuthProvider';
+import { AdminDataProvider } from './context/AdminDataContext';
 
 // Subadmin imports 
 import SubadminDashboard from './pages/subadmin/SubAdminDashboard';
@@ -35,14 +36,16 @@ import ReviewManagement from "./pages/admin/ReviewManagement";
 import ReportManagement from "./pages/admin/ReportManagement";
 import AdvertisementManagement from "./pages/admin/AdvertisementManagement";
 
-// Wrapper for Admin Layout with Sidebar + Topbar
+// Wrapper for Admin Layout with Sidebar + Topbar + Data Context
 const AdminLayout = ({ children }) => (
-  <div className="flex">
-    <Sidebar />
-    <div className="flex-1">
-      <Layout>{children}</Layout>
+  <AdminDataProvider>
+    <div className="flex">
+      <Sidebar />
+      <div className="flex-1">
+        <Layout>{children}</Layout>
+      </div>
     </div>
-  </div>
+  </AdminDataProvider>
 );
 
 function App() {
@@ -55,6 +58,7 @@ function App() {
 
           {/* Auth */}
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Login />} />
           <Route path="/registration-form" element={<RegistrationForm />} />
 
           {/* Society Profile Standalone */}

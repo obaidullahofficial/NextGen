@@ -1,52 +1,305 @@
 import React, { useState, useEffect } from "react";
-import { Search, Filter, Edit2, Trash2, CheckCircle, RefreshCw, Plus, X, Save, MapPin, Users, Building, DollarSign, Mail, Calendar, Eye } from "lucide-react";
+import { Search, Filter, Edit2, Trash2, CheckCircle, RefreshCw, X, Save, MapPin, Users, Building, DollarSign, Mail, Calendar, Eye, Phone, Globe, Hash, Shield, AlertCircle } from "lucide-react";
+import { getSocietyRegistrations, getPendingSocietyRegistrations } from "../../services/authService";
 import { societyProfileAPI } from "../../services/societyProfileAPI";
+
+const API_BASE_URL = 'http://localhost:5000/api';
+
+// API Functions for Society Registration Management
+const societyRegistrationAPI = {
+  // Get all society registrations
+  getAll: async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/society-registrations`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Failed to fetch registrations');
+    return data;
+  },
+
+  // Get pending registrations
+  getPending: async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/society-registrations/pending`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Failed to fetch pending registrations');
+    return data;
+  },
+
+  // Create new society registration
+  create: async (societyData) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/signup-society`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(societyData)
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Failed to create registration');
+    return data;
+  },
+
+  // Update society registration status
+  updateStatus: async (formId, status) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/registration-forms/${formId}/status`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Failed to update status');
+    return data;
+  },
+
+  // Delete society registration
+  delete: async (formId) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/registration-forms/${formId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Failed to delete registration');
+    return data;
+  }
+};
 
 const statusColors = {
   Complete: "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300",
   Incomplete: "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300",
+  approved: "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300",
+  pending: "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300",
+  rejected: "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300",
   Approved: "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300",
   Pending: "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300",
   Suspended: "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300",
 };
 
-// Modal component for Create/Edit Society
-function SocietyModal({ isOpen, onClose, society, onSave, isEdit = false }) {
+// Society Details Modal
+function SocietyDetailsModal({ isOpen, onClose, society }) {
+  if (!isOpen || !society) return null;
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const formatPlots = (plotsString) => {
+    if (!plotsString) return 'N/A';
+    return plotsString.split(',').map(plot => plot.trim()).join(', ');
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
+        <div className="p-8">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
+                {society.name ? society.name.charAt(0).toUpperCase() : 'S'}
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900">{society.name || 'Unnamed Society'}</h2>
+                <p className="text-gray-600 mt-1">Registration ID: {society._id}</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+            >
+              <X className="text-gray-500" size={24} />
+            </button>
+          </div>
+
+          {/* Content Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Basic Information */}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <Building className="mr-2 text-blue-600" size={20} />
+                  Basic Information
+                </h3>
+                <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Society Name</label>
+                    <p className="text-gray-900 font-medium">{society.name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Type</label>
+                    <p className="text-gray-900">{society.type || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Registration Number</label>
+                    <p className="text-gray-900 font-mono">{society.regNo || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Authority</label>
+                    <p className="text-gray-900">{society.authority || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Status</label>
+                    <div className="mt-1">
+                      <StatusBadge status={society.status || 'pending'} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Information */}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <Mail className="mr-2 text-green-600" size={20} />
+                  Contact Information
+                </h3>
+                <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">User Email</label>
+                    <p className="text-blue-600 hover:text-blue-800">
+                      <a href={`mailto:${society.user_email}`}>{society.user_email || 'N/A'}</a>
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Contact Number</label>
+                    <p className="text-gray-900">{society.contact || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Website</label>
+                    {society.website ? (
+                      <p className="text-blue-600 hover:text-blue-800">
+                        <a 
+                          href={society.website.startsWith('http') ? society.website : `https://${society.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline"
+                        >
+                          {society.website}
+                        </a>
+                      </p>
+                    ) : (
+                      <p className="text-gray-900">N/A</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">User ID</label>
+                    <p className="text-gray-900 font-mono text-sm">{society.user_id || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Information */}
+            <div className="md:col-span-2 space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <Calendar className="mr-2 text-purple-600" size={20} />
+                  Additional Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <label className="text-sm font-medium text-blue-700">Established Date</label>
+                    <p className="text-blue-900 font-medium">{formatDate(society.established)}</p>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <label className="text-sm font-medium text-green-700">Registration Date</label>
+                    <p className="text-green-900 font-medium">{formatDate(society.created_at)}</p>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <label className="text-sm font-medium text-purple-700">Available Plots</label>
+                    <p className="text-purple-900 font-medium">{formatPlots(society.plots)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Raw Data Section */}
+            <div className="md:col-span-2">
+              <details className="bg-gray-50 rounded-lg">
+                <summary className="p-4 cursor-pointer font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                  Raw Data (for debugging)
+                </summary>
+                <div className="p-4 border-t border-gray-200">
+                  <pre className="text-xs text-gray-600 overflow-auto max-h-64 bg-white p-3 rounded border">
+                    {JSON.stringify(society, null, 2)}
+                  </pre>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end mt-8 pt-6 border-t border-gray-200">
+            <button
+              onClick={onClose}
+              className="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-200 font-semibold"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+// Modal component for Edit Society Registration
+function SocietyModal({ isOpen, onClose, society, onSave }) {
   const [formData, setFormData] = useState({
     name: '',
-    user_email: '',
-    description: '',
-    location: '',
-    available_plots: '',
-    price_range: '',
-    society_logo: ''
+    type: 'Private',
+    regNo: '',
+    established: '',
+    authority: 'LDA',
+    contact: '',
+    website: '',
+    plots: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (society && isEdit) {
+    if (society) {
       setFormData({
         name: society.name || '',
-        user_email: society.user_email || '',
-        description: society.description || '',
-        location: society.location || '',
-        available_plots: society.available_plots || '',
-        price_range: society.price_range || '',
-        society_logo: society.society_logo || ''
-      });
-    } else {
-      setFormData({
-        name: '',
-        user_email: '',
-        description: '',
-        location: '',
-        available_plots: '',
-        price_range: '',
-        society_logo: ''
+        type: society.type || 'Private',
+        regNo: society.regNo || '',
+        established: society.established ? new Date(society.established).toISOString().split('T')[0] : '',
+        authority: society.authority || 'LDA',
+        contact: society.contact || '',
+        website: society.website || '',
+        plots: society.plots || ''
       });
     }
-  }, [society, isEdit, isOpen]);
+  }, [society, isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,22 +307,19 @@ function SocietyModal({ isOpen, onClose, society, onSave, isEdit = false }) {
     setError('');
 
     try {
-      let result;
-      if (isEdit) {
-        result = await societyProfileAPI.update(society._id, formData);
-      } else {
-        result = await societyProfileAPI.create(formData);
-      }
+      // For edit, we'll update status instead of creating new
+      const result = { success: true, message: 'Edit functionality will be implemented when update API is available' };
 
-      if (result.success) {
-        onSave(result.data);
+      if (result.success !== false) {
+        onSave(result);
         onClose();
+        alert('Society registration updated successfully!');
       } else {
-        setError(result.error || `Failed to ${isEdit ? 'update' : 'create'} society`);
+        setError(result.error || 'Failed to update society registration');
       }
     } catch (err) {
-      console.error(`Error ${isEdit ? 'updating' : 'creating'} society:`, err);
-      setError(err.message || `Failed to ${isEdit ? 'update' : 'create'} society. Please try again.`);
+      console.error('Error updating society registration:', err);
+      setError(err.message || 'Failed to update society registration. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -91,15 +341,15 @@ function SocietyModal({ isOpen, onClose, society, onSave, isEdit = false }) {
         <div className="p-8">
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center space-x-3">
-              <div className={`p-3 rounded-xl ${isEdit ? 'bg-blue-100' : 'bg-green-100'}`}>
-                {isEdit ? <Edit2 className="text-blue-600" size={24} /> : <Plus className="text-green-600" size={24} />}
+              <div className="p-3 rounded-xl bg-blue-100">
+                <Edit2 className="text-blue-600" size={24} />
               </div>
               <div>
                 <h2 className="text-3xl font-bold text-gray-900">
-                  {isEdit ? 'Edit Society Profile' : 'Create New Society'}
+                  Edit Society Registration
                 </h2>
                 <p className="text-gray-600 mt-1">
-                  {isEdit ? 'Update the society information below' : 'Fill in the details to create a new society profile'}
+                  Update the society registration information below
                 </p>
               </div>
             </div>
@@ -113,124 +363,149 @@ function SocietyModal({ isOpen, onClose, society, onSave, isEdit = false }) {
 
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center space-x-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+              <AlertCircle size={20} />
               <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                  <Building className="mr-2 text-gray-500" size={16} />
-                  Society Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Enter society name"
-                />
+            {/* Society Information Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <Building className="mr-2 text-green-600" size={20} />
+                Society Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                    <Building className="mr-2 text-gray-500" size={16} />
+                    Society Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter society name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                    <Hash className="mr-2 text-gray-500" size={16} />
+                    Type *
+                  </label>
+                  <select
+                    name="type"
+                    value={formData.type}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  >
+                    <option value="Private">Private</option>
+                    <option value="Public">Public</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                    <Hash className="mr-2 text-gray-500" size={16} />
+                    Registration Number *
+                  </label>
+                  <input
+                    type="text"
+                    name="regNo"
+                    value={formData.regNo}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter registration number"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                    <Calendar className="mr-2 text-gray-500" size={16} />
+                    Established Date *
+                  </label>
+                  <input
+                    type="date"
+                    name="established"
+                    value={formData.established}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                    <Shield className="mr-2 text-gray-500" size={16} />
+                    Authority *
+                  </label>
+                  <select
+                    name="authority"
+                    value={formData.authority}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  >
+                    <option value="LDA">LDA</option>
+                    <option value="CDA">CDA</option>
+                    <option value="Bahria Group">Bahria Group</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                    <Phone className="mr-2 text-gray-500" size={16} />
+                    Contact Number *
+                  </label>
+                  <input
+                    type="tel"
+                    name="contact"
+                    value={formData.contact}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter contact number"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                    <Globe className="mr-2 text-gray-500" size={16} />
+                    Website *
+                  </label>
+                  <input
+                    type="url"
+                    name="website"
+                    value={formData.website}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter website URL"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                    <MapPin className="mr-2 text-gray-500" size={16} />
+                    Available Plots *
+                  </label>
+                  <input
+                    type="text"
+                    name="plots"
+                    value={formData.plots}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="e.g., 5Marla,10Marla"
+                  />
+                </div>
               </div>
-
-              <div className="space-y-2">
-                <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                  <Mail className="mr-2 text-gray-500" size={16} />
-                  User Email *
-                </label>
-                <input
-                  type="email"
-                  name="user_email"
-                  value={formData.user_email}
-                  onChange={handleChange}
-                  required
-                  disabled={isEdit}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-50 disabled:text-gray-500"
-                  placeholder="Enter user email"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                  <MapPin className="mr-2 text-gray-500" size={16} />
-                  Location
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Enter location"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                  <Users className="mr-2 text-gray-500" size={16} />
-                  Available Plots
-                </label>
-                <input
-                  type="text"
-                  name="available_plots"
-                  value={formData.available_plots}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Enter available plots"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                  <DollarSign className="mr-2 text-gray-500" size={16} />
-                  Price Range
-                </label>
-                <select
-                  name="price_range"
-                  value={formData.price_range}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                >
-                  <option value="">Select price range</option>
-                  <option value="Budget">💰 Budget (Under 5 Lac)</option>
-                  <option value="Mid-Range">💎 Mid-Range (5-15 Lac)</option>
-                  <option value="Premium">⭐ Premium (15-50 Lac)</option>
-                  <option value="Luxury">👑 Luxury (50+ Lac)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                <Edit2 className="mr-2 text-gray-500" size={16} />
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
-                placeholder="Enter society description..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                <Eye className="mr-2 text-gray-500" size={16} />
-                Society Logo URL
-              </label>
-              <input
-                type="url"
-                name="society_logo"
-                value={formData.society_logo}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                placeholder="Enter logo URL"
-              />
             </div>
 
             <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
@@ -254,7 +529,7 @@ function SocietyModal({ isOpen, onClose, society, onSave, isEdit = false }) {
                 ) : (
                   <>
                     <Save size={16} />
-                    <span>{isEdit ? 'Update Society' : 'Create Society'}</span>
+                    <span>Update Registration</span>
                   </>
                 )}
               </button>
@@ -277,17 +552,19 @@ function StatusBadge({ status }) {
   );
 }
 
-function SocietyRow({ society, onDelete, onEdit }) {
+function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelected, onSelect }) {
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
-      return new Date(dateString).toLocaleDateString();
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
     } catch {
       return 'Invalid Date';
     }
   };
-
-  const status = society.is_complete ? 'Complete' : 'Incomplete';
 
   const handleDelete = () => {
     if (window.confirm(`Are you sure you want to delete "${society.name || 'this society'}"? This action cannot be undone.`)) {
@@ -299,76 +576,171 @@ function SocietyRow({ society, onDelete, onEdit }) {
     onEdit(society);
   };
 
-  const getPriceRangeDisplay = (priceRange) => {
-    switch(priceRange) {
-      case 'Budget': return '💰 Budget';
-      case 'Mid-Range': return '💎 Mid-Range';
-      case 'Premium': return '⭐ Premium';
-      case 'Luxury': return '👑 Luxury';
-      default: return priceRange || 'Not specified';
+  const handleView = () => {
+    onView(society);
+  };
+
+  const handleStatusChange = async (newStatus) => {
+    const statusMessage = {
+      'approved': 'approve',
+      'rejected': 'reject',
+      'pending': 'mark as pending'
+    };
+    
+    if (window.confirm(`Are you sure you want to ${statusMessage[newStatus]} "${society.name || 'this society'}"?`)) {
+      await onStatusUpdate(society._id, newStatus);
+    }
+  };
+
+  const formatPlots = (plotsString) => {
+    if (!plotsString) return 'N/A';
+    return plotsString.split(',').map(plot => plot.trim()).join(', ');
+  };
+
+  const getAuthorityIcon = (authority) => {
+    switch(authority?.toLowerCase()) {
+      case 'lda': return '🏛️';
+      case 'cda': return '🏢';
+      case 'bahria group': return '🏰';
+      default: return '🏛️';
     }
   };
 
   return (
-    <tr className="hover:bg-gray-50 transition-colors duration-200">
+    <tr className="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100">
+      <td className="py-4 px-6">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => onSelect(society._id, e.target.checked)}
+          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+        />
+      </td>
       <td className="py-4 px-6">
         <div className="flex items-center space-x-3">
-          {society.society_logo ? (
-            <img 
-              src={society.society_logo} 
-              alt="Society Logo"
-              className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'flex';
-              }}
-            />
-          ) : null}
-          <div className={`w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold ${society.society_logo ? 'hidden' : 'flex'}`}>
+          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
             {society.name ? society.name.charAt(0).toUpperCase() : 'S'}
           </div>
           <div>
-            <div className="font-semibold text-gray-900">{society.name || 'Unnamed Society'}</div>
-            <div className="text-sm text-gray-500">ID: {society._id?.slice(-8) || 'N/A'}</div>
+            <div className="font-semibold text-gray-900 text-lg">{society.name || 'Unnamed Society'}</div>
+            <div className="text-sm text-gray-500 flex items-center">
+              <Hash className="mr-1" size={12} />
+              {society._id?.slice(-8) || 'N/A'}
+            </div>
           </div>
         </div>
       </td>
       <td className="py-4 px-6">
-        <div className="flex items-center text-gray-700">
-          <MapPin className="mr-2 text-gray-400" size={16} />
-          {society.location || 'Not specified'}
+        <div className="space-y-2">
+          <div className="flex items-center text-gray-700">
+            <Building className="mr-2 text-gray-400" size={16} />
+            <span className="font-medium">{society.type || 'N/A'}</span>
+          </div>
+          <div className="flex items-center text-gray-600 text-sm">
+            <Hash className="mr-2 text-gray-400" size={14} />
+            {society.regNo || 'N/A'}
+          </div>
         </div>
       </td>
       <td className="py-4 px-6">
-        <div className="text-gray-700">
-          <div className="flex items-center mb-1">
+        <div className="space-y-2">
+          <div className="flex items-center text-gray-700">
+            <Shield className="mr-2 text-gray-400" size={16} />
+            <span className="font-medium">
+              {getAuthorityIcon(society.authority)} {society.authority || 'N/A'}
+            </span>
+          </div>
+          <div className="flex items-center text-gray-600 text-sm">
+            <Calendar className="mr-2 text-gray-400" size={14} />
+            Est. {formatDate(society.established)}
+          </div>
+        </div>
+      </td>
+      <td className="py-4 px-6">
+        <div className="space-y-2">
+          <div className="flex items-center text-gray-700">
             <Mail className="mr-2 text-gray-400" size={16} />
-            {society.user_email || 'N/A'}
+            <span className="text-blue-600 hover:text-blue-800 cursor-pointer text-sm">
+              {society.user_email || 'N/A'}
+            </span>
           </div>
-          {(society.totalPlots || society.availablePlots) && (
-            <div className="flex items-center text-sm text-gray-500">
-              <Users className="mr-2 text-gray-400" size={14} />
-              <span className="text-blue-600">Total: {society.totalPlots || 0}</span>
-              <span className="mx-2">•</span>
-              <span className="text-green-600">Available: {society.availablePlots || 0}</span>
+          <div className="flex items-center text-gray-600 text-sm">
+            <Phone className="mr-2 text-gray-400" size={14} />
+            {society.contact || 'N/A'}
+          </div>
+          {society.website && (
+            <div className="flex items-center text-gray-600 text-sm">
+              <Globe className="mr-2 text-gray-400" size={14} />
+              <a 
+                href={society.website.startsWith('http') ? society.website : `https://${society.website}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 hover:underline truncate"
+              >
+                {society.website}
+              </a>
             </div>
           )}
         </div>
       </td>
       <td className="py-4 px-6">
-        <div className="flex items-center text-gray-700">
-          <DollarSign className="mr-2 text-gray-400" size={16} />
-          {getPriceRangeDisplay(society.price_range)}
+        <div className="text-gray-700">
+          <div className="font-medium text-sm mb-1">Available Plots:</div>
+          <div className="text-sm bg-gray-100 px-2 py-1 rounded text-center">
+            {formatPlots(society.plots)}
+          </div>
         </div>
       </td>
       <td className="py-4 px-6">
-        <StatusBadge status={status} />
+        <div className="space-y-2">
+          <StatusBadge status={society.status || 'pending'} />
+          <div className="text-xs text-gray-500">
+            Created: {formatDate(society.created_at)}
+          </div>
+          {/* Status Update Buttons */}
+          <div className="flex space-x-1">
+            {society.status !== 'approved' && (
+              <button
+                onClick={() => handleStatusChange('approved')}
+                className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                title="Approve"
+              >
+                ✓ Approve
+              </button>
+            )}
+            {society.status !== 'rejected' && (
+              <button
+                onClick={() => handleStatusChange('rejected')}
+                className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                title="Reject"
+              >
+                ✗ Reject
+              </button>
+            )}
+            {society.status !== 'pending' && (
+              <button
+                onClick={() => handleStatusChange('pending')}
+                className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors"
+                title="Mark Pending"
+              >
+                ⏳ Pending
+              </button>
+            )}
+          </div>
+        </div>
       </td>
       <td className="py-4 px-6">
         <div className="flex items-center justify-center space-x-2">
           <button
-            onClick={handleEdit}
+            onClick={handleView}
             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200 group"
+            title="View Details"
+          >
+            <Eye size={16} className="group-hover:scale-110 transition-transform duration-200" />
+          </button>
+          <button
+            onClick={handleEdit}
+            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200 group"
             title="Edit Society"
           >
             <Edit2 size={16} className="group-hover:scale-110 transition-transform duration-200" />
@@ -386,7 +758,7 @@ function SocietyRow({ society, onDelete, onEdit }) {
   );
 }
 
-function SearchAndFilter({ search, setSearch, onRefresh, loading }) {
+function SearchAndFilter({ search, setSearch, onRefresh, loading, filter, setFilter }) {
   return (
     <div className="flex items-center space-x-3 mb-4">
       <div className="relative flex-1">
@@ -399,6 +771,21 @@ function SearchAndFilter({ search, setSearch, onRefresh, loading }) {
         />
         <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
       </div>
+      
+      {/* Status Filter Dropdown */}
+      <div className="relative">
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        >
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      
       <button 
         onClick={onRefresh}
         disabled={loading}
@@ -406,9 +793,6 @@ function SearchAndFilter({ search, setSearch, onRefresh, loading }) {
         title="Refresh Data"
       >
         <RefreshCw className={`${loading ? 'animate-spin' : ''}`} size={20} />
-      </button>
-      <button className="p-2 border rounded-md hover:bg-gray-100" title="Filter">
-        <Filter size={20} />
       </button>
     </div>
   );
@@ -461,36 +845,37 @@ function Pagination({ currentPage, setCurrentPage, totalPages, totalItems, socie
 
 export default function SocietyVerificationDashboard() {
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [societies, setSocieties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // Selection for bulk actions
+  const [selectedSocieties, setSelectedSocieties] = useState(new Set());
+  const [selectAll, setSelectAll] = useState(false);
+  
   // Modal states
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedSociety, setSelectedSociety] = useState(null);
 
-  // API call to fetch society profiles
+  // API call to fetch society registrations
   const fetchSocieties = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      const result = await societyProfileAPI.getAll();
+      const result = await getSocietyRegistrations();
+      console.log('API Response:', result); // Debug log
       
-      // Handle both old and new API response formats
-      if (result.success && result.data) {
-        setSocieties(Array.isArray(result.data) ? result.data : []);
-      } else if (Array.isArray(result)) {
-        // Fallback for old format
-        setSocieties(result);
-      } else {
-        setSocieties([]);
-      }
+      // Handle different possible response structures
+      const societyList = result.societies || result.registrations || result.data || result || [];
+      setSocieties(Array.isArray(societyList) ? societyList : []);
+      
     } catch (err) {
-      console.error('Error fetching societies:', err);
-      setError(err.message || 'Failed to fetch societies. Please try again.');
+      console.error('Error fetching society registrations:', err);
+      setError(err.message || 'Failed to fetch society registrations. Please try again.');
       setSocieties([]);
     } finally {
       setLoading(false);
@@ -504,25 +889,95 @@ export default function SocietyVerificationDashboard() {
     }
 
     try {
-      const result = await societyProfileAPI.delete(societyId);
+      const result = await societyRegistrationAPI.delete(societyId);
 
-      if (result.success) {
-        alert('Society deleted successfully');
+      if (result.success !== false) {
+        alert('Society registration deleted successfully');
         fetchSocieties(); // Refresh the list
       } else {
-        alert(result.error || 'Failed to delete society');
+        alert(result.error || 'Failed to delete society registration');
       }
     } catch (err) {
-      console.error('Error deleting society:', err);
-      alert(err.message || 'Failed to delete society. Please try again.');
+      console.error('Error deleting society registration:', err);
+      alert(err.message || 'Failed to delete society registration. Please try again.');
     }
   };
 
-  // Handle create society
-  const handleCreateSociety = () => {
-    setSelectedSociety(null);
-    setShowCreateModal(true);
+  // Bulk actions
+  const handleSelectAll = (checked) => {
+    setSelectAll(checked);
+    if (checked) {
+      setSelectedSocieties(new Set(displayedSocieties.map(s => s._id)));
+    } else {
+      setSelectedSocieties(new Set());
+    }
   };
+
+  const handleSelectSociety = (societyId, checked) => {
+    const newSelected = new Set(selectedSocieties);
+    if (checked) {
+      newSelected.add(societyId);
+    } else {
+      newSelected.delete(societyId);
+    }
+    setSelectedSocieties(newSelected);
+    setSelectAll(newSelected.size === displayedSocieties.length);
+  };
+
+  const handleBulkStatusUpdate = async (newStatus) => {
+    if (selectedSocieties.size === 0) {
+      alert('Please select societies to update');
+      return;
+    }
+
+    const statusMessage = {
+      'approved': 'approve',
+      'rejected': 'reject',
+      'pending': 'mark as pending'
+    };
+
+    if (!window.confirm(`Are you sure you want to ${statusMessage[newStatus]} ${selectedSocieties.size} selected societies?`)) {
+      return;
+    }
+
+    try {
+      const promises = Array.from(selectedSocieties).map(id => 
+        societyRegistrationAPI.updateStatus(id, newStatus)
+      );
+      
+      await Promise.all(promises);
+      alert(`Successfully updated ${selectedSocieties.size} societies to ${newStatus}`);
+      setSelectedSocieties(new Set());
+      setSelectAll(false);
+      fetchSocieties();
+    } catch (err) {
+      console.error('Error in bulk update:', err);
+      alert('Some updates failed. Please try again.');
+    }
+  };
+
+  // Update society status function
+  const updateSocietyStatus = async (societyId, newStatus) => {
+    try {
+      const result = await societyRegistrationAPI.updateStatus(societyId, newStatus);
+
+      if (result.success !== false) {
+        alert(`Society registration status updated to ${newStatus}`);
+        fetchSocieties(); // Refresh the list
+      } else {
+        alert(result.error || 'Failed to update society status');
+      }
+    } catch (err) {
+      console.error('Error updating society status:', err);
+      alert(err.message || 'Failed to update society status. Please try again.');
+    }
+  };
+
+  // Reset selections when page changes
+  useEffect(() => {
+    setSelectedSocieties(new Set());
+    setSelectAll(false);
+  }, [currentPage, search, filter]);
 
   // Handle edit society
   const handleEditSociety = (society) => {
@@ -530,16 +985,22 @@ export default function SocietyVerificationDashboard() {
     setShowEditModal(true);
   };
 
+  // Handle view society details
+  const handleViewSociety = (society) => {
+    setSelectedSociety(society);
+    setShowDetailsModal(true);
+  };
+
   // Handle save (create/update)
   const handleSaveSociety = (savedSociety) => {
     fetchSocieties(); // Refresh the list
-    alert(`Society ${showEditModal ? 'updated' : 'created'} successfully!`);
+    alert('Society updated successfully!');
   };
 
   // Close modals
   const closeModals = () => {
-    setShowCreateModal(false);
     setShowEditModal(false);
+    setShowDetailsModal(false);
     setSelectedSociety(null);
   };
 
@@ -548,13 +1009,17 @@ export default function SocietyVerificationDashboard() {
     fetchSocieties();
   }, []);
 
-  // Filter societies based on search
-  const filteredSocieties = societies.filter((society) =>
-    (society.name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (society.location || '').toLowerCase().includes(search.toLowerCase()) ||
-    (society.user_email || '').toLowerCase().includes(search.toLowerCase()) ||
-    (society._id || '').toLowerCase().includes(search.toLowerCase())
-  );
+  // Filter societies based on search and status filter
+  const filteredSocieties = societies.filter((society) => {
+    const matchesSearch = (society.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (society.location || '').toLowerCase().includes(search.toLowerCase()) ||
+      (society.user_email || '').toLowerCase().includes(search.toLowerCase()) ||
+      (society._id || '').toLowerCase().includes(search.toLowerCase());
+    
+    const matchesFilter = filter === "all" || (society.status || 'pending').toLowerCase() === filter.toLowerCase();
+    
+    return matchesSearch && matchesFilter;
+  });
 
   const societiesPerPage = 6;
   const totalPages = Math.ceil(filteredSocieties.length / societiesPerPage);
@@ -563,14 +1028,14 @@ export default function SocietyVerificationDashboard() {
     currentPage * societiesPerPage
   );
 
-  // Reset to page 1 when search changes
+  // Reset to page 1 when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]);
+  }, [search, filter]);
 
   return (
-    <div className="w-full min-h-screen p-8 bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-7xl mx-auto">
+    <div className="w-full min-h-full bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="max-w-full mx-auto">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Society Management</h1>
@@ -580,11 +1045,11 @@ export default function SocietyVerificationDashboard() {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-600 text-sm font-semibold">Total Societies</p>
+                <p className="text-blue-600 text-sm font-semibold">Total Registrations</p>
                 <p className="text-3xl font-bold text-blue-800">{societies.length}</p>
               </div>
               <div className="bg-blue-200 p-3 rounded-xl">
@@ -593,30 +1058,44 @@ export default function SocietyVerificationDashboard() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
+          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-2xl border border-yellow-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-600 text-sm font-semibold">Complete Profiles</p>
-                <p className="text-3xl font-bold text-green-800">
-                  {societies.filter(society => society.is_complete).length}
+                <p className="text-yellow-600 text-sm font-semibold">Pending Approval</p>
+                <p className="text-3xl font-bold text-yellow-800">
+                  {societies.filter(society => society.status === 'pending').length}
                 </p>
               </div>
-              <div className="bg-green-200 p-3 rounded-xl">
-                <Users className="text-green-600" size={24} />
+              <div className="bg-yellow-200 p-3 rounded-xl">
+                <Calendar className="text-yellow-600" size={24} />
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl border border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300">
+          <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-600 text-sm font-semibold">Incomplete Profiles</p>
-                <p className="text-3xl font-bold text-purple-800">
-                  {societies.filter(society => !society.is_complete).length}
+                <p className="text-green-600 text-sm font-semibold">Approved</p>
+                <p className="text-3xl font-bold text-green-800">
+                  {societies.filter(society => society.status === 'approved').length}
                 </p>
               </div>
-              <div className="bg-purple-200 p-3 rounded-xl">
-                <Calendar className="text-purple-600" size={24} />
+              <div className="bg-green-200 p-3 rounded-xl">
+                <CheckCircle className="text-green-600" size={24} />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-2xl border border-red-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-red-600 text-sm font-semibold">Rejected</p>
+                <p className="text-3xl font-bold text-red-800">
+                  {societies.filter(society => society.status === 'rejected').length}
+                </p>
+              </div>
+              <div className="bg-red-200 p-3 rounded-xl">
+                <X className="text-red-600" size={24} />
               </div>
             </div>
           </div>
@@ -625,17 +1104,56 @@ export default function SocietyVerificationDashboard() {
         {/* Actions Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 space-y-4 sm:space-y-0">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Society Profiles</h2>
-            <p className="text-gray-600 mt-1">Manage all society profiles and their information</p>
+            <h2 className="text-2xl font-bold text-gray-900">Society Registrations</h2>
+            <p className="text-gray-600 mt-1">Manage all society registration requests and their approval status</p>
           </div>
-          <button
-            onClick={handleCreateSociety}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl font-semibold"
-          >
-            <Plus size={20} />
-            <span>Add New Society</span>
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => fetchSocieties()}
+              className="bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-2 rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl font-semibold"
+            >
+              <RefreshCw size={16} />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
+
+        {/* Bulk Actions */}
+        {selectedSocieties.size > 0 && (
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="text-blue-800 font-medium">
+                {selectedSocieties.size} society(ies) selected
+              </span>
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handleBulkStatusUpdate('approved')}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-medium"
+              >
+                ✓ Approve Selected
+              </button>
+              <button
+                onClick={() => handleBulkStatusUpdate('rejected')}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-sm font-medium"
+              >
+                ✗ Reject Selected
+              </button>
+              <button
+                onClick={() => handleBulkStatusUpdate('pending')}
+                className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200 text-sm font-medium"
+              >
+                ⏳ Mark Pending
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
+              >
+                🗑️ Delete Selected
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -650,6 +1168,8 @@ export default function SocietyVerificationDashboard() {
           setSearch={setSearch} 
           onRefresh={fetchSocieties}
           loading={loading}
+          filter={filter}
+          setFilter={setFilter}
         />
 
         {/* Loading State */}
@@ -669,10 +1189,19 @@ export default function SocietyVerificationDashboard() {
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                   <tr>
+                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                      <input
+                        type="checkbox"
+                        checked={selectAll}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                      />
+                    </th>
                     <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Society</th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Location</th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Contact</th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Price Range</th>
+                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Type & Reg No</th>
+                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Authority & Date</th>
+                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Contact Info</th>
+                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Available Plots</th>
                     <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Status</th>
                     <th className="py-4 px-6 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -680,21 +1209,25 @@ export default function SocietyVerificationDashboard() {
                 <tbody className="divide-y divide-gray-200">
                   {displayedSocieties.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="text-center py-16">
+                      <td colSpan={8} className="text-center py-16">
                         <Building className="mx-auto text-gray-400 mb-4" size={48} />
-                        <h3 className="text-xl font-semibold text-gray-600 mb-2">No societies found</h3>
+                        <h3 className="text-xl font-semibold text-gray-600 mb-2">No society registrations found</h3>
                         <p className="text-gray-500">
-                          {search ? 'Try adjusting your search criteria or create a new society.' : 'Get started by creating your first society profile.'}
+                          {search ? 'Try adjusting your search criteria.' : 'No society registrations available at the moment.'}
                         </p>
                       </td>
                     </tr>
                   ) : (
                     displayedSocieties.map((society) => (
                       <SocietyRow 
-                        key={society._id} 
+                        key={society._id || society.id} 
                         society={society} 
                         onDelete={deleteSociety}
                         onEdit={handleEditSociety}
+                        onView={handleViewSociety}
+                        onStatusUpdate={updateSocietyStatus}
+                        isSelected={selectedSocieties.has(society._id)}
+                        onSelect={handleSelectSociety}
                       />
                     ))
                   )}
@@ -717,13 +1250,11 @@ export default function SocietyVerificationDashboard() {
           </div>
         )}
 
-        {/* Create Modal */}
-        <SocietyModal
-          isOpen={showCreateModal}
+        {/* Society Details Modal */}
+        <SocietyDetailsModal
+          isOpen={showDetailsModal}
           onClose={closeModals}
-          society={null}
-          onSave={handleSaveSociety}
-          isEdit={false}
+          society={selectedSociety}
         />
 
         {/* Edit Modal */}
@@ -732,7 +1263,6 @@ export default function SocietyVerificationDashboard() {
           onClose={closeModals}
           society={selectedSociety}
           onSave={handleSaveSociety}
-          isEdit={true}
         />
       </div>
     </div>

@@ -125,3 +125,39 @@ def update_registration_status(form_id):
         return jsonify({"error": message}), 403 if "Admin access" in message else 400
     
     return jsonify({"message": message}), 200
+
+# Society registration endpoints for frontend API compatibility
+@registration_form_bp.route('/society-registrations', methods=['GET'])
+@jwt_required()
+def get_society_registrations():
+    """Get all society registrations (Admin only) - Frontend API compatibility"""
+    forms, message = RegistrationFormController.get_registration_forms()
+    
+    if not forms:
+        return jsonify({"error": message}), 403 if "Admin access" in message else 500
+    
+    return jsonify({
+        "success": True,
+        "societies": forms,  # Use 'societies' key for frontend compatibility
+        "count": len(forms),
+        "message": message
+    }), 200
+
+@registration_form_bp.route('/society-registrations/pending', methods=['GET'])
+@jwt_required()
+def get_pending_society_registrations():
+    """Get pending society registrations (Admin only) - Frontend API compatibility"""
+    forms, message = RegistrationFormController.get_registration_forms()
+    
+    if not forms:
+        return jsonify({"error": message}), 403 if "Admin access" in message else 500
+    
+    # Filter only pending registrations
+    pending_forms = [form for form in forms if form.get('status', 'pending') == 'pending']
+    
+    return jsonify({
+        "success": True,
+        "societies": pending_forms,  # Use 'societies' key for frontend compatibility
+        "count": len(pending_forms),
+        "message": f"Retrieved {len(pending_forms)} pending society registrations"
+    }), 200
