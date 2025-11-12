@@ -1,0 +1,131 @@
+NextGenArchitect Backend APIs
+====================================
+
+Based on Frontend Structure Analysis:
+
+COMMIT 1: Authentication APIs
+=============================
+POST /api/auth/login          # User login (Login.jsx)
+POST /api/auth/register       # User registration (Login.jsx)  
+POST /api/auth/admin-login    # Admin login (adminlogin.jsx)
+POST /api/auth/logout         # Logout functionality
+GET  /api/auth/verify-token   # Token verification for protected routes
+
+COMMIT 2: Society Management APIs
+=================================
+GET  /api/societies           # Get all societies (SocietiesPage.jsx)
+GET  /api/societies/:id       # Get society details
+POST /api/societies           # Add new society (SubAdmin)
+PUT  /api/societies/:id       # Update society profile (SocietyProfile.jsx)
+DELETE /api/societies/:id     # Delete society
+GET  /api/societies/:id/plots # Get plots by society (SocietyPlots.jsx)
+
+COMMIT 3: Plot Management APIs
+==============================
+GET  /api/plots               # Get all plots
+GET  /api/plots/:id           # Get plot details (PlotDetail.jsx)
+POST /api/plots               # Add new plot (AddPlot.jsx)
+PUT  /api/plots/:id           # Update plot details
+DELETE /api/plots/:id         # Delete plot
+GET  /api/societies/:societyId/plots/:plotId # Get specific plot in society
+
+COMMIT 4: User Profile APIs
+===========================
+GET  /api/user/profile        # Get user profile (personalInfoForm.jsx)
+PUT  /api/user/profile        # Update user profile
+GET  /api/user/approvals      # Get approval requests (UserDesignStatus.jsx)
+GET  /api/user/progress       # Get user progress (MyProgress.jsx)
+POST /api/user/approval-request # Submit approval request (ApprovalRequestForm.jsx)
+GET  /api/user/settings       # Get user settings
+
+COMMIT 5: Floor Plan APIs
+=========================
+POST /api/floorplan/generate  # Generate floor plan (GenerateFloorPlan.jsx)
+GET  /api/floorplan/:id       # Get saved floor plan
+POST /api/floorplan/save      # Save floor plan project
+POST /api/floorplan/export    # Export to PDF (using jsPDF)
+GET  /api/floorplan/templates # Get approved templates
+POST /api/floorplan/validate  # Validate against compliance rules
+
+COMMIT 6: SubAdmin Management APIs
+==================================
+GET  /api/subadmin/dashboard  # Dashboard stats (SubAdminDashboard.jsx)
+GET  /api/subadmin/approvals  # Get approval requests (Approvals.jsx)
+PUT  /api/subadmin/approvals/:id # Update approval status
+GET  /api/subadmin/compliance # Get compliance rules (ComplianceManagement.jsx)
+POST /api/subadmin/compliance # Add compliance rule
+PUT  /api/subadmin/compliance/:id # Update compliance rule
+DELETE /api/subadmin/compliance/:id # Delete compliance rule
+GET  /api/subadmin/plots      # Get plots managed by subadmin (PlotManager.jsx)
+
+COMMIT 7: File Upload APIs
+==========================
+POST /api/upload/logo         # Upload society logo (SocietyProfile.jsx)
+POST /api/upload/plot-image   # Upload plot images
+POST /api/upload/floorplan    # Upload floor plan files
+POST /api/upload/documents    # Upload compliance documents
+GET  /api/files/:filename     # Serve uploaded files
+
+COMMIT 8: Admin APIs
+====================
+GET  /api/admin/dashboard     # Admin dashboard stats
+GET  /api/admin/users         # Get all users
+GET  /api/admin/subadmins     # Get all subadmins
+POST /api/admin/subadmin      # Create new subadmin
+PUT  /api/admin/users/:id     # Update user status
+DELETE /api/admin/users/:id   # Delete user
+GET  /api/admin/societies     # Get all societies for admin
+GET  /api/admin/reports       # Generate reports
+
+COMMIT 9: Search and Filter APIs
+================================
+GET  /api/search/societies    # Search societies
+GET  /api/search/plots        # Search plots with filters
+GET  /api/filter/plots        # Filter plots by price, area, location
+GET  /api/autocomplete/locations # Location autocomplete
+
+COMMIT 10: Notification APIs
+============================
+GET  /api/notifications       # Get user notifications
+POST /api/notifications       # Send notification
+PUT  /api/notifications/:id   # Mark as read
+DELETE /api/notifications/:id # Delete notification
+
+ADDITIONAL UTILITY APIs
+=======================
+GET  /api/health              # Health check
+GET  /api/version             # API version
+POST /api/contact             # Contact form submission
+GET  /api/stats               # General statistics
+
+DATABASE COLLECTIONS NEEDED
+============================
+- users
+- societies
+- plots
+- floorplans
+- approvals
+- compliance_rules
+- notifications
+- file_uploads
+- admin_logs
+
+AUTHENTICATION STRATEGY
+=======================
+- JWT tokens for session management
+- Role-based access control (user, subadmin, admin)
+- Password hashing with bcrypt
+- Session timeout and refresh tokens
+
+FILE STRUCTURE RECOMMENDED
+===========================
+backend/
+├── app.py
+├── config.py
+├── requirements.txt
+├── models/
+├── routes/
+├── middleware/
+├── utils/
+├── services/
+└── static/uploads/
