@@ -28,8 +28,9 @@ const Approvals = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedApproval, setSelectedApproval] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [editingNotes, setEditingNotes] = useState(false);
-  const [editedNotes, setEditedNotes] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null); // 'approve' or 'reject'
+  const [confirmTargetId, setConfirmTargetId] = useState(null);
   const [viewingDocument, setViewingDocument] = useState(null);
   // viewMode: 'current' shows pending requests; 'history' shows approved/rejected
   const [viewMode, setViewMode] = useState('current');
@@ -166,45 +167,38 @@ const Approvals = () => {
   };
 
   const handleApprove = (id) => {
-    updateStatus(id, "Approved");
+    setConfirmTargetId(id);
+    setConfirmAction('Approved');
+    setShowConfirmDialog(true);
   };
 
   const handleReject = (id) => {
-    updateStatus(id, "Rejected");
+    setConfirmTargetId(id);
+    setConfirmAction('Rejected');
+    setShowConfirmDialog(true);
+  };
+
+  const confirmActionHandler = () => {
+    if (confirmAction === 'Approved') {
+      updateStatus(confirmTargetId, "Approved");
+    } else if (confirmAction === 'reject') {
+      updateStatus(confirmTargetId, "Rejected");
+    }
+    setShowConfirmDialog(false);
+    setConfirmTargetId(null);
+    setConfirmAction(null);
+  };
+
+  const cancelConfirmation = () => {
+    setShowConfirmDialog(false);
+    setConfirmTargetId(null);
+    setConfirmAction(null);
   };
 
   const handleViewDetails = (approval) => {
     setSelectedApproval(approval);
-    setEditedNotes(approval.details.notes);
-    setEditingNotes(false);
     setViewingDocument(null);
     setShowModal(true);
-  };
-
-  const handleEditNotes = () => {
-    setEditingNotes(true);
-  };
-
-  const handleSaveNotes = () => {
-    setApprovals(approvals.map(a => 
-      a.id === selectedApproval.id 
-        ? { 
-            ...a, 
-            details: {
-              ...a.details,
-              notes: editedNotes
-            }
-          } 
-        : a
-    ));
-    setEditingNotes(false);
-    setSelectedApproval({
-      ...selectedApproval,
-      details: {
-        ...selectedApproval.details,
-        notes: editedNotes
-      }
-    });
   };
 
   // Helper to format request date nicely (date + time) instead of raw ISO
@@ -328,41 +322,8 @@ const Approvals = () => {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="text-lg font-semibold">Notes</h3>
-                  {!editingNotes && (
-                    <button
-                      onClick={handleEditNotes}
-                      className="text-[#2F3D57] hover:text-[#1E2A3B] flex items-center gap-1"
-                    >
-                      <FaEdit size={14} /> Edit
-                    </button>
-                  )}
                 </div>
-                {editingNotes ? (
-                  <div className="space-y-2">
-                    <textarea
-                      value={editedNotes}
-                      onChange={(e) => setEditedNotes(e.target.value)}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#2F3D57] focus:border-transparent"
-                      rows="3"
-                    />
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => setEditingNotes(false)}
-                        className="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-100"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSaveNotes}
-                        className="px-3 py-1 bg-[#2F3D57] text-white rounded-lg hover:bg-[#1E2A3B]"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">{selectedApproval.details.notes}</p>
-                )}
+                <p className="bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">{selectedApproval.details.notes}</p>
               </div>
               
               <div className="mt-6 flex justify-end">
@@ -579,6 +540,50 @@ const Approvals = () => {
           </table>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-100 to-orange-200">
+              {confirmAction === 'Approved' ? (
+                <FaCheck className="text-green-600 text-2xl" />
+              ) : (
+                <FaTimes className="text-red-600 text-2xl" />
+              )}
+            </div>
+            
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+              {confirmAction === 'Approved' ? 'Approve Floor Plan?' : 'Reject Floor Plan?'}
+            </h3>
+            
+            <p className="text-gray-600 text-center mb-6">
+              {confirmAction === 'Approved' 
+                ? 'Are you sure you want to approve this floor plan? '
+                : 'Are you sure you want to reject this floor plan? '}
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={cancelConfirmation}
+                className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmActionHandler}
+                className={`flex-1 px-4 py-3 rounded-lg font-medium text-white transition-colors ${
+                  confirmAction === 'Approved'
+                    ? 'bg-green-500 hover:bg-green-600'
+                    : 'bg-red-500 hover:bg-red-600'
+                }`}
+              >
+                {confirmAction === 'Approved' ? 'Yes, Approve' : 'Yes, Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
