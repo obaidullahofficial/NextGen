@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_file, abort
 from flask_jwt_extended import JWTManager
 from routes.user_routes import user_bp
 from routes.society_profile_routes import society_profile_bp
@@ -34,16 +34,6 @@ app.config['JWT_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
 app.config['JWT_COOKIE_CSRF_PROTECT'] = False  # Set to True in production
 app.config['JWT_COOKIE_SAMESITE'] = 'Lax'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-
-# ============================================================
-# EMAIL CONFIGURATION for Email Verification
-# ============================================================
-app.config['SMTP_SERVER'] = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
-app.config['SMTP_PORT'] = int(os.getenv('SMTP_PORT', 587))
-app.config['SENDER_EMAIL'] = os.getenv('SENDER_EMAIL', '')
-app.config['SENDER_PASSWORD'] = os.getenv('SENDER_PASSWORD', '')
-app.config['VERIFICATION_LINK_BASE'] = os.getenv('VERIFICATION_LINK_BASE', 'http://localhost:5173')
-
 jwt = JWTManager(app)
 
 # JWT Error Handlers
@@ -75,45 +65,33 @@ app.register_blueprint(user_profile_bp, url_prefix='/api')
 from routes.floorplan_routes import floorplan_bp
 app.register_blueprint(floorplan_bp, url_prefix='/api')
 
-# ============================================================
-# Initialize Email Verification System
-# ============================================================
-@app.before_request
-def initialize_email_verification():
-    """Initialize email verification indexes on first request"""
-    try:
-        from utils.db import get_db
-        db = get_db()
-        if db is not None:
-            from models.email_verification import create_verification_index
-            create_verification_index(db)
-    except Exception as e:
-        print(f"[EMAIL VERIFICATION] Index initialization warning: {str(e)}")
 
-@app.route('/api/email-config-test')
-def email_config_test():
-    """Test email configuration"""
-    config_status = {
-        "smtp_server": app.config.get('SMTP_SERVER'),
-        "smtp_port": app.config.get('SMTP_PORT'),
-        "sender_email": app.config.get('SENDER_EMAIL', 'NOT SET'),
-        "sender_email_configured": bool(app.config.get('SENDER_EMAIL')),
-        "sender_password_configured": bool(app.config.get('SENDER_PASSWORD')),
-        "verification_link_base": app.config.get('VERIFICATION_LINK_BASE')
-    }
-    
-    if not app.config.get('SENDER_EMAIL') or not app.config.get('SENDER_PASSWORD'):
-        return jsonify({
-            "success": False,
-            "message": "Email credentials not configured. Please set SENDER_EMAIL and SENDER_PASSWORD in .env file",
-            "config": config_status
-        }), 400
-    
-    return jsonify({
-        "success": True,
-        "message": "Email configuration is ready",
-        "config": config_status
-    }), 200
+# ========== FILE SERVING ROUTES (for uploaded user documents) ==========
+
+UPLOAD_ROOT = os.path.join(os.getcwd(), 'uploads')
+
+@app.route('/api/file/<path:filepath>', methods=['GET'])
+def serve_uploaded_file(filepath):
+    """Serve uploaded files (e.g., floor plan PDFs) in a safe way.
+
+    The `filepath` is stored in the database, typically starting with
+    "uploads/" (e.g., "uploads/user_profiles/user_<id>/floor_plans/file.pdf").
+    This endpoint ensures we only serve files from the `uploads` directory.
+    """
+    # Normalize path and ensure it stays within the uploads directory
+    normalized = os.path.normpath(filepath)
+    full_path = os.path.normpath(os.path.join(os.getcwd(), normalized))
+
+    # Security check: file must be inside the UPLOAD_ROOT directory
+    if not full_path.startswith(UPLOAD_ROOT):
+        abort(403)
+
+    if not os.path.exists(full_path) or not os.path.isfile(full_path):
+        abort(404)
+
+    # Let Flask infer the correct MIME type (PDF/image/etc.)
+    return send_file(full_path, as_attachment=False)
+
 
 @app.route('/api/db-test')
 def db_test():

@@ -14,7 +14,8 @@ from models.user_profile import (
 class UserProfileController:
     """Controller for handling user profile operations"""
     
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
+    # Allow images, PDFs, and JSON floorplan files
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf', 'json'}
     UPLOAD_FOLDER = 'uploads/user_profiles'
     
     @staticmethod

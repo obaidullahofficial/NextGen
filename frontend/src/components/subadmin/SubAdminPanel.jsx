@@ -15,7 +15,11 @@ const SubAdminPanel = ({ activeTab, setActiveTab }) => {
   const { logout } = useAuth();
   
   const handleTabClick = (tab) => {
-    setActiveTab(tab);
+    if (tab === 'floorPlan') {
+      navigate('/floorplan-generation');
+    } else {
+      setActiveTab(tab);
+    }
   };
 
   const handleLogout = async () => {

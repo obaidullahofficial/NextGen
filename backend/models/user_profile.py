@@ -46,7 +46,12 @@ class ApprovalRequest:
     
     def __init__(self, user_id, **kwargs):
         self.user_id = ObjectId(user_id) if isinstance(user_id, str) else user_id
-        self.plot_id = kwargs.get('plot_id', '')
+        # Optional link to society that owns the plot
+        self.society_id = kwargs.get('society_id', '')  # store as string
+        self.society_name = kwargs.get('society_name', '')
+        # Plot reference: database ID and human-friendly plot number
+        self.plot_id = kwargs.get('plot_id', '')  # plot document _id
+        self.plot_number = kwargs.get('plot_number', '')  # e.g. "PL-1001"
         self.plot_details = kwargs.get('plot_details', '')
         self.area = kwargs.get('area', '')
         self.design_type = kwargs.get('design_type', '')
@@ -64,7 +69,10 @@ class ApprovalRequest:
         """Convert the approval request to a dictionary"""
         return {
             'user_id': str(self.user_id),
+            'society_id': self.society_id,
+            'society_name': self.society_name,
             'plot_id': self.plot_id,
+            'plot_number': self.plot_number,
             'plot_details': self.plot_details,
             'area': self.area,
             'design_type': self.design_type,

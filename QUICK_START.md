@@ -1,10 +1,12 @@
 # 🚀 QUICK START GUIDE - Email Verification System
 
 ## ⚡ Start Server
+
 ```bash
 cd backend
 python app.py
 ```
+
 Server runs on: `http://localhost:5000`
 
 ---
@@ -12,6 +14,7 @@ Server runs on: `http://localhost:5000`
 ## 📝 Test with CURL (Windows PowerShell)
 
 ### 1️⃣ Signup
+
 ```powershell
 $body = @{
     username = "TestUser"
@@ -23,9 +26,11 @@ Invoke-RestMethod -Uri "http://localhost:5000/api/signup" -Method POST -Body $bo
 ```
 
 ### 2️⃣ Check Email
+
 Open Gmail and click the verification link
 
 ### 3️⃣ Verify Email (automatic via link, or manual)
+
 ```powershell
 $body = @{
     token = "YOUR_TOKEN_FROM_EMAIL"
@@ -35,6 +40,7 @@ Invoke-RestMethod -Uri "http://localhost:5000/api/verify-email" -Method POST -Bo
 ```
 
 ### 4️⃣ Login
+
 ```powershell
 $body = @{
     email = "your-email@gmail.com"
@@ -47,6 +53,7 @@ Invoke-RestMethod -Uri "http://localhost:5000/api/login" -Method POST -Body $bod
 ---
 
 ## 🧪 Run Tests
+
 ```bash
 cd backend
 python test_system.py
@@ -57,6 +64,7 @@ Expected: **6/6 tests passed ✅**
 ---
 
 ## 🔧 Configuration (.env)
+
 ```env
 SENDER_EMAIL=nextgenarchitect0@gmail.com
 SENDER_PASSWORD=viet sopt chwm apqe

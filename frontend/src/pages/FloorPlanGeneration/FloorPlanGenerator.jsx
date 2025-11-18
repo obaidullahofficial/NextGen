@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import KonvaFloorPlan from '../../components/FloorPlan/KonvaFloorPlan';
 
 const FloorPlanGenerator = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlans, setGeneratedPlans] = useState([]);
@@ -12,6 +13,7 @@ const FloorPlanGenerator = () => {
   const [totalAreaPercentage, setTotalAreaPercentage] = useState(0);
   const [availableAreaPercentage, setAvailableAreaPercentage] = useState(100);
   const [areaDistributionMode, setAreaDistributionMode] = useState('auto'); // 'auto' or 'manual'
+  const [generatingEngine, setGeneratingEngine] = useState(null); // Track which engine is currently generating: 'ga' or 'genai'
 
   const [formData, setFormData] = useState({
     // Use sensible default strings to avoid controlled/uncontrolled warnings in number inputs
@@ -34,6 +36,32 @@ const FloorPlanGenerator = () => {
     areas: false,
     connections: false
   });
+
+  // If coming from an approval request, import external JSON floor plan
+  useEffect(() => {
+    const importUrl = location.state?.importFromUrl;
+    if (!importUrl) return;
+
+    const loadImportedPlan = async () => {
+      try {
+        const res = await fetch(importUrl);
+        const data = await res.json();
+
+        // Support either a single plan object or an array of plans
+        const plans = Array.isArray(data) ? data : [data];
+        if (plans.length === 0) return;
+
+        setGeneratedPlans(plans);
+        setCurrentPlanIndex(0);
+        setCurrentStep(3); // Jump directly to review/visualization step
+      } catch (err) {
+        console.error('Failed to import floor plan JSON:', err);
+        alert('Could not load floor plan JSON from approval request.');
+      }
+    };
+
+    loadImportedPlan();
+  }, [location.state]);
 
   // Auto-calculate total and available area whenever room configuration changes
   useEffect(() => {
@@ -685,7 +713,35 @@ const FloorPlanGenerator = () => {
       return;
     }
 
+    // Call the generation logic with useGenAI = false (GA)
+    await generateFloorPlans(false);
+  };
+
+  const handleGenAISubmit = async (e) => {
+    e.preventDefault();
+    
+    const selectedRooms = getSelectedRooms();
+    const totalArea = getTotalAreaPercentage();
+    
+    if (selectedRooms.length === 0) {
+      alert('Please select at least one room');
+      return;
+    }
+    
+    if (totalArea > 100) {
+      alert(`Total area percentage (${totalArea.toFixed(1)}%) exceeds 100%. Please adjust room areas.`);
+      return;
+    }
+
+    // Call the generation logic with useGenAI = true (Gemini)
+    await generateFloorPlans(true);
+  };
+
+  const generateFloorPlans = async (useGenAIFlag) => {
+    const selectedRooms = getSelectedRooms();
+
     setIsGenerating(true);
+    setGeneratingEngine(useGenAIFlag ? 'genai' : 'ga'); // Track which engine is being used
     setCurrentStep(2);
 
     try {
@@ -788,7 +844,9 @@ const FloorPlanGenerator = () => {
         bath_per: averageAreas.bathroom || 8,
         bed_per: averageAreas.bedroom || 20,
         gar_per: averageAreas.garden || 2,
-        room_areas: roomAreaMap // Send individual room areas
+        room_areas: roomAreaMap, // Send individual room areas
+        use_genai: useGenAIFlag, // Send GenAI toggle flag
+        num_plans: 5 // Request 5 floor plan variations
       };
 
       console.log('Room configuration:', formData.roomConfiguration);
@@ -881,6 +939,7 @@ const FloorPlanGenerator = () => {
       alert(`Failed to generate floor plan: ${error.message}`);
     } finally {
       setIsGenerating(false);
+      setGeneratingEngine(null); // Reset engine state
     }
   };
 
@@ -1812,27 +1871,75 @@ const FloorPlanGenerator = () => {
                         </div>
                       </div>
 
-                      {/* Generate Button */}
-                      <button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={isGenerating || getSelectedRooms().length === 0 || getTotalAreaPercentage() > 100}
-                        className="w-full bg-[#ED7600] hover:bg-[#D56900] disabled:bg-gray-400 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg transform hover:scale-105 disabled:hover:scale-100"
-                      >
-                        {isGenerating ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            <span>Generating Floor Plans...</span>
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      {/* Two Separate Generate Buttons */}
+                      <div className="space-y-3">
+                        {/* Genetic Algorithm Button */}
+                        <button
+                          type="button"
+                          onClick={handleSubmit}
+                          disabled={(isGenerating && generatingEngine === 'ga') || getSelectedRooms().length === 0 || getTotalAreaPercentage() > 100}
+                          className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg transform hover:scale-105 disabled:hover:scale-100"
+                        >
+                          {isGenerating && generatingEngine === 'ga' ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span>Generating with Genetic Algorithm...</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                              </svg>
+                              <span>Generate with Genetic Algorithm 🧬</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* Divider with OR */}
+                        <div className="flex items-center">
+                          <div className="flex-1 border-t-2 border-gray-300"></div>
+                          <span className="px-4 text-gray-500 font-semibold text-sm">OR</span>
+                          <div className="flex-1 border-t-2 border-gray-300"></div>
+                        </div>
+
+                        {/* Generative AI Button */}
+                        <button
+                          type="button"
+                          onClick={handleGenAISubmit}
+                          disabled={(isGenerating && generatingEngine === 'genai') || getSelectedRooms().length === 0 || getTotalAreaPercentage() > 100}
+                          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg transform hover:scale-105 disabled:hover:scale-100"
+                        >
+                          {isGenerating && generatingEngine === 'genai' ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span>Generating with Generative AI...</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                              <span>Generate with Generative AI ✨</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* Info Box */}
+                        <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
+                          <div className="flex">
+                            <svg className="w-4 h-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                             </svg>
-                            <span>Generate AI Floor Plans</span>
-                          </>
-                        )}
-                      </button>
+                            <div className="text-xs text-blue-800">
+                              <p className="font-semibold mb-1">Choose Your AI Engine:</p>
+                              <ul className="space-y-0.5">
+                                <li>• <strong>Genetic Algorithm:</strong> Fast & precise optimization</li>
+                                <li>• <strong>Generative AI:</strong> Creative AI-powered generation</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
                       {/* Generate Variations Button */}
                       {generatedPlans.length > 0 && (

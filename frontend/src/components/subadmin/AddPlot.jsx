@@ -33,10 +33,56 @@ const AddPlotForm = ({ onSubmit, onCancel}) => {
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); // Prevent double submission
   const [imageError, setImageError] = useState(false); // Track image validation error
+  const [phoneError, setPhoneError] = useState('');
+  const [plotNumberError, setPlotNumberError] = useState('');
   const { alertState, showError, showWarning, showSuccess } = useAlert();
 
+  const areaOptions = ["5 Marla", "7 Marla", "10 Marla", "1 Kanal"];
+
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // Phone number validation and formatting
+    if (name === 'contactPhone') {
+      // Remove all non-digit characters
+      const cleaned = value.replace(/\D/g, '');
+      
+      // Limit to 10 digits
+      const limited = cleaned.substring(0, 10);
+      
+      // Format with dashes: XXX-XXXXXXX
+      let formatted = limited;
+      if (limited.length > 3) {
+        formatted = limited.substring(0, 3) + '-' + limited.substring(3);
+      }
+      
+      // Validate phone number length
+      if (limited.length > 0 && limited.length < 10) {
+        setPhoneError('Phone number must be 10 digits');
+      } else if (limited.length === 10) {
+        setPhoneError('');
+      } else if (limited.length === 0) {
+        setPhoneError('');
+      }
+      
+      setForm({ ...form, [name]: formatted });
+    }
+    // Plot number validation - only numbers allowed
+    else if (name === 'plot_number') {
+      // Remove all non-digit characters
+      const cleaned = value.replace(/\D/g, '');
+      
+      if (value !== '' && value !== cleaned) {
+        setPlotNumberError('Plot number must contain only digits');
+      } else {
+        setPlotNumberError('');
+      }
+      
+      setForm({ ...form, [name]: cleaned });
+    }
+    else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const handleDescriptionChange = (index, value) => {
@@ -152,6 +198,31 @@ const AddPlotForm = ({ onSubmit, onCancel}) => {
         }
       }
       
+      // Validate phone number before submission
+      if (phoneError) {
+        setLoading(false);
+        setIsSubmitting(false);
+        await showWarning('Validation Error', 'Please enter a valid phone number (10 digits required)');
+        return;
+      }
+
+      // Check if phone number has correct length
+      const phoneDigits = form.contactPhone.replace(/\D/g, '');
+      if (phoneDigits.length !== 10) {
+        setLoading(false);
+        setIsSubmitting(false);
+        await showWarning('Validation Error', 'Phone number must be exactly 10 digits');
+        return;
+      }
+      
+      // Validate plot number
+      if (plotNumberError) {
+        setLoading(false);
+        setIsSubmitting(false);
+        await showWarning('Validation Error', 'Plot number must contain only digits');
+        return;
+      }
+      
       // Image is mandatory
       if (!plotImage) {
         // Show red border validation instead of alert
@@ -188,9 +259,9 @@ const AddPlotForm = ({ onSubmit, onCancel}) => {
         formData.append(`description[${index}]`, desc);
       });
       
-      // Add seller info
+      // Add seller info with country code prefix to phone
       formData.append('seller[name]', form.contactName);
-      formData.append('seller[phone]', form.contactPhone);
+      formData.append('seller[phone]', '+92' + phoneDigits);
       
       // Add amenities - ensure we append amenities[] array
       const amenities = getSelectedAmenities(form.amenities);
@@ -279,15 +350,22 @@ const AddPlotForm = ({ onSubmit, onCancel}) => {
           {/* Left Column */}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Plot Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Plot Number <span className="text-red-600">*</span>
+              </label>
               <input
                 type="text"
                 name="plot_number"
                 value={form.plot_number}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#ED7600] focus:border-transparent"
+                placeholder="e.g., 123"
+                className={`w-full border ${plotNumberError ? 'border-red-500' : 'border-gray-300'} rounded-md p-2 focus:ring-2 focus:ring-[#ED7600] focus:border-transparent`}
                 required
               />
+              {plotNumberError && (
+                <p className="text-red-500 text-xs mt-1">{plotNumberError}</p>
+              )}
+              <p className="text-gray-500 text-xs mt-1">Numbers only</p>
             </div>
 
             <div>
@@ -329,15 +407,23 @@ const AddPlotForm = ({ onSubmit, onCancel}) => {
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Area</label>
-                <input
-                  type="text"
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Area <span className="text-red-600">*</span>
+                </label>
+                <select
                   name="area"
                   value={form.area}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#ED7600] focus:border-transparent"
                   required
-                />
+                >
+                  <option value="">Select Area</option>
+                  {areaOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Dimension X (ft)</label>
@@ -422,18 +508,28 @@ const AddPlotForm = ({ onSubmit, onCancel}) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Phone</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contact Phone <span className="text-red-600">*</span>
+              </label>
               <div className="flex items-center">
-                <FiPhone className="text-[#ED7600] mr-2" />
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 border border-gray-300 rounded-l-md border-r-0">
+                  <span className="text-lg">🇵🇰</span>
+                  <span className="font-semibold text-gray-700">+92</span>
+                </div>
                 <input
                   type="text"
                   name="contactPhone"
                   value={form.contactPhone}
                   onChange={handleChange}
-                  className="flex-1 border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#ED7600] focus:border-transparent"
+                  placeholder="3XX-XXXXXXX"
+                  className={`flex-1 border ${phoneError ? 'border-red-500' : 'border-gray-300'} rounded-r-md p-2 focus:ring-2 focus:ring-[#ED7600] focus:border-transparent`}
                   required
                 />
               </div>
+              {phoneError && (
+                <p className="text-red-500 text-xs mt-1">{phoneError}</p>
+              )}
+              <p className="text-gray-500 text-xs mt-1">Enter 10 digits (e.g., 300-1234567)</p>
             </div>
 
             {/* Image Upload Section - Society Profile Style */}

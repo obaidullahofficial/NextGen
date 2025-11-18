@@ -2,33 +2,116 @@ import React, { useState, useEffect } from 'react';
 import { FiUpload, FiFileText, FiSend } from 'react-icons/fi';
 import { userProfileAPI, createApprovalRequestFormData } from '../../services/userProfileAPI';
 
-// MOCK DATA: In a real application, this list of plots would come from an API call.
-const MOCK_AVAILABLE_PLOTS = [
-  { id: 'PL-1001', details: 'Commercial Plot A, 10 Marla', area: '10 Marla' },
-  { id: 'PL-1008', details: 'Residential Plot Y, 8 Marla', area: '8 Marla' },
-  { id: 'PL-2055', details: 'Residential Plot B, 1 Kanal', area: '1 Kanal' },
-  { id: 'PL-3102', details: 'Corner Plot C, 5 Marla', area: '5 Marla' },
-];
 
 const ApprovalRequestForm = () => {
+  // Society & plot selection
+  const [societies, setSocieties] = useState([]);
+  const [selectedSocietyId, setSelectedSocietyId] = useState('');
+  const [availablePlots, setAvailablePlots] = useState([]);
+
   // State to manage all form inputs
-  const [selectedPlotId, setSelectedPlotId] = useState(MOCK_AVAILABLE_PLOTS[0].id);
+  const [selectedPlotId, setSelectedPlotId] = useState('');
   const [designType, setDesignType] = useState('');
   const [floorPlanFile, setFloorPlanFile] = useState(null);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   
   // State for the derived plot details, to display them in the UI
-  const [selectedPlotDetails, setSelectedPlotDetails] = useState(MOCK_AVAILABLE_PLOTS[0]);
+  const [selectedPlotDetails, setSelectedPlotDetails] = useState(null);
+
+  // Helper to reset form state back to initial (after societies have loaded)
+  const resetFormState = () => {
+    setDesignType('');
+    setFloorPlanFile(null);
+    setNotes('');
+
+    // Reset selections to the first society (if any) and clear plot selection;
+    // plot list will be reloaded by the useEffect on selectedSocietyId.
+    if (societies.length > 0) {
+      setSelectedSocietyId(societies[0]._id);
+    } else {
+      setSelectedSocietyId('');
+      setAvailablePlots([]);
+    }
+    setSelectedPlotId('');
+    setSelectedPlotDetails(null);
+
+    const fileInput = document.getElementById('floorPlanFile');
+    if (fileInput) fileInput.value = '';
+  };
+
+  // Load all registered societies when form mounts
+  useEffect(() => {
+    const fetchSocieties = async () => {
+      try {
+        const response = await userProfileAPI.getSocieties();
+        const list = response.data || [];
+
+        setSocieties(list);
+        if (list.length > 0) {
+          setSelectedSocietyId(list[0]._id);
+        }
+      } catch (error) {
+        setMessage({ type: 'error', text: error.message || 'Failed to load societies' });
+      }
+    };
+
+    fetchSocieties();
+  }, []);
+
+  // Load plots whenever selected society changes
+  useEffect(() => {
+    const fetchPlots = async () => {
+      if (!selectedSocietyId) {
+        setAvailablePlots([]);
+        setSelectedPlotId('');
+        setSelectedPlotDetails(null);
+        return;
+      }
+
+      try {
+        const plotsResponse = await userProfileAPI.getPlotsBySociety(selectedSocietyId);
+        const plots = plotsResponse || [];
+
+        const mappedPlots = plots.map((plot) => ({
+          id: plot._id || plot.plot_id || plot.plot_number,
+          label: plot.plot_number || plot._id,
+          details: `${plot.plot_number || 'Plot'}${plot.type ? ` - ${plot.type}` : ''}${plot.location ? `, ${plot.location}` : ''}`,
+          area: plot.area || '',
+          raw: plot,
+        }));
+
+        setAvailablePlots(mappedPlots);
+
+        if (mappedPlots.length > 0) {
+          setSelectedPlotId(mappedPlots[0].id);
+          setSelectedPlotDetails(mappedPlots[0]);
+        } else {
+          setSelectedPlotId('');
+          setSelectedPlotDetails(null);
+        }
+      } catch (error) {
+        setMessage({ type: 'error', text: error.message || 'Failed to load plots for selected society' });
+      }
+    };
+
+    fetchPlots();
+  }, [selectedSocietyId]);
 
   // This effect updates the displayed plot details whenever the user selects a new plot
   useEffect(() => {
-    const plot = MOCK_AVAILABLE_PLOTS.find(p => p.id === selectedPlotId);
+    if (!selectedPlotId) {
+      setSelectedPlotDetails(null);
+      return;
+    }
+
+    const plot = availablePlots.find((p) => p.id === selectedPlotId);
     if (plot) {
       setSelectedPlotDetails(plot);
     }
-  }, [selectedPlotId]);
+  }, [selectedPlotId, availablePlots]);
 
   const handleFileChange = (e) => {
     if (e.target.files[0]) {
@@ -42,18 +125,24 @@ const ApprovalRequestForm = () => {
     setMessage({ type: '', text: '' });
 
     // --- Data Validation ---
-    if (!selectedPlotId || !designType || !floorPlanFile) {
-      setMessage({ type: 'error', text: 'Please fill out all required fields and upload a floor plan.' });
+    if (!selectedSocietyId || !selectedPlotId || !designType || !floorPlanFile) {
+      setMessage({ type: 'error', text: 'Please select a society & plot, fill out all required fields, and upload a floor plan.' });
       setLoading(false);
       return;
     }
 
     try {
       // --- Prepare the data for submission ---
+      const selectedSociety = societies.find((s) => s._id === selectedSocietyId);
+
       const requestData = {
+        societyId: selectedSocietyId,
+        societyName: selectedSociety ? selectedSociety.name : '',
         plotId: selectedPlotId,
-        plotDetails: selectedPlotDetails.details,
-        area: selectedPlotDetails.area,
+        // Human-readable plot number (label) for convenience in admin views
+        plotNumber: selectedPlotDetails ? selectedPlotDetails.label : '',
+        // Area comes directly from the selected plot record in the database
+        area: selectedPlotDetails ? selectedPlotDetails.area : '',
         designType,
         notes,
       };
@@ -64,13 +153,9 @@ const ApprovalRequestForm = () => {
       
       if (response.success) {
         setMessage({ type: 'success', text: response.message });
-        // Reset form after successful submission
-        setDesignType('');
-        setFloorPlanFile(null);
-        setNotes('');
-        // Reset file input
-        const fileInput = document.getElementById('floorPlanFile');
-        if (fileInput) fileInput.value = '';
+        // Reset form but keep success message; modal will show it
+        resetFormState();
+        setShowSuccessModal(true);
       }
     } catch (error) {
       setMessage({ type: 'error', text: error.message || 'Failed to submit approval request' });
@@ -85,13 +170,9 @@ const ApprovalRequestForm = () => {
         Floor Plan Approval Request
       </h2>
 
-      {/* Success/Error Message */}
-      {message.text && (
-        <div className={`mb-6 p-4 rounded-lg ${
-          message.type === 'success' 
-            ? 'bg-green-100 border border-green-400 text-green-700' 
-            : 'bg-red-100 border border-red-400 text-red-700'
-        }`}>
+      {/* Error Message (success is shown via modal) */}
+      {message.text && message.type === 'error' && (
+        <div className="mb-6 p-4 rounded-lg bg-red-100 border border-red-400 text-red-700">
           {message.text}
         </div>
       )}
@@ -100,31 +181,63 @@ const ApprovalRequestForm = () => {
         {/* --- Plot Information Section --- */}
         <section>
           <h3 className="text-xl font-semibold text-gray-700 mb-4">1. Select Your Plot</h3>
+
+          {/* Society selection */}
+          <div className="mb-4">
+            <label
+              htmlFor="societyId"
+              className="block text-sm font-medium text-gray-600 mb-1"
+            >
+              Society
+            </label>
+            <select
+              id="societyId"
+              value={selectedSocietyId}
+              onChange={(e) => setSelectedSocietyId(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#ED7600]"
+            >
+              {societies.length === 0 && (
+                <option value="" disabled>
+                  No societies available
+                </option>
+              )}
+              {societies.map((society) => (
+                <option key={society._id} value={society._id}>
+                  {society.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label htmlFor="plotId" className="block text-sm font-medium text-gray-600 mb-1">
-                Available Plot ID
+                Available Plot
               </label>
               <select
                 id="plotId"
                 value={selectedPlotId}
                 onChange={(e) => setSelectedPlotId(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#ED7600]"
+                disabled={availablePlots.length === 0}
               >
-                {MOCK_AVAILABLE_PLOTS.map(plot => (
+                {availablePlots.length === 0 && (
+                  <option value="" disabled>
+                    {selectedSocietyId ? 'No record found' : 'Select a society first'}
+                  </option>
+                )}
+                {availablePlots.map((plot) => (
                   <option key={plot.id} value={plot.id}>
-                    {plot.id} - ({plot.details})
+                    {plot.label} - ({plot.area})
                   </option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Plot Details</label>
-              <p className="w-full p-3 bg-gray-100 rounded-md text-gray-700">{selectedPlotDetails.details}</p>
-            </div>
              <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Area</label>
-              <p className="w-full p-3 bg-gray-100 rounded-md text-gray-700">{selectedPlotDetails.area}</p>
+              <p className="w-full p-3 bg-gray-100 rounded-md text-gray-700">
+                {selectedPlotDetails ? selectedPlotDetails.area : '-'}
+              </p>
             </div>
           </div>
         </section>
@@ -165,7 +278,7 @@ const ApprovalRequestForm = () => {
                 id="floorPlanFile"
                 onChange={handleFileChange}
                 className="hidden"
-                accept=".pdf,.png,.jpg,.jpeg"
+                accept=".json,application/json"
                 required
               />
             </div>
@@ -203,6 +316,29 @@ const ApprovalRequestForm = () => {
           </button>
         </div>
       </form>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full text-center">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Request Submitted</h3>
+            <p className="text-gray-600 mb-6">
+              {message.text || 'Your floor plan approval request has been submitted successfully.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setShowSuccessModal(false);
+                setMessage({ type: '', text: '' });
+                resetFormState();
+              }}
+              className="bg-[#ED7600] text-white px-6 py-2 rounded-md font-semibold hover:bg-[#d46000] transition-colors"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

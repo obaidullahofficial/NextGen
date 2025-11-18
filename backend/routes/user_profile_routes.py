@@ -8,6 +8,8 @@ from controllers.user_profile_controller import (
 from models.user import user_collection
 from utils.db import get_db
 from bson import ObjectId
+from datetime import datetime
+from models.society_profile import society_profile_collection
 
 user_profile_bp = Blueprint('user_profile', __name__)
 
@@ -213,7 +215,12 @@ def create_approval_request():
         
         # Get form data
         request_data = {
+            # Society info comes from the user form (optional but useful for filtering by society)
+            'society_id': request.form.get('societyId', ''),
+            'society_name': request.form.get('societyName', ''),
             'plot_id': request.form.get('plotId', ''),
+            # Store human-readable plot number alongside the plot document ID
+            'plot_number': request.form.get('plotNumber', ''),
             'plot_details': request.form.get('plotDetails', ''),
             'area': request.form.get('area', ''),
             'design_type': request.form.get('designType', ''),
@@ -512,7 +519,8 @@ def get_all_approval_requests():
         users = user_collection(db)
         current_user = users.find_one({'email': current_user_email})
         
-        if not current_user or current_user.get('role') != 'admin':
+        # Allow both admin and society (subadmin) roles to view approval requests
+        if not current_user or current_user.get('role') not in ['admin', 'society']:
             return jsonify({
                 "success": False,
                 "message": "Admin access required"
@@ -521,13 +529,52 @@ def get_all_approval_requests():
         # Get all approval requests
         from controllers.user_profile_controller import approval_request_collection
         requests_collection = approval_request_collection(db)
-        
-        all_requests = list(requests_collection.find({}).sort('created_at', -1))
-        
-        # Convert ObjectIds to strings
+
+        # If the current user is a society (subadmin), restrict approval
+        # requests to that society only, using the society profile's _id.
+        query = {}
+        if current_user.get('role') == 'society':
+            profiles = society_profile_collection(db)
+            profile = profiles.find_one({'user_email': current_user_email})
+            if profile:
+                society_id = str(profile['_id'])
+                query['society_id'] = society_id
+
+        all_requests = list(requests_collection.find(query).sort('created_at', -1))
+
+        # Build a map from user_id -> username/email so we can show
+        # the requester name in the admin/subadmin approvals panel.
+        # Note: in approval_requests, user_id is stored as a STRING, not ObjectId,
+        # so we need to convert it back to ObjectId for the users collection.
+        user_id_strs = set()
         for req in all_requests:
+            uid = req.get('user_id')
+            if isinstance(uid, str) and uid:
+                user_id_strs.add(uid)
+
+        users_map = {}
+        if user_id_strs:
+            object_ids = []
+            for uid_str in user_id_strs:
+                try:
+                    object_ids.append(ObjectId(uid_str))
+                except Exception:
+                    # Skip invalid ids
+                    continue
+
+            if object_ids:
+                users_cursor = users.find({'_id': {'$in': object_ids}})
+                for u in users_cursor:
+                    users_map[str(u['_id'])] = u.get('username') or u.get('email') or ''
+        
+        # Convert ObjectIds to strings and attach requester name
+        for req in all_requests:
+            uid = req.get('user_id')
+            uid_str = str(uid) if uid is not None else ''
+            req['requested_by_name'] = users_map.get(uid_str, '')
+            req['user_id'] = uid_str
+
             req['_id'] = str(req['_id'])
-            req['user_id'] = str(req['user_id'])
             if req.get('reviewed_by'):
                 req['reviewed_by'] = str(req['reviewed_by'])
         
@@ -556,7 +603,8 @@ def update_approval_request_status(request_id):
         users = user_collection(db)
         current_user = users.find_one({'email': current_user_email})
         
-        if not current_user or current_user.get('role') != 'admin':
+        # Allow both admin and society (subadmin) roles to change approval request status
+        if not current_user or current_user.get('role') not in ['admin', 'society']:
             return jsonify({
                 "success": False,
                 "message": "Admin access required"
@@ -572,11 +620,13 @@ def update_approval_request_status(request_id):
                 "error": "Invalid status"
             }), 400
         
+        # Store the action time (when admin/subadmin approves or rejects)
+        # as an ISO string so it can be safely returned in JSON and used on the frontend
         update_data = {
             'status': status,
             'admin_comments': admin_comments,
             'reviewed_by': ObjectId(current_user['_id']),
-            'reviewed_at': datetime.utcnow()
+            'reviewed_at': datetime.utcnow().isoformat(),
         }
         
         success, message = ApprovalRequestController.update_approval_request(

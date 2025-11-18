@@ -1,5 +1,6 @@
 from flask import request, jsonify
 from ai.floorplan_ai import GA_driver
+from ai.genai_floorplan import genai_generate_floorplans
 from models.floorplan import floorplan_collection
 from utils.db import get_db
 from datetime import datetime
@@ -7,7 +8,7 @@ from bson.objectid import ObjectId
 import traceback
 
 def generate_floorplan():
-    """Generate floor plan using AI algorithm"""
+    """Generate floor plan using AI algorithm (GA or GenAI)"""
     try:
         data = request.get_json()
         
@@ -45,6 +46,65 @@ def generate_floorplan():
         
         print(f"Generating floor plan with dimensions: {width}x{height}")
         print(f"Connections: {len(connects)}")
+        
+        # Check if user requested GenAI instead of GA
+        use_genai = data.get('use_genai', False)
+        
+        if use_genai:
+            print("Using GenAI (Gemini) for floor plan generation...")
+            
+            # Build input structure matching the GA format
+            from ai.floorplan_ai import getRooms, getConnectionList
+            Roms = getRooms(connects)
+            conns = getConnectionList(connects)
+            
+            inputG = {
+                "width": width,
+                "height": height,
+                "connections": conns,
+                "rooms": Roms,
+                "percents": {
+                    "livingroom": float(living_per),
+                    "kitchen": float(kitchen_per),
+                    "bedroom": float(bed_per),
+                    "bathroom": float(bath_per),
+                    "carporch": float(car_per),
+                    "garden": float(gar_per),
+                    "drawingroom": float(drawing_per)
+                },
+                "proportions": {
+                    "livingroom": float(living_p),
+                    "kitchen": float(kitchen_p),
+                    "bedroom": float(bed_p),
+                    "bathroom": float(bath_p),
+                    "carporch": float(car_p),
+                    "garden": float(gar_p),
+                    "drawingroom": float(drawing_p)
+                }
+            }
+            
+            # Request 4-5 floorplans from GenAI
+            num_plans = data.get('num_plans', 5)  # Allow user to specify how many
+            result = genai_generate_floorplans(inputG, n=num_plans)
+            
+            if 'error' in result:
+                return jsonify({
+                    'success': False,
+                    'error': result['error'],
+                    'raw_response': result.get('raw', None)
+                }), 500
+            
+            return jsonify({
+                'success': True,
+                'data': result,
+                'floor_plans': result.get('maps', []),
+                'room_data': result.get('room', []),
+                'message': f'Generated {len(result.get("maps", []))} floor plan variations using GenAI',
+                'generator': 'genai'
+            })
+        
+        # Original GA-based generation
+        print("Using Genetic Algorithm for floor plan generation...")
         
         # Call the AI algorithm
         result = GA_driver(

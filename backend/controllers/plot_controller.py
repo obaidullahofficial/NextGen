@@ -191,8 +191,9 @@ class PlotController:
         # Find all plots belonging to the specified society ID
         plots = list(plot_col.find({'societyId': society_id}))
         
+        # If no plots exist for this society, return an empty list with 200 OK
         if not plots:
-            return jsonify({'message': f'No plots found for society ID: {society_id}'}), 404
+            return jsonify([]), 200
             
         # Convert ObjectId to string for JSON serialization
         for plot in plots:

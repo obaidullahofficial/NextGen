@@ -58,6 +58,29 @@ export const userProfileAPI = {
     return handleResponse(response);
   },
 
+  // ============= SOCIETIES & PLOTS =============
+
+  /**
+   * Get all registered societies (public endpoint)
+   */
+  async getSocieties() {
+    const response = await fetch(`${API_BASE_URL}/society-profiles`, {
+      method: 'GET',
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Get plots for a specific society (public endpoint)
+   * @param {string} societyId
+   */
+  async getPlotsBySociety(societyId) {
+    const response = await fetch(`${API_BASE_URL}/plots/society/${societyId}`, {
+      method: 'GET',
+    });
+    return handleResponse(response);
+  },
+
   // ============= APPROVAL REQUESTS =============
 
   /**
@@ -226,7 +249,10 @@ export const createApprovalRequestFormData = (requestData, floorPlanFile) => {
   const formData = new FormData();
   
   // Add text fields
+  if (requestData.societyId) formData.append('societyId', requestData.societyId);
+  if (requestData.societyName) formData.append('societyName', requestData.societyName);
   if (requestData.plotId) formData.append('plotId', requestData.plotId);
+  if (requestData.plotNumber) formData.append('plotNumber', requestData.plotNumber);
   if (requestData.plotDetails) formData.append('plotDetails', requestData.plotDetails);
   if (requestData.area) formData.append('area', requestData.area);
   if (requestData.designType) formData.append('designType', requestData.designType);
