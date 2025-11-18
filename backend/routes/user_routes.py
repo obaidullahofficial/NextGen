@@ -296,33 +296,33 @@ def signup():
 @user_bp.route('/verify-email', methods=['POST', 'GET'])
 def verify_email_route():
     """
-    Verify user's email using token
-    Step 4: Verify token (Activate account)
-    Step 5: Delete/expire token (Security)
+    Verify user's email using 6-digit code
+    Step 4: Verify code (Activate account)
+    Step 5: Delete/expire code (Security)
     
     Supports both:
-    - POST with token in body
-    - GET with token in query parameter
+    - POST with code in body
+    - GET with code in query parameter
     """
     try:
-        # Get token from either POST body or GET query parameter
+        # Get code from either POST body or GET query parameter
         if request.method == 'POST':
             data = request.json or {}
-            token = data.get('token')
+            code = data.get('code')
         else:  # GET
-            token = request.args.get('token')
+            code = request.args.get('code')
         
-        if not token:
+        if not code:
             return jsonify({
                 "success": False,
-                "error": "Verification token is required",
-                "message": "Please provide a valid verification token"
+                "error": "Verification code is required",
+                "message": "Please provide a valid 6-digit verification code"
             }), 400
         
-        print(f"[VERIFY EMAIL API] Processing verification for token: {token[:10]}...")
+        print(f"[VERIFY EMAIL API] Processing verification for code: {code}")
         
         # Call controller to verify email
-        success, message = UserController.verify_email(token)
+        success, message = UserController.verify_email(code)
         
         if success:
             return jsonify({
@@ -549,11 +549,12 @@ def login():
     
     print(f"[LOGIN] Success for {email} with role {user['role']}")
     
-    # Simplified response
+    # Simplified response with user_id
     response_data = {
         "success": True,
         "access_token": access_token, 
         "user": {
+            "id": user.get('_id'),  # Include user ID
             "email": email,
             "role": user['role'],
             "username": user.get('username', ''),

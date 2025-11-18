@@ -1,25 +1,25 @@
 """
 Email Verification Model
-Stores verification tokens with automatic expiration using MongoDB TTL indexes
+Stores verification codes with automatic expiration using MongoDB TTL indexes
 """
 from datetime import datetime, timedelta
 
 class EmailVerification:
     """
-    Email verification token model
+    Email verification code model
     
     Fields:
         email: User's email address
-        token: Unique verification token
-        created_at: Token creation timestamp
-        expires_at: Token expiration timestamp (24 hours default)
-        is_used: Whether the token has been used
+        code: 6-digit verification code
+        created_at: Code creation timestamp
+        expires_at: Code expiration timestamp (10 minutes default)
+        is_used: Whether the code has been used
     """
-    def __init__(self, email, token, expires_at=None, is_used=False):
+    def __init__(self, email, code, expires_at=None, is_used=False):
         self.email = email
-        self.token = token
+        self.code = code
         self.created_at = datetime.utcnow()
-        self.expires_at = expires_at or (self.created_at + timedelta(hours=24))
+        self.expires_at = expires_at or (self.created_at + timedelta(minutes=10))
         self.is_used = is_used
 
 def email_verification_collection(db):
@@ -44,10 +44,15 @@ def create_verification_index(db):
             collection.create_index("expires_at", expireAfterSeconds=0)
             print("[EMAIL VERIFICATION] Created TTL index on expires_at")
         
-        # Unique index on token for fast, unique lookups
+        # Unique index on code for fast, unique lookups
+        if 'code_1' not in existing_indexes:
+            collection.create_index("code", unique=True)
+            print("[EMAIL VERIFICATION] Created unique index on code")
+        
+        # Also keep token index for backward compatibility
         if 'token_1' not in existing_indexes:
-            collection.create_index("token", unique=True)
-            print("[EMAIL VERIFICATION] Created unique index on token")
+            collection.create_index("token", unique=False)
+            print("[EMAIL VERIFICATION] Created index on token")
         
         # Index on email for querying user's verification tokens
         if 'email_1' not in existing_indexes:

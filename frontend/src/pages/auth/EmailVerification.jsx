@@ -1,39 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import QuickVerify from '../../components/QuickVerify';
 
 const EmailVerification = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [token, setToken] = useState('');
-  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [email, setEmail] = useState(location.state?.email || '');
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [verified, setVerified] = useState(false);
 
-  useEffect(() => {
-    // Get token from URL query parameter
-    const params = new URLSearchParams(location.search);
-    const urlToken = params.get('token');
-    
-    if (urlToken) {
-      setToken(urlToken);
-      // Auto-verify if token is in URL
-      verifyWithToken(urlToken);
-    }
-  }, [location]);
-
-  const verifyWithToken = async (tokenToVerify) => {
+  const verifyWithCode = async (codeToVerify) => {
     setVerifying(true);
     setError('');
     setMessage('');
 
     try {
       const response = await axios.post('http://localhost:5000/api/verify-email', {
-        token: tokenToVerify || token
+        code: codeToVerify || code
       });
 
       if (response.data.success) {
@@ -54,11 +41,15 @@ const EmailVerification = () => {
   };
 
   const handleManualVerify = async () => {
-    if (!token) {
-      setError('Please enter a verification token');
+    if (!code) {
+      setError('Please enter a 6-digit verification code');
       return;
     }
-    await verifyWithToken(token);
+    if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+      setError('Verification code must be 6 digits');
+      return;
+    }
+    await verifyWithCode(code);
   };
 
   const handleResendEmail = async () => {
@@ -85,14 +76,6 @@ const EmailVerification = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleQuickVerified = () => {
-    setVerified(true);
-    setMessage('Email verified successfully! Redirecting to login...');
-    setTimeout(() => {
-      navigate('/login', { state: { verified: true } });
-    }, 2000);
   };
 
   if (verifying) {
@@ -152,22 +135,26 @@ const EmailVerification = () => {
           </div>
         )}
 
-        {/* Manual Token Entry */}
+        {/* Manual Code Entry */}
         <div style={styles.section}>
-          <h3 style={styles.sectionTitle}>Have a Verification Token?</h3>
+          <h3 style={styles.sectionTitle}>Enter Your Verification Code</h3>
           <input
             type="text"
-            placeholder="Enter your verification token"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            style={styles.input}
+            placeholder="Enter 6-digit code"
+            value={code}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+              setCode(value);
+            }}
+            maxLength="6"
+            style={{...styles.input, ...styles.codeInput}}
           />
           <button
             onClick={handleManualVerify}
-            disabled={!token || verifying}
+            disabled={!code || verifying || code.length !== 6}
             style={{
               ...styles.button,
-              ...(!token ? styles.buttonDisabled : {})
+              ...(!code || code.length !== 6 ? styles.buttonDisabled : {})
             }}
           >
             {verifying ? '⏳ Verifying...' : 'Verify Email'}
@@ -196,12 +183,6 @@ const EmailVerification = () => {
           </button>
         </div>
 
-        {/* Quick Verify - Only in Development */}
-        <QuickVerify 
-          email={email} 
-          onVerified={handleQuickVerified}
-        />
-
         {/* Help Section */}
         <div style={styles.helpBox}>
           <div style={styles.helpIcon}>📬</div>
@@ -209,7 +190,8 @@ const EmailVerification = () => {
           <ul style={styles.helpList}>
             <li>Check your Gmail inbox for the verification email</li>
             <li>Look in your spam/junk folder if you don't see it</li>
-            <li>Verification links expire after 24 hours</li>
+            <li>Verification codes expire after 10 minutes</li>
+            <li>Enter the 6-digit code from the email</li>
             <li>Only Gmail addresses are accepted</li>
           </ul>
         </div>
@@ -233,7 +215,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: '#2F3D57',
     padding: '20px'
   },
   card: {
@@ -274,16 +256,17 @@ const styles = {
   input: {
     width: '100%',
     padding: '12px',
-    border: '2px solid #e0e0e0',
+    border: '2px solid #2F3D57',
     borderRadius: '6px',
     fontSize: '14px',
     marginBottom: '10px',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
+    transition: 'border-color 0.3s ease'
   },
   button: {
     width: '100%',
     padding: '14px',
-    backgroundColor: '#667eea',
+    backgroundColor: '#ED7600',
     color: 'white',
     border: 'none',
     borderRadius: '6px',
@@ -295,7 +278,7 @@ const styles = {
   buttonSecondary: {
     width: '100%',
     padding: '14px',
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#ED7600',
     color: 'white',
     border: 'none',
     borderRadius: '6px',
@@ -387,6 +370,13 @@ const styles = {
     textAlign: 'center',
     color: '#666',
     fontSize: '16px'
+  },
+  codeInput: {
+    fontSize: '24px',
+    letterSpacing: '8px',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    border: '2px solid #ED7600'
   }
 };
 

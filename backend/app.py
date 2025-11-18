@@ -17,9 +17,9 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configure CORS
+# Configure CORS - Allow all localhost ports for development
 CORS(app, 
-     origins=["http://localhost:5173", "http://localhost:5174"], 
+     origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"], 
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization"],
      expose_headers=["Content-Type", "Authorization"])

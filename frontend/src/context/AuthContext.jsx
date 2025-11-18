@@ -28,8 +28,10 @@ export const AuthProvider = ({ children }) => {
       
       // Store user data from backend response
       const userData = {
+        id: data.user?.id,  // Include user ID
         email: data.email || email,
         role: data.user?.role || data.role,
+        username: data.user?.username,
         societyId: data.societyId
       };
 

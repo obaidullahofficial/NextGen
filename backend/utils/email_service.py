@@ -1,8 +1,9 @@
 """
 Email Service for Account Verification
-Handles token generation, email sending, and verification
+Handles code generation, email sending, and verification
 """
 import secrets
+import random
 import smtplib
 import os
 from email.mime.text import MIMEText
@@ -15,71 +16,80 @@ class EmailService:
     """Service for handling email verification operations"""
     
     @staticmethod
+    def generate_verification_code():
+        """
+        Generate a 6-digit verification code
+        Returns a string like "123456"
+        """
+        return ''.join([str(random.randint(0, 9)) for _ in range(6)])
+    
+    @staticmethod
     def generate_verification_token():
         """
-        Generate a secure random token for email verification
+        Generate a secure random token (kept for backward compatibility)
         Returns a 32-character URL-safe token
         """
         return secrets.token_urlsafe(32)
     
     @staticmethod
-    def create_verification_token(email, token_expiry_hours=24):
+    def create_verification_code(email, code_expiry_minutes=10):
         """
-        Create and store a verification token in the database
+        Create and store a verification code in the database
         
         Args:
             email: User's email address
-            token_expiry_hours: Hours until token expires (default 24)
+            code_expiry_minutes: Minutes until code expires (default 10)
             
         Returns:
-            tuple: (token_string, token_document) or (None, error_message)
+            tuple: (code_string, code_document) or (None, error_message)
         """
         try:
             db = get_db()
             if db is None:
                 return None, "Database connection failed"
             
-            # Generate unique token
-            token = EmailService.generate_verification_token()
+            # Generate unique 6-digit code
+            code = EmailService.generate_verification_code()
             
             # Calculate expiration time
-            expires_at = datetime.utcnow() + timedelta(hours=token_expiry_hours)
+            expires_at = datetime.utcnow() + timedelta(minutes=code_expiry_minutes)
             
-            # Create verification token document
+            # Create verification code document
             verification = EmailVerification(
                 email=email,
-                token=token,
+                code=code,
                 expires_at=expires_at,
                 is_used=False
             )
             
             # Store in database
             collection = email_verification_collection(db)
-            token_doc = {
+            code_doc = {
                 'email': verification.email,
-                'token': verification.token,
+                'code': verification.code,
+                'token': EmailService.generate_verification_token(),  # Keep token for backward compatibility
                 'created_at': verification.created_at,
                 'expires_at': verification.expires_at,
                 'is_used': verification.is_used
             }
-            collection.insert_one(token_doc)
+            collection.insert_one(code_doc)
             
-            print(f"[EMAIL SERVICE] Token created for {email}, expires at {expires_at}")
-            return token, token_doc
+            print(f"[EMAIL SERVICE] Code created for {email}, expires at {expires_at}")
+            return code, code_doc
             
         except Exception as e:
-            print(f"[EMAIL SERVICE ERROR] Failed to create token: {str(e)}")
+            print(f"[EMAIL SERVICE ERROR] Failed to create code: {str(e)}")
             return None, str(e)
     
     @staticmethod
-    def send_verification_email(email, username, token):
+    def send_verification_email(email, username, code):
         """
         Send verification email to user
         
         Args:
             email: Recipient's email address
             username: User's username
-            token: Verification token
+            code: 6-digit verification code
             
         Returns:
             tuple: (success: bool, message: str)
@@ -90,14 +100,10 @@ class EmailService:
             smtp_port = int(os.getenv('SMTP_PORT', 587))
             sender_email = os.getenv('SENDER_EMAIL')
             sender_password = os.getenv('SENDER_PASSWORD')
-            verification_link_base = os.getenv('VERIFICATION_LINK_BASE', 'http://localhost:5173')
             
             # Validate configuration
             if not sender_email or not sender_password:
                 return False, "Email configuration is incomplete. Please set SENDER_EMAIL and SENDER_PASSWORD in .env"
-            
-            # Construct verification link
-            verification_link = f"{verification_link_base}/verify-email?token={token}"
             
             # Create email message
             message = MIMEMultipart('alternative')
@@ -111,11 +117,11 @@ Hello {username},
 
 Thank you for signing up for NextGenArchitect!
 
-To complete your registration and activate your account, please verify your email address by clicking the link below:
+To complete your registration and activate your account, please enter the following verification code:
 
-{verification_link}
+{code}
 
-This link will expire in 24 hours.
+This code will expire in 10 minutes.
 
 If you didn't create an account, please ignore this email.
 
@@ -152,15 +158,17 @@ NextGenArchitect Team
             padding: 30px;
             border-radius: 0 0 5px 5px;
         }}
-        .button {{
-            display: inline-block;
-            padding: 15px 30px;
-            background-color: #4CAF50;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
+        .code-box {{
+            background-color: #f0f0f0;
+            border: 2px dashed #4CAF50;
+            padding: 20px;
+            text-align: center;
+            font-size: 32px;
             font-weight: bold;
+            letter-spacing: 8px;
+            color: #4CAF50;
+            margin: 20px 0;
+            border-radius: 5px;
         }}
         .footer {{
             text-align: center;
@@ -180,16 +188,11 @@ NextGenArchitect Team
             
             <p>Thank you for signing up for NextGenArchitect!</p>
             
-            <p>To complete your registration and activate your account, please verify your email address by clicking the button below:</p>
+            <p>To complete your registration and activate your account, please enter the following verification code:</p>
             
-            <center>
-                <a href="{verification_link}" class="button">Verify Email Address</a>
-            </center>
+            <div class="code-box">{code}</div>
             
-            <p>Or copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #666;">{verification_link}</p>
-            
-            <p><strong>Important:</strong> This link will expire in 24 hours.</p>
+            <p><strong>Important:</strong> This code will expire in 10 minutes.</p>
             
             <p>If you didn't create an account, please ignore this email.</p>
             
@@ -235,12 +238,12 @@ NextGenArchitect Team
             return False, error_msg
     
     @staticmethod
-    def verify_token(token):
+    def verify_code(code):
         """
-        Verify a token and mark it as used
+        Verify a 6-digit code and mark it as used
         
         Args:
-            token: Verification token string
+            code: 6-digit verification code string
             
         Returns:
             tuple: (success: bool, email_or_error: str)
@@ -252,31 +255,31 @@ NextGenArchitect Team
             
             collection = email_verification_collection(db)
             
-            # Find the token
-            token_doc = collection.find_one({'token': token})
+            # Find the code
+            code_doc = collection.find_one({'code': code})
             
-            if not token_doc:
-                return False, "Invalid or expired verification token"
+            if not code_doc:
+                return False, "Invalid or expired verification code"
             
             # Check if already used
-            if token_doc.get('is_used', False):
-                return False, "This verification link has already been used"
+            if code_doc.get('is_used', False):
+                return False, "This verification code has already been used"
             
             # Check if expired
-            if datetime.utcnow() > token_doc['expires_at']:
-                return False, "This verification link has expired. Please request a new one"
+            if datetime.utcnow() > code_doc['expires_at']:
+                return False, "This verification code has expired. Please request a new one"
             
-            # Mark token as used
+            # Mark code as used
             collection.update_one(
-                {'token': token},
+                {'code': code},
                 {'$set': {'is_used': True}}
             )
             
-            print(f"[EMAIL SERVICE] ✅ Token verified for {token_doc['email']}")
-            return True, token_doc['email']
+            print(f"[EMAIL SERVICE] ✅ Code verified for {code_doc['email']}")
+            return True, code_doc['email']
             
         except Exception as e:
-            print(f"[EMAIL SERVICE ERROR] Token verification failed: {str(e)}")
+            print(f"[EMAIL SERVICE ERROR] Code verification failed: {str(e)}")
             return False, str(e)
     
     @staticmethod

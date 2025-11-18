@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FaBuilding, FaCube, FaClipboardCheck, FaShieldAlt, FaMapMarkerAlt, FaComments, FaBullhorn, FaPhone, FaEye, FaStar } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
 import homepagePic1 from '../../assets/homepage-pic1.png';
 import homepagePic3 from '../../assets/homepage-pic3.png';
 import Navbar from '../../components/user/Navbar';
@@ -9,6 +10,8 @@ import advertisementAPI from '../../services/advertisementAPI';
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [advertisement, setAdvertisement] = useState(null); // Holds ad content
   const [showPopup, setShowPopup] = useState(false);
@@ -250,6 +253,13 @@ const HomePage = () => {
         {/* Hero Section */}
         <div className="container mx-auto px-6 py-35 flex flex-col md:flex-row items-center justify-between">
           <div className="md:w-1/2 mb-12 md:mb-0 pl-12 md:pl-20 lg:pl-28 xl:pl-36">
+            {/* Welcome message */}
+            {user && (
+              <div className="mb-4 p-4 bg-[#1E2936] rounded-lg border border-[#ED7600]">
+                <p className="text-sm text-gray-300">Welcome back, <span className="text-[#ED7600] font-semibold">{user.username || user.email}</span>!</p>
+              </div>
+            )}
+            
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
               <div className="block">You Dream It.</div>
               <div className="block text-[#ED7600]">We Design It.</div>

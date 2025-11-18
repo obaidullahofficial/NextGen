@@ -17,6 +17,7 @@ import ProtectedAdminRoute from './components/common/ProtectedAdminRoute';
 
 // User imports 
 import Login from './pages/auth/Login';
+import EmailVerification from './pages/auth/EmailVerification';
 import UserLayout from './layouts/UserLayout';
 import HomePage from './pages/user/HomePage';
 import PlotDetail from './pages/user/PlotDetail';
@@ -61,6 +62,7 @@ function App() {
           {/* Auth */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Login />} />
+          <Route path="/verify-email" element={<EmailVerification />} />
           <Route path="/registration-form" element={<RegistrationForm />} />
 
           {/* Society Profile Standalone */}

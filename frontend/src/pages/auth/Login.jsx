@@ -177,6 +177,11 @@ const Login = () => {
             setSignupError('All fields are required.');
             return false;
         }
+        // Restrict to Gmail addresses only
+        if (!email.toLowerCase().endsWith('@gmail.com')) {
+            setSignupError('Only Gmail addresses (@gmail.com) are allowed.');
+            return false;
+        }
         if (password !== confirmPassword) {
             setSignupError('Passwords do not match.');
             return false;
@@ -250,17 +255,30 @@ const Login = () => {
                     const handleUserSignupSuccess = () => {
                         setSignupForm({ name: '', email: '', password: '', confirmPassword: '' });
                         setSignupError('');
-                        setIsLoginMode(true); // Switch to login mode
+                        // Redirect to email verification page with user's email
+                        navigate('/verify-email', { state: { email: signupForm.email } });
                     };
                     
                     showPopup(
-                        'Signup Successful!',
-                        'Your account has been created successfully! Click OK to continue to login.',
+                        'Check Your Email!',
+                        'We sent a 6-digit verification code to your email. Please check your inbox and enter the code to verify your account.',
                         'success',
                         handleUserSignupSuccess
                     );
                 } else {
-                    setSignupError(result.error || 'Signup failed. Please try again.');
+                    // Display clear error message for duplicate email
+                    const errorMessage = result.error || result.message || 'Signup failed. Please try again.';
+                    setSignupError(errorMessage);
+                    
+                    // Show popup for email already exists
+                    if (errorMessage.includes('already registered') || errorMessage.includes('already exists')) {
+                        showPopup(
+                            'Email Already Exists',
+                            errorMessage,
+                            'error',
+                            null
+                        );
+                    }
                 }
             }
         } catch (error) {
@@ -322,8 +340,9 @@ const Login = () => {
                     console.log('[LOGIN] Redirecting to society dashboard');
                     navigate('/subadmin');
                 } else {
-                    console.log('[LOGIN] Redirecting to user profile');
-                    navigate('/userprofile');
+                    console.log('[LOGIN] Redirecting to home page with user ID:', userData.id);
+                    // Redirect to home page with user ID
+                    navigate('/', { state: { userId: userData.id } });
                 }
             };
             

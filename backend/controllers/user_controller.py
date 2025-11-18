@@ -38,6 +38,10 @@ class UserController:
             tuple: (success: bool, message/user_id: str, additional_info: dict)
         """
         try:
+            # Restrict to Gmail addresses only
+            if not email.lower().endswith('@gmail.com'):
+                return False, "Only Gmail addresses (@gmail.com) are allowed", {}
+            
             db = get_db()
             users = user_collection(db)
             
@@ -45,7 +49,7 @@ class UserController:
             existing_user = users.find_one({'email': email})
             if existing_user:
                 if existing_user.get('is_verified', False):
-                    return False, "Email already registered and verified", {}
+                    return False, "This email is already registered. Please login or use a different email address.", {}
                 else:
                     # Email exists but not verified - allow re-registration
                     users.delete_one({'email': email})
@@ -66,16 +70,16 @@ class UserController:
             result = users.insert_one(user_data)
             user_id = str(result.inserted_id)
             
-            # Step 2: Generate verification token
-            token, token_doc = EmailService.create_verification_token(email)
+            # Step 2: Generate verification code
+            code, code_doc = EmailService.create_verification_code(email)
             
-            if not token:
-                # Rollback user creation if token generation fails
+            if not code:
+                # Rollback user creation if code generation fails
                 users.delete_one({'_id': result.inserted_id})
-                return False, f"Failed to create verification token: {token_doc}", {}
+                return False, f"Failed to create verification code: {code_doc}", {}
             
             # Step 3: Send verification email
-            email_sent, email_message = EmailService.send_verification_email(email, username, token)
+            email_sent, email_message = EmailService.send_verification_email(email, username, code)
             
             if not email_sent:
                 print(f"[SIGNUP WARNING] User created but email failed: {email_message}")
@@ -96,21 +100,21 @@ class UserController:
             return False, f"Signup failed: {str(e)}", {}
     
     @staticmethod
-    def verify_email(token):
+    def verify_email(code):
         """
-        Verify user's email using token
+        Verify user's email using 6-digit code
         
-        Step 4: Verify token (Activate account)
-        Step 5: Delete/expire token (Security)
+        Step 4: Verify code (Activate account)
+        Step 5: Delete/expire code (Security)
         
         Returns:
             tuple: (success: bool, message: str)
         """
         try:
-            # Step 4: Verify the token
-            token_valid, email_or_error = EmailService.verify_token(token)
+            # Step 4: Verify the code
+            code_valid, email_or_error = EmailService.verify_code(code)
             
-            if not token_valid:
+            if not code_valid:
                 return False, email_or_error
             
             email = email_or_error
@@ -127,7 +131,7 @@ class UserController:
             if result.modified_count == 0:
                 return False, "User not found or already verified"
             
-            # Step 5: Clean up old tokens (token already marked as used in verify_token)
+            # Step 5: Clean up old codes (code already marked as used in verify_code)
             print(f"[VERIFY EMAIL] ✅ Email {email} verified successfully")
             return True, "Email verified successfully! You can now log in."
             
@@ -157,20 +161,20 @@ class UserController:
             if user.get('is_verified', False):
                 return False, "This email is already verified. Please log in."
             
-            # Delete old tokens
+            # Delete old codes/tokens
             EmailService.delete_user_tokens(email)
             
-            # Generate new token
-            token, token_doc = EmailService.create_verification_token(email)
+            # Generate new verification code
+            code, code_doc = EmailService.create_verification_code(email)
             
-            if not token:
-                return False, f"Failed to create verification token: {token_doc}"
+            if not code:
+                return False, f"Failed to create verification code: {code_doc}"
             
             # Send new verification email
             email_sent, email_message = EmailService.send_verification_email(
                 email, 
                 user.get('username', 'User'), 
-                token
+                code
             )
             
             if not email_sent:
