@@ -6,6 +6,8 @@ import Navbar from '../../components/user/Navbar';
 import Footer from '../../components/user/Footer';
 import { FaMapMarkerAlt, FaStar, FaHome } from 'react-icons/fa';
 import userProfileAPI from '../../services/userProfileAPI';
+import reviewAPI from '../../services/reviewAPI';
+import { useAuth } from '../../context/AuthContext';
 
 // Import society images to use in the hero section
 import bahria from '../../assets/bahria.png';
@@ -15,10 +17,15 @@ import ghauri from '../../assets/Ghauri.png';
 const SocietyPlots = () => {
     const { societyId } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [plots, setPlots] = useState([]);
     const [currentSociety, setCurrentSociety] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [reviews, setReviews] = useState([]);
+    const [reviewsLoading, setReviewsLoading] = useState(false);
+    const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+    const [submittingReview, setSubmittingReview] = useState(false);
 
     // Fetch society and plots data from backend
     useEffect(() => {
@@ -33,9 +40,9 @@ const SocietyPlots = () => {
                 if (society) {
                     setCurrentSociety({
                         id: society._id,
-                        name: society.society_name,
+                        name: society.name,
                         description: society.description,
-                        image: society.logo || bahria, // Use society logo or default
+                        image: society.society_logo || bahria, // Use base64 logo from society_logo field
                         rating: society.rating || 4.5,
                         location: society.location,
                         availablePlots: 0, // Will be calculated from plots
@@ -66,30 +73,87 @@ const SocietyPlots = () => {
         fetchData();
     }, [societyId]);
 
-    // Sample reviews data - THIS WAS MISSING
-    const reviews = [
-        {
-            id: 1,
-            author: 'Ahmed Khan',
-            comment: 'Great society with excellent amenities and a peaceful environment. The process of buying a plot was smooth and transparent.',
-            rating: 5,
-            date: '2023-10-25'
-        },
-        {
-            id: 2,
-            author: 'Sara Ali',
-            comment: 'I am very happy with my plot purchase. The staff was helpful and provided all the necessary information.',
-            rating: 4,
-            date: '2023-09-18'
-        },
-        {
-            id: 3,
-            author: 'Usman Javed',
-            comment: 'The location is perfect, and the price was reasonable for the plot size. Highly recommended!',
-            rating: 5,
-            date: '2023-08-01'
-        },
-    ];
+    // Fetch reviews for this society
+    useEffect(() => {
+        const fetchReviews = async () => {
+            try {
+                setReviewsLoading(true);
+                const response = await reviewAPI.getReviewsByPlot(societyId);
+                if (response.success) {
+                    setReviews(response.data || []);
+                }
+            } catch (err) {
+                console.error('Error fetching reviews:', err);
+            } finally {
+                setReviewsLoading(false);
+            }
+        };
+
+        if (societyId) {
+            fetchReviews();
+        }
+    }, [societyId]);
+
+    // Handle review submission
+    const handleSubmitReview = async (e) => {
+        e.preventDefault();
+        
+        if (!user) {
+            alert('Please login to submit a review');
+            navigate('/login');
+            return;
+        }
+
+        if (!newReview.comment.trim()) {
+            alert('Please write a comment');
+            return;
+        }
+
+        try {
+            setSubmittingReview(true);
+            
+            // Check if token exists
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Your session has expired. Please login again.');
+                navigate('/login');
+                return;
+            }
+            
+            const response = await reviewAPI.createReview({
+                plot_id: societyId,
+                rating: newReview.rating,
+                comment: newReview.comment
+            });
+
+            if (response.success) {
+                alert('Review submitted successfully!');
+                setNewReview({ rating: 5, comment: '' });
+                // Refresh reviews
+                const reviewsResponse = await reviewAPI.getReviewsByPlot(societyId);
+                if (reviewsResponse.success) {
+                    setReviews(reviewsResponse.data || []);
+                }
+            } else {
+                // Check if token expired or unauthorized
+                if (response.expired || response.error?.toLowerCase().includes('expired') || 
+                    response.error?.toLowerCase().includes('unauthorized')) {
+                    alert('Your login session has expired. Please login again to submit a review.');
+                    // Clear user state
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    navigate('/login');
+                } else {
+                    alert(response.error || 'Failed to submit review');
+                }
+            }
+        } catch (err) {
+            console.error('Error submitting review:', err);
+            alert('Failed to submit review. Please try again.');
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
 
     // Handle loading state
     if (loading) {
@@ -263,22 +327,78 @@ const SocietyPlots = () => {
                             <h2 className="text-3xl font-bold text-[#2F3D57]">Customer Reviews</h2>
                             <p className="text-gray-600 mt-2">Hear what people are saying about {currentSociety.name}.</p>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {reviews.map((review) => (
-                                <div key={review.id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <div className="flex text-yellow-400">
-                                            {Array.from({ length: review.rating }, (_, i) => (
-                                                <FaStar key={i} />
+
+                        {/* Review Submission Form - Only for logged in users */}
+                        {user && (
+                            <div className="max-w-2xl mx-auto mb-12 bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                                <h3 className="text-xl font-bold text-[#2F3D57] mb-4">Write a Review</h3>
+                                <form onSubmit={handleSubmitReview}>
+                                    <div className="mb-4">
+                                        <label className="block text-gray-700 font-medium mb-2">Rating</label>
+                                        <div className="flex gap-2">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                    key={star}
+                                                    type="button"
+                                                    onClick={() => setNewReview({ ...newReview, rating: star })}
+                                                    className="text-3xl focus:outline-none transition-colors"
+                                                >
+                                                    <FaStar className={star <= newReview.rating ? 'text-yellow-400' : 'text-gray-300'} />
+                                                </button>
                                             ))}
                                         </div>
-                                        <span className="text-gray-600 text-sm">{review.date}</span>
                                     </div>
-                                    <p className="text-gray-800 italic mb-4">"{review.comment}"</p>
-                                    <p className="font-bold text-[#2F3D57]">- {review.author}</p>
-                                </div>
-                            ))}
-                        </div>
+                                    <div className="mb-4">
+                                        <label className="block text-gray-700 font-medium mb-2">Your Review</label>
+                                        <textarea
+                                            value={newReview.comment}
+                                            onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED7600]"
+                                            rows="4"
+                                            placeholder="Share your experience with this society..."
+                                            required
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={submittingReview}
+                                        className="w-full bg-[#ED7600] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#d66a00] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                    >
+                                        {submittingReview ? 'Submitting...' : 'Submit Review'}
+                                    </button>
+                                </form>
+                            </div>
+                        )}
+
+                        {/* Display Reviews */}
+                        {reviewsLoading ? (
+                            <div className="text-center py-8">
+                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#ED7600]"></div>
+                            </div>
+                        ) : reviews.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {reviews.map((review) => (
+                                    <div key={review._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="flex text-yellow-400">
+                                                {Array.from({ length: review.rating }, (_, i) => (
+                                                    <FaStar key={i} />
+                                                ))}
+                                            </div>
+                                            <span className="text-gray-600 text-sm">
+                                                {new Date(review.created_at).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <p className="text-gray-800 italic mb-4">"{review.comment}"</p>
+                                        <p className="font-bold text-[#2F3D57]">- {review.user_email}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-gray-600">
+                                <p className="text-lg">No reviews yet. Be the first to review {currentSociety.name}!</p>
+                            </div>
+                        )}
                     </div>
                 </section>
             </main>

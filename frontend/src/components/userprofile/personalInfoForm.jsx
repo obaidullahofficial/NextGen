@@ -81,14 +81,17 @@ const PersonalInfoForm = () => {
       const response = await userProfileAPI.updateProfile(formData);
       
       if (response.success) {
+        console.log('[PROFILE UPDATE] Full response:', response);
         console.log('[PROFILE UPDATE] Response data:', response.data);
+        console.log('[PROFILE UPDATE] All fields:', Object.keys(response.data));
         setMessage({ type: 'success', text: response.message });
         // Update AuthContext with new profile data
         if (response.data) {
           console.log('[PROFILE UPDATE] Updating context with:', {
             firstName: response.data.first_name,
             lastName: response.data.last_name,
-            profileImage: response.data.profile_image
+            profileImage: response.data.profile_image_url || response.data.profile_image,
+            allData: response.data
           });
           updateUserProfile(response.data);
         }

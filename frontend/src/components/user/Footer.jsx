@@ -31,22 +31,17 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/societies" className="text-gray-300 hover:text-[#ED7600] transition-colors flex items-center">
+                <Link to="/society" className="text-gray-300 hover:text-[#ED7600] transition-colors flex items-center">
                   <FaBuilding className="mr-2" /> Societies
                 </Link>
               </li>
               <li>
-                <Link to="/guidelines" className="text-gray-300 hover:text-[#ED7600] transition-colors flex items-center">
-                  <FaBook className="mr-2" /> Guidelines
-                </Link>
-              </li>
-              <li>
-                <Link to="/plot-selector" className="text-gray-300 hover:text-[#ED7600] transition-colors flex items-center">
+                <Link to="/society" className="text-gray-300 hover:text-[#ED7600] transition-colors flex items-center">
                   <FaMapMarkerAlt className="mr-2" /> Plot Selector
                 </Link>
               </li>
               <li>
-                <Link to="/modeling" className="text-gray-300 hover:text-[#ED7600] transition-colors flex items-center">
+                <Link to="/floor-plan/generate" className="text-gray-300 hover:text-[#ED7600] transition-colors flex items-center">
                   <FaCube className="mr-2" /> 2D/3D Modelling
                 </Link>
               </li>

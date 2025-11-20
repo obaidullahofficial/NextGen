@@ -63,12 +63,12 @@ const Navbar = () => {
           Societies
         </Link>
         <Link 
-          to="/contact" 
+          to="/offers" 
           className={`font-medium transition-colors ${
-            isActive('/contact') ? 'text-[#ED7600]' : 'text-gray-300 hover:text-[#ED7600]'
+            isActive('/offers') ? 'text-[#ED7600]' : 'text-gray-300 hover:text-[#ED7600]'
           }`}
         >
-          Contact
+          Offers
         </Link>
         
         {/* Show Profile Dropdown if logged in, otherwise show Login button */}
@@ -81,19 +81,28 @@ const Navbar = () => {
               {/* Profile Picture */}
               {user.profileImage ? (
                 <img 
-                  src={`http://localhost:5000${user.profileImage}`}
+                  src={`http://localhost:5000/api/file/${user.profileImage.replace(/^\//, '')}`}
                   alt="Profile"
                   className="w-10 h-10 rounded-full object-cover border-2 border-white hover:border-[#ED7600] transition-colors cursor-pointer"
+                  onError={(e) => {
+                    console.error('Image failed to load:', user.profileImage);
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
                 />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-[#ED7600] flex items-center justify-center text-white font-bold border-2 border-white hover:border-[#ED7600] transition-colors cursor-pointer">
+              ) : null}
+              {!user.profileImage || true ? (
+                <div 
+                  className="w-10 h-10 rounded-full bg-[#ED7600] flex items-center justify-center text-white font-bold border-2 border-white hover:border-[#ED7600] transition-colors cursor-pointer"
+                  style={{ display: user.profileImage ? 'none' : 'flex' }}
+                >
                   {user.firstName 
                     ? user.firstName.charAt(0).toUpperCase() 
                     : user.username 
                       ? user.username.charAt(0).toUpperCase() 
                       : user.email.charAt(0).toUpperCase()}
                 </div>
-              )}
+              ) : null}
             </button>
 
             {/* Dropdown Menu */}

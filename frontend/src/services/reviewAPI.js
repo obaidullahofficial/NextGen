@@ -112,9 +112,16 @@ class ReviewAPI {
   // POST /api/reviews - Create new review
   async createReview(reviewData) {
     try {
+      const token = this.getAuthToken();
+      console.log('Token exists:', !!token);
+      console.log('Token value:', token);
+      
+      const headers = this.getAuthHeaders();
+      console.log('Request headers:', headers);
+      
       const response = await fetch(`${API_BASE_URL}/reviews`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
+        headers: headers,
         body: JSON.stringify(reviewData)
       });
 
@@ -127,9 +134,16 @@ class ReviewAPI {
           message: data.message
         };
       } else {
+        // Check if token expired
+        if (response.status === 401) {
+          // Clear expired token
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
         return {
           success: false,
-          error: data.error || 'Failed to create review'
+          error: data.error || data.message || 'Failed to create review',
+          expired: response.status === 401
         };
       }
     } catch (error) {

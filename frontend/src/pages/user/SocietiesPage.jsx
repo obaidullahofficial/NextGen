@@ -94,9 +94,12 @@ const Societies = () => {
                     {/* Image Section */}
                     <div className="lg:w-2/5 relative overflow-hidden">
                       <img
-                        src={society.society_logo}
-                        alt={society.name}
+                        src={society.society_logo || societiesImg}
+                        alt={society.name || 'Society'}
                         className="w-full h-64 md:h-80 lg:h-full object-cover transition-transform duration-700 hover:scale-105"
+                        onError={(e) => {
+                          e.target.src = societiesImg;
+                        }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                       {/* Price Badge */}

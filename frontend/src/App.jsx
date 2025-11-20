@@ -27,6 +27,7 @@ import RegistrationForm from './pages/RegistrationForm/RegistrationForm';
 import UserProfileLayout from './layouts/UserProfileLayout';
 import SocietyPlots from "./pages/user/SocietyPlots";
 import GenerateFloorPlan from './pages/user/GenerateFloorPlan';
+import OffersPage from './pages/user/OffersPage';
 import { FloorPlanGenerator as FloorPlanGen } from './pages/FloorPlanGeneration';
 import FloorPlanCustomization from './pages/FloorPlanGeneration/FloorPlanCustomization';
 
@@ -81,6 +82,7 @@ function App() {
             <Route path="society" element={<SocietiesPage />} />
             <Route path="societies/:societyId/plots" element={<SocietyPlots />} />
             <Route path="generate-floor-plan/:societyId/:plotId" element={<GenerateFloorPlan />} />
+            <Route path="offers" element={<OffersPage />} />
           </Route>
 
           {/* Subadmin Routes - Protected */}

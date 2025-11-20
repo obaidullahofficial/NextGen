@@ -26,24 +26,66 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.error || data.message || 'Login failed');
       }
       
-      // Store user data from backend response
+      // Store token first if available
+      if (data.access_token) {
+        localStorage.setItem('token', data.access_token);
+      }
+      
+      // Fetch user profile data
+      let profileData = null;
+      try {
+        const profileResponse = await fetch(`${API_URL}/profile`, {
+          headers: {
+            'Authorization': `Bearer ${data.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (profileResponse.ok) {
+          const profileResult = await profileResponse.json();
+          console.log('Profile API response:', profileResult);
+          if (profileResult.success && profileResult.data) {
+            profileData = profileResult.data;
+            console.log('Profile data fetched:', profileData);
+          } else {
+            console.log('Profile not found or not created yet');
+          }
+        } else {
+          console.log('Profile API returned status:', profileResponse.status);
+        }
+      } catch (profileError) {
+        console.log('Could not fetch profile data:', profileError);
+        // Continue with basic user data if profile fetch fails
+      }
+      
+      // Build user data with profile information if available
+      let profileImagePath = null;
+      if (profileData?.profile_image_url || profileData?.profile_image) {
+        profileImagePath = profileData.profile_image_url || profileData.profile_image;
+        // Fix path format
+        profileImagePath = profileImagePath.replace(/\\/g, '/');
+        if (!profileImagePath.startsWith('/')) {
+          profileImagePath = '/' + profileImagePath;
+        }
+      }
+      
       const userData = {
-        id: data.user?.id,  // Include user ID
+        id: data.user?.id,
         email: data.email || email,
         role: data.user?.role || data.role,
         username: data.user?.username,
-        societyId: data.societyId
+        societyId: data.societyId,
+        // Add profile data if available
+        firstName: profileData?.first_name || null,
+        lastName: profileData?.last_name || null,
+        phone: profileData?.phone || null,
+        profileImage: profileImagePath
       };
 
       console.log('Storing user data:', userData); // Debug log
 
       // Save to localStorage
       localStorage.setItem('user', JSON.stringify(userData));
-      
-      // Store token if available
-      if (data.access_token) {
-        localStorage.setItem('token', data.access_token);
-      }
       
       // Update context
       setUser(userData);
@@ -60,13 +102,26 @@ export const AuthProvider = ({ children }) => {
       console.log('[AUTH CONTEXT] Current user:', user);
       console.log('[AUTH CONTEXT] Profile data received:', profileData);
       
+      // Get profile image path and fix the format
+      let profileImagePath = profileData.profile_image_url || profileData.profile_image;
+      
+      if (profileImagePath) {
+        // Replace backslashes with forward slashes
+        profileImagePath = profileImagePath.replace(/\\/g, '/');
+        
+        // Ensure it starts with a forward slash
+        if (!profileImagePath.startsWith('/')) {
+          profileImagePath = '/' + profileImagePath;
+        }
+      }
+      
       // Update user object with profile data
       const updatedUser = {
         ...user,
         firstName: profileData.first_name,
         lastName: profileData.last_name,
         phone: profileData.phone,
-        profileImage: profileData.profile_image,
+        profileImage: profileImagePath,
       };
       
       console.log('[AUTH CONTEXT] Updated user object:', updatedUser);
