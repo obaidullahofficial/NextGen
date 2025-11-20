@@ -55,6 +55,33 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUserProfile = (profileData) => {
+    try {
+      console.log('[AUTH CONTEXT] Current user:', user);
+      console.log('[AUTH CONTEXT] Profile data received:', profileData);
+      
+      // Update user object with profile data
+      const updatedUser = {
+        ...user,
+        firstName: profileData.first_name,
+        lastName: profileData.last_name,
+        phone: profileData.phone,
+        profileImage: profileData.profile_image,
+      };
+      
+      console.log('[AUTH CONTEXT] Updated user object:', updatedUser);
+      
+      // Update localStorage and context
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      
+      return updatedUser;
+    } catch (error) {
+      console.error('Error updating user profile in context:', error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       // Call logout endpoint using service (for server-side logout)
@@ -115,6 +142,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
+    updateUserProfile,
     checkAuth,
     hasRole,
     belongsToSociety,

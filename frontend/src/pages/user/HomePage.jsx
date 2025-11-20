@@ -255,8 +255,27 @@ const HomePage = () => {
           <div className="md:w-1/2 mb-12 md:mb-0 pl-12 md:pl-20 lg:pl-28 xl:pl-36">
             {/* Welcome message */}
             {user && (
-              <div className="mb-4 p-4 bg-[#1E2936] rounded-lg border border-[#ED7600]">
-                <p className="text-sm text-gray-300">Welcome back, <span className="text-[#ED7600] font-semibold">{user.username || user.email}</span>!</p>
+              <div className="mb-4 p-4 bg-[#1E2936] rounded-lg border border-[#ED7600] flex items-center space-x-3">
+                {user.profileImage ? (
+                  <img 
+                    src={`http://localhost:5000${user.profileImage}`}
+                    alt="Profile"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-[#ED7600]"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-[#ED7600] flex items-center justify-center text-white font-bold">
+                    {user.firstName 
+                      ? user.firstName.charAt(0).toUpperCase() 
+                      : user.username 
+                        ? user.username.charAt(0).toUpperCase() 
+                        : user.email.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <p className="text-sm text-gray-300">Welcome back, <span className="text-[#ED7600] font-semibold">
+                  {user.firstName && user.lastName 
+                    ? `${user.firstName} ${user.lastName}` 
+                    : user.username || user.email}
+                </span>!</p>
               </div>
             )}
             

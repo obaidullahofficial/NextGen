@@ -79,9 +79,21 @@ const Navbar = () => {
               className="flex items-center space-x-2 focus:outline-none"
             >
               {/* Profile Picture */}
-              <div className="w-10 h-10 rounded-full bg-[#ED7600] flex items-center justify-center text-white font-bold border-2 border-white hover:border-[#ED7600] transition-colors cursor-pointer">
-                {user.username ? user.username.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
-              </div>
+              {user.profileImage ? (
+                <img 
+                  src={`http://localhost:5000${user.profileImage}`}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-white hover:border-[#ED7600] transition-colors cursor-pointer"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-[#ED7600] flex items-center justify-center text-white font-bold border-2 border-white hover:border-[#ED7600] transition-colors cursor-pointer">
+                  {user.firstName 
+                    ? user.firstName.charAt(0).toUpperCase() 
+                    : user.username 
+                      ? user.username.charAt(0).toUpperCase() 
+                      : user.email.charAt(0).toUpperCase()}
+                </div>
+              )}
             </button>
 
             {/* Dropdown Menu */}
@@ -90,7 +102,9 @@ const Navbar = () => {
                 {/* User Info */}
                 <div className="px-4 py-3 border-b border-gray-200">
                   <p className="text-sm font-semibold text-gray-800">
-                    {user.username || 'User'}
+                    {user.firstName && user.lastName 
+                      ? `${user.firstName} ${user.lastName}` 
+                      : user.username || 'User'}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
                     {user.email}

@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { userProfileAPI, createProfileFormData } from '../../services/userProfileAPI';
+import { useAuth } from '../../context/AuthContext';
 
 const PersonalInfoForm = () => {
+  const navigate = useNavigate();
+  const { updateUserProfile } = useAuth();
   const [form, setForm] = useState({
     cnic: '',
     cnicFront: null,
@@ -77,16 +81,21 @@ const PersonalInfoForm = () => {
       const response = await userProfileAPI.updateProfile(formData);
       
       if (response.success) {
+        console.log('[PROFILE UPDATE] Response data:', response.data);
         setMessage({ type: 'success', text: response.message });
-        // Reload profile to show updated data
-        await loadProfile();
-        // Clear file inputs
-        setForm(prev => ({
-          ...prev,
-          profileImage: null,
-          cnicFront: null,
-          cnicBack: null,
-        }));
+        // Update AuthContext with new profile data
+        if (response.data) {
+          console.log('[PROFILE UPDATE] Updating context with:', {
+            firstName: response.data.first_name,
+            lastName: response.data.last_name,
+            profileImage: response.data.profile_image
+          });
+          updateUserProfile(response.data);
+        }
+        // Show success message briefly then redirect to home
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
       }
     } catch (error) {
       setMessage({ type: 'error', text: error.message || 'Failed to update profile' });
