@@ -266,6 +266,9 @@ const AddPlotForm = ({ onSubmit, onCancel}) => {
       // Add amenities - ensure we append amenities[] array
       const amenities = getSelectedAmenities(form.amenities);
       
+      console.log('[AddPlot DEBUG] Selected amenities:', amenities);
+      console.log('[AddPlot DEBUG] Form amenities object:', form.amenities);
+      
       // First, append empty array marker for Flask to detect
       if (amenities.length > 0) {
         formData.append('amenities[]', '');
@@ -273,6 +276,7 @@ const AddPlotForm = ({ onSubmit, onCancel}) => {
       
       // Then append each amenity with index
       amenities.forEach((amenity, index) => {
+        console.log(`[AddPlot DEBUG] Appending amenities[${index}] = ${amenity}`);
         formData.append(`amenities[${index}]`, amenity);
       });
       
@@ -618,11 +622,11 @@ const AddPlotForm = ({ onSubmit, onCancel}) => {
           <div className="grid grid-cols-2 gap-2">
             {[
               { id: "gatedCommunity", label: "Gated Community" },
-              { id: "security", label: "24/7 Security" },
-              { id: "electricity", label: "Underground Electricity" },
+              { id: "security", label: "Security" },
+              { id: "electricity", label: "Electricity" },
               { id: "waterSupply", label: "Water Supply" },
-              { id: "parks", label: "Green Parks" },
-              { id: "mosque", label: "Mosque Nearby" }
+              { id: "parks", label: "Parks" },
+              { id: "mosque", label: "Mosque" }
             ].map((amenity) => (
               <label key={amenity.id} className="flex items-center">
                 <input

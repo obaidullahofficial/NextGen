@@ -45,6 +45,18 @@ const FloorPlanGenerator = () => {
     const loadImportedPlan = async () => {
       try {
         const res = await fetch(importUrl);
+        
+        if (!res.ok) {
+          if (res.status === 404) {
+            alert('❌ Floor plan file not found!\n\nThe file was referenced in the database but does not exist on the server. The file may have been deleted or never uploaded properly.\n\nPlease ask the user to re-submit their floor plan.');
+          } else if (res.status === 403) {
+            alert('❌ Access denied to floor plan file.');
+          } else {
+            alert(`❌ Error loading floor plan: ${res.status} ${res.statusText}`);
+          }
+          return;
+        }
+        
         const data = await res.json();
 
         // Support either a single plan object or an array of plans
@@ -56,7 +68,7 @@ const FloorPlanGenerator = () => {
         setCurrentStep(3); // Jump directly to review/visualization step
       } catch (err) {
         console.error('Failed to import floor plan JSON:', err);
-        alert('Could not load floor plan JSON from approval request.');
+        alert('❌ Could not load floor plan JSON from approval request.\n\nError: ' + err.message);
       }
     };
 

@@ -35,6 +35,33 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
 
   const areaOptions = ["5 Marla", "7 Marla", "10 Marla", "1 Kanal"];
 
+  // Map internal amenity keys to human-readable labels used in FormData (same as AddPlot submission)
+  const amenityMap = {
+    gatedCommunity: "Gated Community",
+    security: "Security",
+    electricity: "Electricity",
+    waterSupply: "Water Supply",
+    parks: "Parks",
+    mosque: "Mosque"
+  };
+
+  // Support multiple possible stored labels coming back from backend
+  // so old data and new data both map correctly to checkboxes
+  const amenityStorageAliases = {
+    gatedCommunity: ["Gated Community"],
+    security: ["Security", "24/7 Security"],
+    electricity: ["Electricity", "Underground Electricity"],
+    waterSupply: ["Water Supply"],
+    parks: ["Parks", "Green Parks"],
+    mosque: ["Mosque", "Mosque Nearby"]
+  };
+
+  const hasStoredAmenity = (plotAmenities, key) => {
+    if (!Array.isArray(plotAmenities)) return false;
+    const aliases = amenityStorageAliases[key] || [];
+    return aliases.some((label) => plotAmenities.includes(label));
+  };
+
   useEffect(() => {
     if (plot) {
       console.log('EditPlot - FULL plot data received:', JSON.stringify(plot, null, 2));
@@ -67,12 +94,13 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
         contactPhone: formattedPhone,
         images: [],
         amenities: {
-          gatedCommunity: plot.amenities?.includes("gatedCommunity") || false,
-          security: plot.amenities?.includes("security") || false,
-          electricity: plot.amenities?.includes("electricity") || false,
-          waterSupply: plot.amenities?.includes("waterSupply") || false,
-          parks: plot.amenities?.includes("parks") || false,
-          mosque: plot.amenities?.includes("mosque") || false
+          // Check for all known label variants stored in backend
+          gatedCommunity: hasStoredAmenity(plot.amenities, 'gatedCommunity'),
+          security: hasStoredAmenity(plot.amenities, 'security'),
+          electricity: hasStoredAmenity(plot.amenities, 'electricity'),
+          waterSupply: hasStoredAmenity(plot.amenities, 'waterSupply'),
+          parks: hasStoredAmenity(plot.amenities, 'parks'),
+          mosque: hasStoredAmenity(plot.amenities, 'mosque')
         }
       });
       
@@ -283,7 +311,7 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
   const getSelectedAmenities = (amenitiesObj) =>
     Object.entries(amenitiesObj)
       .filter((entry) => entry[1])
-      .map((entry) => entry[0]);
+      .map(([key]) => amenityMap[key] || key);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -350,6 +378,9 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
       // Add amenities - ensure we append amenities[] array
       const amenities = getSelectedAmenities(form.amenities);
       
+      console.log('[EditPlot DEBUG] Selected amenities:', amenities);
+      console.log('[EditPlot DEBUG] Form amenities object:', form.amenities);
+      
       // First, append empty array marker for Flask to detect
       if (amenities.length > 0) {
         formData.append('amenities[]', '');
@@ -357,6 +388,7 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
       
       // Then append each amenity with index
       amenities.forEach((amenity, index) => {
+        console.log(`[EditPlot DEBUG] Appending amenities[${index}] = ${amenity}`);
         formData.append(`amenities[${index}]`, amenity);
       });
       
@@ -751,60 +783,38 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
         <div className="mt-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">Amenities</label>
           <div className="grid grid-cols-2 gap-2">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={form.amenities.gatedCommunity}
-                onChange={() => handleAmenityChange("gatedCommunity")}
-                className="mr-2"
-              />
-              Gated Community
-            </label>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={form.amenities.security}
-                onChange={() => handleAmenityChange("security")}
-                className="mr-2"
-              />
-              Security
-            </label>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={form.amenities.electricity}
-                onChange={() => handleAmenityChange("electricity")}
-                className="mr-2"
-              />
-              Electricity
-            </label>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={form.amenities.waterSupply}
-                onChange={() => handleAmenityChange("waterSupply")}
-                className="mr-2"
-              />
-              Water Supply
-            </label>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={form.amenities.parks}
-                onChange={() => handleAmenityChange("parks")}
-                className="mr-2"
-              />
-              Parks
-            </label>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={form.amenities.mosque}
-                onChange={() => handleAmenityChange("mosque")}
-                className="mr-2"
-              />
-              Mosque
-            </label>
+            {[
+              { id: "gatedCommunity", label: "Gated Community" },
+              { id: "security", label: "Security" },
+              { id: "electricity", label: "Electricity" },
+              { id: "waterSupply", label: "Water Supply" },
+              { id: "parks", label: "Parks" },
+              { id: "mosque", label: "Mosque" }
+            ].map((amenity) => (
+              <label 
+                key={amenity.id} 
+                className={`flex items-center p-2 rounded-md transition-colors ${
+                  form.amenities[amenity.id] 
+                    ? 'bg-orange-50 border border-[#ED7600]' 
+                    : 'hover:bg-gray-50'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={form.amenities[amenity.id]}
+                  onChange={() => handleAmenityChange(amenity.id)}
+                  className="mr-2 text-[#ED7600] focus:ring-[#ED7600]"
+                />
+                <span className={form.amenities[amenity.id] ? 'font-medium text-[#ED7600]' : ''}>
+                  {amenity.label}
+                </span>
+                {form.amenities[amenity.id] && (
+                  <svg className="ml-auto h-5 w-5 text-[#ED7600]" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </label>
+            ))}
           </div>
         </div>
         {/* Form Actions */}

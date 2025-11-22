@@ -56,7 +56,16 @@ class PlotController:
                 
                 # Handle nested array fields from form data
                 data['description'] = [request.form.get(f'description[{i}]') for i in range(len(request.form.getlist('description[]')))]
-                data['amenities'] = [request.form.get(f'amenities[{i}]') for i in range(len(request.form.getlist('amenities[]')))]
+                # Collect all amenities from amenities[0], amenities[1], etc.
+                amenities_list = []
+                i = 0
+                while f'amenities[{i}]' in request.form:
+                    amenity = request.form.get(f'amenities[{i}]')
+                    if amenity and amenity.strip():  # Filter out empty strings
+                        amenities_list.append(amenity)
+                    i += 1
+                data['amenities'] = amenities_list
+                print(f"[DEBUG] Parsed amenities: {data['amenities']}")
                 
                 # Handle nested object field from form data
                 seller = {}
@@ -216,7 +225,16 @@ class PlotController:
                 
                 # Handle nested array and object fields
                 data['description'] = [request.form.get(f'description[{i}]') for i in range(len(request.form.getlist('description[]')))]
-                data['amenities'] = [request.form.get(f'amenities[{i}]') for i in range(len(request.form.getlist('amenities[]')))]
+                # Collect all amenities from amenities[0], amenities[1], etc.
+                amenities_list = []
+                i = 0
+                while f'amenities[{i}]' in request.form:
+                    amenity = request.form.get(f'amenities[{i}]')
+                    if amenity and amenity.strip():  # Filter out empty strings
+                        amenities_list.append(amenity)
+                    i += 1
+                data['amenities'] = amenities_list
+                print(f"[DEBUG UPDATE] Parsed amenities: {data['amenities']}")
                 seller = {}
                 for key in request.form.keys():
                     if key.startswith('seller['):

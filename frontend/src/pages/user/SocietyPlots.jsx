@@ -11,8 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 
 // Import society images to use in the hero section
 import bahria from '../../assets/bahria.png';
-import cda from '../../assets/CDA.png';
-import ghauri from '../../assets/Ghauri.png';
+
 
 const SocietyPlots = () => {
     const { societyId } = useParams();

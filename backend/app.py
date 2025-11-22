@@ -72,25 +72,52 @@ UPLOAD_ROOT = os.path.join(os.getcwd(), 'uploads')
 
 @app.route('/api/file/<path:filepath>', methods=['GET'])
 def serve_uploaded_file(filepath):
-    """Serve uploaded files (e.g., floor plan PDFs) in a safe way.
+    """Serve uploaded files (e.g., floor plan PDFs/JSON) in a safe way.
 
     The `filepath` is stored in the database, typically starting with
-    "uploads/" (e.g., "uploads/user_profiles/user_<id>/floor_plans/file.pdf").
+    "uploads/" (e.g., "uploads/user_profiles/user_<id>/floor_plans/file.json").
     This endpoint ensures we only serve files from the `uploads` directory.
     """
+    print(f"[FILE SERVE] Requested: {filepath}")
+    
+    # Normalize path separators for cross-platform compatibility
+    # Replace forward slashes with OS-specific separator
+    filepath = filepath.replace('/', os.sep)
+    
     # Normalize path and ensure it stays within the uploads directory
     normalized = os.path.normpath(filepath)
     full_path = os.path.normpath(os.path.join(os.getcwd(), normalized))
+    
+    print(f"[FILE SERVE] Full path: {full_path}")
 
     # Security check: file must be inside the UPLOAD_ROOT directory
-    if not full_path.startswith(UPLOAD_ROOT):
+    # Use case-insensitive comparison for Windows
+    if not os.path.normcase(full_path).startswith(os.path.normcase(UPLOAD_ROOT)):
+        print(f"[FILE SERVE] Security error - path outside uploads")
         abort(403)
 
-    if not os.path.exists(full_path) or not os.path.isfile(full_path):
+    if not os.path.exists(full_path):
+        print(f"[FILE SERVE] File not found! Path in DB but file missing on disk.")
+        abort(404)
+        
+    if not os.path.isfile(full_path):
+        print(f"[FILE SERVE] Path is not a file")
         abort(404)
 
-    # Let Flask infer the correct MIME type (PDF/image/etc.)
-    return send_file(full_path, as_attachment=False)
+    # Determine MIME type based on file extension
+    _, ext = os.path.splitext(full_path)
+    mimetype = None
+    if ext.lower() == '.json':
+        mimetype = 'application/json'
+    elif ext.lower() == '.pdf':
+        mimetype = 'application/pdf'
+    elif ext.lower() in ['.jpg', '.jpeg']:
+        mimetype = 'image/jpeg'
+    elif ext.lower() == '.png':
+        mimetype = 'image/png'
+    
+    # Serve file with explicit MIME type
+    return send_file(full_path, mimetype=mimetype, as_attachment=False)
 
 
 @app.route('/api/db-test')
