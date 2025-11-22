@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/* Custom animations for society profile components */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animation classes */
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.4s ease-out;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out;
+}
+
+/* Custom hover effects */
+.hover-lift:hover {
+  transform: translateY(-2px);
+  transition: all 0.2s ease-in-out;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 10px 25px rgba(237, 118, 0, 0.3);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Smooth transitions for all elements */
+* {
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}

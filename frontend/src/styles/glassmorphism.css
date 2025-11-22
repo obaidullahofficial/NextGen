@@ -1,0 +1,57 @@
+/* Glassmorphism Modal Styles */
+
+/* Base backdrop with blur effect */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Base modal with glass effect */
+.modal-glass {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Form modal with dark glass effect */
+.modal-dark-glass {
+  background: rgba(47, 61, 87, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Modal animation */
+.modal-animate {
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Browser compatibility for older browsers */
+@supports not (backdrop-filter: blur()) {
+  .modal-backdrop {
+    background: rgba(0, 0, 0, 0.4);
+  }
+  
+  .modal-glass {
+    background: rgba(255, 255, 255, 0.98);
+  }
+  
+  .modal-dark-glass {
+    background: rgba(47, 61, 87, 0.98);
+  }
+}
