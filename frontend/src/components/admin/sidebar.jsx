@@ -10,6 +10,7 @@ import {
   Building2,
   MessageSquare,
   BarChart3,
+  LogOut,
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -65,55 +66,58 @@ const Sidebar = () => {
           <p style={styles.architectTitle}>NextGenArchitect</p>
         </div>
       </div>
-      <nav>
-        {menuItems.map((item) => {
-          const isActive =
-            location.pathname === item.path ||
-            (item.name === "Dashboard" && location.pathname === "/");
-          const isHovered = hoveredItem === item.name;
+      <nav style={styles.navContainer}>
+        <div>
+          {menuItems.map((item) => {
+            const isActive =
+              location.pathname === item.path ||
+              (item.name === "Dashboard" && location.pathname === "/");
+            const isHovered = hoveredItem === item.name;
 
-          return (
-            <Link
-              key={item.name}
-              to={item.path}
-              onMouseEnter={() => setHoveredItem(item.name)}
-              onMouseLeave={() => setHoveredItem(null)}
-              style={{
-                ...styles.menuItem,
-                backgroundColor: isActive
-                  ? "#ed7600"
-                  : isHovered
-                  ? "#ffc100"
-                  : "transparent",
-                color: isActive || isHovered ? "#fff" : "#eee",
-                textDecoration: "none",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-              }}
-            >
-              {item.icon}
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
-        {/* Logout Button at the bottom */}
-        <button
-          onClick={handleLogout}
-          style={{
-            ...styles.menuItem,
-            backgroundColor: '#b91c1c',
-            color: '#fff',
-            marginTop: 'auto',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            fontWeight: 700,
-          }}
-        >
-          {/* You can use an icon here if you want */}
-          Logout
-        </button>
+            return (
+              <Link
+                key={item.name}
+                to={item.path}
+                onMouseEnter={() => setHoveredItem(item.name)}
+                onMouseLeave={() => setHoveredItem(null)}
+                style={{
+                  ...styles.menuItem,
+                  backgroundColor: isActive
+                    ? "#ed7600"
+                    : isHovered
+                    ? "#ffc100"
+                    : "transparent",
+                  color: isActive || isHovered ? "#fff" : "#eee",
+                  textDecoration: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                }}
+              >
+                {item.icon}
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+        
+        {/* Bottom-aligned Logout Button */}
+        <div style={styles.bottomSection}>
+          <div style={styles.divider}></div>
+          <button
+            onClick={handleLogout}
+            style={styles.logoutButton}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#dc2626';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <LogOut size={18} />
+            <span>Logout</span>
+          </button>
+        </div>
       </nav>
     </div>
   );
@@ -127,11 +131,12 @@ const styles = {
     padding: "20px",
     boxSizing: "border-box",
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-     position: 'sticky',
+    position: 'sticky',
     top: 0,
     color: 'white',
     overflowY: 'auto',
-
+    display: 'flex',
+    flexDirection: 'column',
   },
   header: {
     marginBottom: "30px",
@@ -165,6 +170,12 @@ const styles = {
     fontWeight: "600",
     fontSize: "21px",
   },
+  navContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    justifyContent: 'space-between',
+  },
   menuItem: {
     padding: "12px 15px",
     borderRadius: "6px",
@@ -172,6 +183,28 @@ const styles = {
     marginBottom: "10px",
     fontWeight: "600",
     transition: "all 0.3s ease",
+  },
+  bottomSection: {
+    marginTop: 'auto',
+  },
+  divider: {
+    borderTop: "1px solid #455a75",
+    marginBottom: "10px",
+  },
+  logoutButton: {
+    width: '100%',
+    padding: "12px 15px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "600",
+    transition: "all 0.3s ease",
+    backgroundColor: 'transparent',
+    color: '#eee',
+    border: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    fontSize: '14px',
   },
 };
 

@@ -145,7 +145,7 @@ class AdvertisementController:
             }
 
     @staticmethod
-    def update_advertisement(advertisement_id, update_data, user_email):
+    def update_advertisement(advertisement_id, update_data, user_email, user_role=None):
         """Update advertisement (only by creator or admin)"""
         try:
             # Validate ObjectId
@@ -165,10 +165,13 @@ class AdvertisementController:
                     "error": "Advertisement not found"
                 }
             
+            # Debug logging
+            print(f"[UPDATE AD] User: {user_email}, Role: {user_role}")
+            print(f"[UPDATE AD] Creator: {existing_ad.get('created_by')}")
+            print(f"[UPDATE AD] Is Admin: {user_role == 'admin'}")
+            
             # Check permission (creator or admin can update)
-            if existing_ad['created_by'] != user_email:
-                # Here you can add admin check if needed
-                # For now, only creator can update
+            if existing_ad['created_by'] != user_email and user_role != 'admin':
                 return {
                     "success": False,
                     "error": "You don't have permission to update this advertisement"
@@ -237,7 +240,7 @@ class AdvertisementController:
             }
 
     @staticmethod
-    def delete_advertisement(advertisement_id, user_email):
+    def delete_advertisement(advertisement_id, user_email, user_role=None):
         """Delete advertisement (only by creator or admin)"""
         try:
             # Validate ObjectId
@@ -249,7 +252,7 @@ class AdvertisementController:
             
             advertisement_model = Advertisement()
             
-            # Check if advertisement exists and user has permission
+            # Check if advertisement exists
             existing_ad = advertisement_model.get_advertisement_by_id(advertisement_id)
             if not existing_ad:
                 return {
@@ -258,9 +261,7 @@ class AdvertisementController:
                 }
             
             # Check permission (creator or admin can delete)
-            if existing_ad['created_by'] != user_email:
-                # Here you can add admin check if needed
-                # For now, only creator can delete
+            if existing_ad['created_by'] != user_email and user_role != 'admin':
                 return {
                     "success": False,
                     "error": "You don't have permission to delete this advertisement"

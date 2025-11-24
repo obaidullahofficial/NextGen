@@ -201,7 +201,7 @@ def get_user_analytics():
             "error": f"Failed to fetch user analytics: {str(e)}"
         }), 500
 
-# Society registration routes have been moved to registration_form_routes.py
+# Society registration routes have been moved to society_registration_form_routes.py
 
 @user_bp.route('/check-email', methods=['POST'])
 def check_email():
@@ -226,7 +226,7 @@ def check_email():
     except Exception as e:
         return jsonify({"error": f"Failed to check email: {str(e)}"}), 500
 
-# Society signup route has been moved to registration_form_routes.py
+# Society signup route has been moved to society_registration_form_routes.py
 
 # ============================================================
 # EMAIL VERIFICATION ROUTES
@@ -257,7 +257,6 @@ def signup():
         email = data.get('email')
         password = data.get('password')
         role = data.get('role', 'user')
-        society_id = data.get('society_id')
         
         # Validate email domain (only Gmail for this requirement)
         if not email.lower().endswith('@gmail.com'):
@@ -270,7 +269,7 @@ def signup():
         
         # Call controller to create user and send verification email
         success, message, info = UserController.signup_user(
-            username, email, password, role, society_id
+            username, email, password, role
         )
         
         if success:
@@ -520,10 +519,33 @@ def login():
 
     # Quick society status check only for society users (optimized)
     if user['role'] == 'society':
-        from controllers.registration_form_controller import RegistrationFormController
+        from controllers.society_registration_form_controller import SocietyRegistrationFormController
         
         # Use the controller to check society status
-        society_status = RegistrationFormController.check_society_status(email)
+        society_status = SocietyRegistrationFormController.check_society_status(email)
+        
+        # If no registration form submitted, allow login but flag it
+        if society_status is None:
+            print(f"[LOGIN] Society user {email} has no registration form submitted")
+            # Allow login but return flag so frontend can redirect to registration form
+            access_token = create_access_token(
+                identity=email,
+                additional_claims={'role': user['role']}
+            )
+            
+            return jsonify({
+                "success": True,
+                "access_token": access_token,
+                "user": {
+                    "id": user.get('_id'),
+                    "email": email,
+                    "role": user['role'],
+                    "username": user.get('username', ''),
+                    "is_admin": user.get('role') == 'admin'
+                },
+                "registration_required": True,
+                "message": "Please complete your society registration form."
+            }), 200
         
         if society_status == 'pending':
             return jsonify({
@@ -568,8 +590,11 @@ def login():
             db = get_db()
             profiles = society_profile_collection(db)
             
+            # Get user_id for profile lookup
+            user_id = str(user['_id'])
+            
             # Quick check if profile exists (only _id field)
-            profile_exists = profiles.find_one({'user_email': email}, {'_id': 1}) is not None
+            profile_exists = profiles.find_one({'user_id': user_id}, {'_id': 1}) is not None
             
             response_data.update({
                 "profile_exists": profile_exists,
@@ -771,10 +796,33 @@ def google_login():
                 
                 # Check society status if applicable
                 if existing_user['role'] == 'society':
-                    from controllers.registration_form_controller import RegistrationFormController
+                    from controllers.society_registration_form_controller import SocietyRegistrationFormController
                     
                     # Use the controller to check society status
-                    society_status = RegistrationFormController.check_society_status(google_email)
+                    society_status = SocietyRegistrationFormController.check_society_status(google_email)
+                    
+                    # If no registration form submitted, allow login but flag it
+                    if society_status is None:
+                        print(f"[GOOGLE LOGIN] Society user {google_email} has no registration form submitted")
+                        # Allow login but return flag so frontend can redirect to registration form
+                        access_token = create_access_token(
+                            identity=google_email,
+                            additional_claims={'role': existing_user['role']}
+                        )
+                        
+                        return jsonify({
+                            "success": True,
+                            "access_token": access_token,
+                            "user": {
+                                "id": existing_user.get('_id'),
+                                "email": google_email,
+                                "role": existing_user['role'],
+                                "username": existing_user.get('username', google_name),
+                                "is_admin": existing_user.get('role') == 'admin'
+                            },
+                            "registration_required": True,
+                            "message": "Please complete your society registration form."
+                        }), 200
                     
                     if society_status == 'pending':
                         return jsonify({
@@ -815,8 +863,9 @@ def google_login():
                 # Add profile info for society users
                 if existing_user['role'] == 'society':
                     try:
+                        user_id = str(existing_user['_id'])
                         profiles = society_profile_collection(db)
-                        profile_exists = profiles.find_one({'user_email': google_email}, {'_id': 1}) is not None
+                        profile_exists = profiles.find_one({'user_id': user_id}, {'_id': 1}) is not None
                         
                         response_data.update({
                             "profile_exists": profile_exists,
@@ -886,7 +935,7 @@ def google_login():
         print(f"[GOOGLE {intent.upper()}] General error: {str(e)}")
         return jsonify({"error": "Google authentication failed", "details": str(e)}), 500
 
-# Society information route has been moved to registration_form_routes.py
+# Society information route has been moved to society_registration_form_routes.py
 
 @user_bp.route('/logout', methods=['POST'])
 def logout():
@@ -1210,7 +1259,7 @@ def bulk_delete_users():
         print(f"[BULK DELETE ERROR] {str(e)}")
         return jsonify({"success": False, "message": "Failed to delete users"}), 500
 
-# Registration forms route has been moved to registration_form_routes.py
+# Registration forms route has been moved to society_registration_form_routes.py
         
     except Exception as e:
         print(f"[GET REGISTRATION FORMS ERROR] {str(e)}")

@@ -2,36 +2,49 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from utils.db import get_db
 from models.society_profile import society_profile_collection
+from models.user import user_collection
 import base64
 from datetime import datetime
 
 society_profile_bp = Blueprint('society_profile', __name__)
+
+def get_user_id_from_email(email):
+    """Helper function to get user_id from email"""
+    db = get_db()
+    users = user_collection(db)
+    user = users.find_one({'email': email}, {'_id': 1})
+    return str(user['_id']) if user else None
 
 @society_profile_bp.route('/society-profile', methods=['GET'])
 @jwt_required()
 def get_society_profile():
     """Get society profile for logged-in user"""
     try:
-        user_email = get_jwt_identity()  # Now returns email directly
-        print(f"[GET PROFILE] User email from JWT: {user_email}")
+        user_email = get_jwt_identity()
+        user_id = get_user_id_from_email(user_email)
+        
+        if not user_id:
+            return jsonify({"error": "User not found"}), 404
+        
+        print(f"[GET PROFILE] User ID: {user_id}")
         
         db = get_db()
         profiles = society_profile_collection(db)
         
-        profile = profiles.find_one({'user_email': user_email})
+        profile = profiles.find_one({'user_id': user_id})
         
         if not profile:
             # If no profile exists, create one with society name from registration
-            from models.registration_form import registration_form_collection
-            reg_forms = registration_form_collection(db)
-            registration = reg_forms.find_one({'user_email': user_email, 'status': 'approved'})
+            from models.society_registration_form import society_registration_form_collection
+            reg_forms = society_registration_form_collection(db)
+            registration = reg_forms.find_one({'user_id': user_id, 'status': 'approved'})
             
             if registration and registration.get('name'):
-                # Create new profile with hardcoded society name from registration
+                # Create new profile with society name from registration
                 new_profile = {
-                    'user_email': user_email,
-                    'name': registration['name'],  # Hardcoded from registration
-                    'registered_society_name': registration['name'],  # Store original registration name
+                    'user_id': user_id,
+                    'name': registration['name'],
+                    'registered_society_name': registration['name'],
                     'description': '',
                     'location': '',
                     'available_plots': '',
@@ -45,7 +58,10 @@ def get_society_profile():
                 result = profiles.insert_one(new_profile)
                 new_profile['_id'] = str(result.inserted_id)
                 
-                print(f"[GET PROFILE] Created new profile with hardcoded name: {registration['name']}")
+                # Add email from user table to response (not stored in profile)
+                new_profile['email'] = user_email
+                
+                print(f"[GET PROFILE] Created new profile for user_id: {user_id}")
                 
                 return jsonify({
                     "success": True,
@@ -56,16 +72,16 @@ def get_society_profile():
         
         # If profile exists but doesn't have registered_society_name, add it from registration
         if not profile.get('registered_society_name'):
-            from models.registration_form import registration_form_collection
-            reg_forms = registration_form_collection(db)
-            registration = reg_forms.find_one({'user_email': user_email, 'status': 'approved'})
+            from models.society_registration_form import society_registration_form_collection
+            reg_forms = society_registration_form_collection(db)
+            registration = reg_forms.find_one({'user_id': user_id, 'status': 'approved'})
             
             if registration and registration.get('name'):
-                # Update profile to include registered society name and ensure name matches registration
+                # Update profile to include registered society name
                 profiles.update_one(
-                    {'user_email': user_email},
+                    {'user_id': user_id},
                     {'$set': {
-                        'name': registration['name'],  # Hardcode from registration
+                        'name': registration['name'],
                         'registered_society_name': registration['name'],
                         'updated_at': datetime.utcnow()
                     }}
@@ -77,6 +93,9 @@ def get_society_profile():
         
         # Convert ObjectId to string for JSON
         profile['_id'] = str(profile['_id'])
+        
+        # Add email from user table to response (not stored in profile)
+        profile['email'] = user_email
         
         return jsonify({
             "success": True,
@@ -174,14 +193,19 @@ def create_or_update_society_profile():
         if not any(profile_data.get(field, '').strip() for field in ['name', 'description', 'location', 'available_plots', 'price_range']):
             return jsonify({"error": "At least one field must be provided"}), 400
         
-        # Prepare data for database
+        # Get user_id from email
+        user_id = get_user_id_from_email(user_email)
+        if not user_id:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Prepare data for database (email never stored, always fetched from user_id)
         update_data = {
-            'user_email': user_email,
+            'user_id': user_id,
             'updated_at': datetime.utcnow()
         }
         
         # Get existing profile to check for registered society name
-        existing_profile = profiles.find_one({'user_email': user_email})
+        existing_profile = profiles.find_one({'user_id': user_id})
         
         # Add non-empty fields but EXCLUDE name if it's already registered
         for field in ['name', 'description', 'location', 'available_plots', 'price_range', 'society_logo']:
@@ -205,17 +229,24 @@ def create_or_update_society_profile():
         
         # Update database
         result = profiles.update_one(
-            {'user_email': user_email},
+            {'user_id': user_id},
             {'$set': update_data},
             upsert=True
         )
         
         print(f"[DEBUG] Database update result: modified={result.modified_count}, matched={result.matched_count}")
         
+        # Get updated profile and add email for response
+        updated_profile = profiles.find_one({'user_id': user_id})
+        if updated_profile:
+            updated_profile['_id'] = str(updated_profile['_id'])
+            updated_profile['email'] = user_email  # Add email from user table (not stored)
+        
         return jsonify({
             "success": True,
             "message": "Profile updated successfully",
-            "is_complete": is_complete
+            "is_complete": is_complete,
+            "profile": updated_profile
         }), 200
         
     except Exception as e:
@@ -424,18 +455,27 @@ def debug_society_profile():
         user_email = get_jwt_identity()  # Now returns email directly
         
         db = get_db()
+        from models.user import user_collection
+        users = user_collection(db)
+        user = users.find_one({'email': user_email})
+        
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        user_id = str(user['_id'])
         profiles = society_profile_collection(db)
         
         # Get profile directly
         profile = profiles.find_one({'user_email': user_email})
         
-        # Get registration
-        from models.registration_form import registration_form_collection
-        reg_forms = registration_form_collection(db)
-        registration = reg_forms.find_one({'user_email': user_email})
+        # Get registration using user_id
+        from models.society_registration_form import society_registration_form_collection
+        reg_forms = society_registration_form_collection(db)
+        registration = reg_forms.find_one({'user_id': user_id})
         
         debug_info = {
             "user_email": user_email,
+            "user_id": user_id,
             "profile_exists": profile is not None,
             "profile_message": "Profile found" if profile else "Profile not found",
             "registration_exists": registration is not None,

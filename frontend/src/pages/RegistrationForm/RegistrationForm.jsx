@@ -3,6 +3,7 @@ import { Box, Grid, TextField, Button, MenuItem, Typography, Alert, Paper, Divid
 import { useLocation, useNavigate } from "react-router-dom";
 import PopupModal from '../../components/common/PopupModal';
 import { societySignup } from '../../services/authService.js';
+import { useAuth } from '../../context/AuthContext';
 
 const authorityOptions = ["LDA", "CDA", "Bahria Group"];
 const typeOptions = ["Private", "Public"];
@@ -10,7 +11,14 @@ const typeOptions = ["Private", "Public"];
 const RegistrationForm = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const userData = location.state || {};
+  const { user } = useAuth();
+  
+  // Get user data from location.state (signup flow) or AuthContext (login redirect)
+  const userData = location.state || {
+    userEmail: user?.email,
+    userName: user?.username,
+    userPassword: '' // Not needed for already logged-in users
+  };
   
   const [form, setForm] = useState({
     name: "",
@@ -26,6 +34,7 @@ const RegistrationForm = () => {
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
   const [phoneError, setPhoneError] = useState('');
+  const [websiteError, setWebsiteError] = useState('');
   
   // Popup modal state with navigation callback
   const [popup, setPopup] = useState({
@@ -36,13 +45,13 @@ const RegistrationForm = () => {
     onOk: null // Callback function to execute when user clicks OK
   });
   
-  // Check if user data was passed
+  // Check if user data is available
   useEffect(() => {
-    if (!userData.userEmail) {
-      // If no user data, redirect to login
+    if (!userData.userEmail && !user?.email) {
+      // If no user data from signup or login, redirect to login
       navigate('/login');
     }
-  }, [userData, navigate]);
+  }, [userData, user, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -71,7 +80,21 @@ const RegistrationForm = () => {
       }
       
       setForm({ ...form, [name]: formatted });
-    } else {
+    } 
+    // Website URL validation
+    else if (name === 'website') {
+      // Validate URL format: https://www.domain.com
+      const urlPattern = /^https:\/\/www\..+\..+$/;
+      
+      if (value.length > 0 && !urlPattern.test(value)) {
+        setWebsiteError('Website must be in format: https://www.example.com');
+      } else {
+        setWebsiteError('');
+      }
+      
+      setForm({ ...form, [name]: value });
+    } 
+    else {
       setForm({ ...form, [name]: value });
     }
   };
@@ -109,7 +132,7 @@ const RegistrationForm = () => {
     setMessage(null);
     setError(null);
 
-        // Validate phone number before submission
+    // Validate phone number before submission
     if (phoneError) {
       showPopup(
         'Validation Error',
@@ -128,6 +151,29 @@ const RegistrationForm = () => {
         'error'
       );
       return;
+    }
+
+    // Validate website URL before submission
+    if (websiteError) {
+      showPopup(
+        'Validation Error',
+        'Please enter a valid website URL in format: https://www.example.com',
+        'error'
+      );
+      return;
+    }
+
+    // Check if website URL is provided and valid
+    if (form.website && form.website.trim().length > 0) {
+      const urlPattern = /^https:\/\/www\..+\..+$/;
+      if (!urlPattern.test(form.website)) {
+        showPopup(
+          'Validation Error',
+          'Website must be in format: https://www.example.com',
+          'error'
+        );
+        return;
+      }
     }
 
     try {
@@ -570,11 +616,13 @@ const RegistrationForm = () => {
                 </Typography>
                 <TextField 
                   name="website"
-                  placeholder="www.yoursociety.com"
+                  placeholder="https://www.yoursociety.com"
                   value={form.website} 
                   onChange={handleChange} 
                   fullWidth 
                   required
+                  error={!!websiteError}
+                  helperText={websiteError}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 2,
@@ -587,6 +635,13 @@ const RegistrationForm = () => {
                         borderColor: '#ED7600',
                         borderWidth: 2,
                       },
+                      '&.Mui-error fieldset': {
+                        borderColor: '#d32f2f',
+                      },
+                    },
+                    '& .MuiFormHelperText-root': {
+                      fontSize: 12,
+                      mt: 0.5,
                     },
                   }}
                 />

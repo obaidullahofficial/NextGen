@@ -1,5 +1,5 @@
 from utils.db import get_db
-from models.user_profile import approval_request_collection
+from models.approval_request import approval_request_collection
 import os
 
 db = get_db()

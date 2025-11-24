@@ -1,7 +1,7 @@
 from datetime import datetime
 from utils.db import get_db
 from models.society_profile import SocietyProfile, society_profile_collection
-from models.registration_form import registration_form_collection
+from models.society_registration_form import society_registration_form_collection
 from bson import ObjectId
 
 class SocietyProfileController:
@@ -11,7 +11,7 @@ class SocietyProfileController:
         """Create initial society profile from approved registration form"""
         try:
             db = get_db()
-            reg_forms = registration_form_collection(db)
+            reg_forms = society_registration_form_collection(db)
             profiles = society_profile_collection(db)
             
             # Check if profile already exists
@@ -67,7 +67,7 @@ class SocietyProfileController:
             if not existing_profile:
                 # Try to create profile from registration data first
                 db = get_db()
-                reg_forms = registration_form_collection(db)
+                reg_forms = society_registration_form_collection(db)
                 registration = reg_forms.find_one({'user_email': user_email})
                 
                 if registration:

@@ -26,6 +26,29 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.error || data.message || 'Login failed');
       }
       
+      // Check if society user needs to complete registration form
+      if (data.registration_required) {
+        console.log('Society user needs to complete registration form');
+        // Store token but throw special error to redirect to registration form
+        if (data.access_token) {
+          localStorage.setItem('token', data.access_token);
+        }
+        // Store basic user data
+        const basicUserData = {
+          id: data.user?.id,
+          email: data.email || email,
+          role: data.user?.role || data.role,
+          username: data.user?.username
+        };
+        localStorage.setItem('user', JSON.stringify(basicUserData));
+        setUser(basicUserData);
+        
+        // Throw error with registration_required flag
+        const error = new Error(data.message || 'Please complete your society registration form.');
+        error.registration_required = true;
+        throw error;
+      }
+      
       // Store token first if available
       if (data.access_token) {
         localStorage.setItem('token', data.access_token);

@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
 from utils.db import get_db
-from models.user_profile import approval_request_collection
+from models.approval_request import approval_request_collection
 
 db = get_db()
 collection = approval_request_collection(db)

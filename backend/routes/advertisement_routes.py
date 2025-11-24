@@ -165,8 +165,17 @@ def get_featured_advertisements():
 def update_advertisement(advertisement_id):
     """Update an advertisement (only by the creator or admin)"""
     try:
+        from utils.db import get_db
+        from models.user import user_collection
+        
         data = request.json
         user_email = get_jwt_identity()
+        
+        # Get user role
+        db = get_db()
+        users = user_collection(db)
+        user = users.find_one({'email': user_email})
+        user_role = user.get('role') if user else None
         
         # Remove fields that shouldn't be updated directly
         forbidden_fields = ['created_by', 'created_at', '_id']
@@ -174,7 +183,7 @@ def update_advertisement(advertisement_id):
             if field in data:
                 del data[field]
         
-        result = AdvertisementController.update_advertisement(advertisement_id, data, user_email)
+        result = AdvertisementController.update_advertisement(advertisement_id, data, user_email, user_role)
         
         if result["success"]:
             return jsonify(result), 200
@@ -193,9 +202,18 @@ def update_advertisement(advertisement_id):
 def delete_advertisement(advertisement_id):
     """Delete an advertisement (only by the creator or admin)"""
     try:
+        from utils.db import get_db
+        from models.user import user_collection
+        
         user_email = get_jwt_identity()
         
-        result = AdvertisementController.delete_advertisement(advertisement_id, user_email)
+        # Get user role
+        db = get_db()
+        users = user_collection(db)
+        user = users.find_one({'email': user_email})
+        user_role = user.get('role') if user else None
+        
+        result = AdvertisementController.delete_advertisement(advertisement_id, user_email, user_role)
         
         if result["success"]:
             return jsonify(result), 200

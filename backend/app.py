@@ -7,7 +7,7 @@ from utils.db import test_connection
 from routes.review_routes import review_bp
 from routes.plot_routes import plot_bp  # Import the blueprint
 from routes.advertisement_routes import advertisement_bp  # Import advertisement routes
-from routes.registration_form_routes import registration_form_bp  # Import registration form routes
+from routes.society_registration_form_routes import society_registration_form_bp  # Import society registration form routes
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
@@ -55,11 +55,15 @@ app.register_blueprint(society_profile_bp, url_prefix='/api')
 app.register_blueprint(plot_bp, url_prefix='/api')
 app.register_blueprint(review_bp, url_prefix='/api')
 app.register_blueprint(advertisement_bp, url_prefix='/api')
-app.register_blueprint(registration_form_bp, url_prefix='/api')
+app.register_blueprint(society_registration_form_bp, url_prefix='/api')
 
 # Import and register user profile blueprint
 from routes.user_profile_routes import user_profile_bp
 app.register_blueprint(user_profile_bp, url_prefix='/api')
+
+# Import and register approval request blueprint
+from routes.approval_request_routes import approval_request_bp
+app.register_blueprint(approval_request_bp, url_prefix='/api')
 
 # Import and register floor plan blueprint
 from routes.floorplan_routes import floorplan_bp

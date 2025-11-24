@@ -227,7 +227,10 @@ const SocietyProfile = () => {
                       Email
                     </Typography>
                     <Typography variant="body1" sx={{ color: '#666', fontSize: '16px' }}>
-                      {profile.user_email || 'Not specified'}
+                      {profile.email || profile.user_email || 'Not specified'}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#999', fontSize: '12px', fontStyle: 'italic' }}>
+                      This is your login email and cannot be changed
                     </Typography>
                   </Grid>
                   

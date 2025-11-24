@@ -255,11 +255,21 @@ NextGenArchitect Team
             
             collection = email_verification_collection(db)
             
+            # Normalize code (strip whitespace and ensure string)
+            code = str(code).strip()
+            
+            print(f"[EMAIL SERVICE] Looking for code: '{code}' (length: {len(code)})")
+            
             # Find the code
             code_doc = collection.find_one({'code': code})
             
             if not code_doc:
+                # Debug: Show what codes exist in database
+                all_codes = list(collection.find({}, {'code': 1, 'email': 1, 'expires_at': 1, 'is_used': 1}).limit(5))
+                print(f"[EMAIL SERVICE] Code not found. Recent codes in DB: {all_codes}")
                 return False, "Invalid or expired verification code"
+            
+            print(f"[EMAIL SERVICE] Found code: {code_doc['code']} for email: {code_doc['email']}")
             
             # Check if already used
             if code_doc.get('is_used', False):

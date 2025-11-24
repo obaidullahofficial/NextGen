@@ -189,10 +189,12 @@ const PersonalInfoForm = () => {
             name="email"
             value={form.email}
             onChange={handleChange}
-            className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#ED7600]"
+            disabled
+            className="border border-gray-300 rounded-lg px-4 py-2 w-full bg-gray-100 text-gray-600 cursor-not-allowed"
             placeholder="example@email.com"
-            required
+            title="Email cannot be changed. This is your login email."
           />
+          <p className="text-xs text-gray-500 mt-1">This is your login email and cannot be changed</p>
         </div>
       </div>
 

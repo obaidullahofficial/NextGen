@@ -1,13 +1,13 @@
-# Registration Form Controller
+# Society Registration Form Controller
 from utils.db import get_db
-from models.registration_form import registration_form_collection, RegistrationForm
+from models.society_registration_form import society_registration_form_collection, SocietyRegistrationForm
 from flask import jsonify, request
 from bson import ObjectId
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.user import user_collection
 from datetime import datetime
 
-class RegistrationFormController:
+class SocietyRegistrationFormController:
     """
     Controller class to handle all business logic related to registration forms.
     This includes creating, retrieving, updating, and deleting registration forms.
@@ -25,7 +25,7 @@ class RegistrationFormController:
             
             data['status'] = "pending"
             db = get_db()
-            reg_forms = registration_form_collection(db)
+            reg_forms = society_registration_form_collection(db)
             reg_id = reg_forms.insert_one(data).inserted_id
             return str(reg_id), "Society registration submitted"
         except Exception as e:
@@ -40,11 +40,10 @@ class RegistrationFormController:
         try:
             # Create society registration form
             society_data['status'] = "pending"
-            society_data['user_email'] = user_data['email']
-            society_data['user_id'] = user_data['user_id']  # Link society to user ID
+            society_data['user_id'] = user_data['user_id']  # Link society to user ID only
             
             db = get_db()
-            reg_forms = registration_form_collection(db)
+            reg_forms = society_registration_form_collection(db)
             reg_id = reg_forms.insert_one(society_data).inserted_id
             
             return str(reg_id), "Society signup successful! Your registration is pending admin approval."
@@ -62,7 +61,7 @@ class RegistrationFormController:
             user_email = get_jwt_identity()  # Now returns email directly
             
             db = get_db()
-            reg_forms = registration_form_collection(db)
+            reg_forms = society_registration_form_collection(db)
             
             # Find society by user email
             society = reg_forms.find_one({'user_email': user_email})
@@ -81,14 +80,23 @@ class RegistrationFormController:
     @staticmethod
     def check_society_status(user_email):
         """
-        Check the status of a society registration for a user
+        Check the status of a society registration for a user by email
+        Looks up user_id from email, then finds registration form
         """
         try:
             db = get_db()
-            reg_forms = registration_form_collection(db)
+            users = user_collection(db)
             
-            # Find society by user email with projection to get only status
-            society = reg_forms.find_one({'user_email': user_email}, {'status': 1})
+            # Get user_id from email
+            user = users.find_one({'email': user_email}, {'_id': 1})
+            if not user:
+                return None
+            
+            user_id = str(user['_id'])
+            
+            # Find society by user_id with projection to get only status
+            reg_forms = society_registration_form_collection(db)
+            society = reg_forms.find_one({'user_id': user_id}, {'status': 1})
             
             if not society:
                 return None
@@ -115,7 +123,7 @@ class RegistrationFormController:
                 return None, "Admin access required"
             
             # Get all registration forms
-            reg_forms = registration_form_collection(db)
+            reg_forms = society_registration_form_collection(db)
             registration_list = list(reg_forms.find({}))
             
             # Convert ObjectId to string
@@ -147,7 +155,7 @@ class RegistrationFormController:
                 return None, "User not found"
             
             # Get the registration form
-            reg_forms = registration_form_collection(db)
+            reg_forms = society_registration_form_collection(db)
             
             try:
                 form = reg_forms.find_one({'_id': ObjectId(form_id)})
@@ -193,7 +201,7 @@ class RegistrationFormController:
                 return False, "Invalid status. Must be 'approved', 'rejected', or 'pending'"
             
             # Update the registration form
-            reg_forms = registration_form_collection(db)
+            reg_forms = society_registration_form_collection(db)
             
             try:
                 result = reg_forms.update_one(
@@ -210,3 +218,41 @@ class RegistrationFormController:
         except Exception as e:
             print(f"[UPDATE REGISTRATION STATUS ERROR] {str(e)}")
             return False, f"Failed to update registration status: {str(e)}"
+
+    @staticmethod
+    @jwt_required()
+    def delete_registration_form(form_id):
+        """
+        Delete a registration form by ID (Admin only)
+        """
+        try:
+            # Check if current user is admin
+            current_user_email = get_jwt_identity()
+            db = get_db()
+            users = user_collection(db)
+            
+            current_user = users.find_one({'email': current_user_email})
+            if not current_user or current_user.get('role') != 'admin':
+                return False, "Admin access required"
+            
+            # Validate ObjectId format
+            if not ObjectId.is_valid(form_id):
+                return False, "Invalid registration form ID format"
+            
+            # Get the registration form before deleting
+            reg_forms = society_registration_form_collection(db)
+            form = reg_forms.find_one({'_id': ObjectId(form_id)})
+            
+            if not form:
+                return False, "Registration form not found"
+            
+            # Delete the registration form
+            result = reg_forms.delete_one({'_id': ObjectId(form_id)})
+            
+            if result.deleted_count == 0:
+                return False, "Failed to delete registration form"
+            
+            return True, f"Registration form for '{form.get('name', 'Unknown')}' deleted successfully"
+        except Exception as e:
+            print(f"[DELETE REGISTRATION FORM ERROR] {str(e)}")
+            return False, f"Failed to delete registration form: {str(e)}"

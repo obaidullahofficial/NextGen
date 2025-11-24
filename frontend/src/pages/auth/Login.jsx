@@ -68,8 +68,14 @@ const Login = () => {
                         console.log(`[GOOGLE ${mode}] Redirecting to admin dashboard`);
                         navigate('/dashboard');
                     } else if (result.user.role === 'society') {
-                        console.log(`[GOOGLE ${mode}] Redirecting to society dashboard`);
-                        navigate('/subadmin');
+                        // Check if society profile is complete
+                        if (result.profile_exists === false || result.profile_complete === false) {
+                            console.log(`[GOOGLE ${mode}] Society profile incomplete, redirecting to profile setup`);
+                            navigate('/society-profile-setup');
+                        } else {
+                            console.log(`[GOOGLE ${mode}] Society profile complete, redirecting to dashboard`);
+                            navigate('/subadmin');
+                        }
                     } else {
                         console.log(`[GOOGLE ${mode}] Redirecting to user profile`);
                         navigate('/userprofile');
@@ -349,9 +355,22 @@ const Login = () => {
         try {
             console.log('[LOGIN] Attempting login with:', { email: loginForm.email });
             
-            // Use AuthContext login method instead of direct API call
-            const userData = await login(loginForm.email, loginForm.password);
+            // Use direct API call to get profile status for society users
+            const result = await loginUser({ email: loginForm.email, password: loginForm.password });
+            console.log('[LOGIN] Backend response:', result);
             
+            // Check if login was successful
+            if (!result.success) {
+                throw new Error(result.error || result.message || 'Login failed');
+            }
+            
+            // Store token
+            if (result.access_token) {
+                localStorage.setItem('token', result.access_token);
+            }
+            
+            // Now call AuthContext login to update context
+            const userData = await login(loginForm.email, loginForm.password);
             console.log('[LOGIN] AuthContext login successful:', userData);
             
             // Show success popup and wait for user to click OK before navigating
@@ -360,8 +379,14 @@ const Login = () => {
                     console.log('[LOGIN] Redirecting to admin dashboard');
                     navigate('/dashboard');
                 } else if (userData.role === 'society') {
-                    console.log('[LOGIN] Redirecting to society dashboard');
-                    navigate('/subadmin');
+                    // Check if society profile is complete
+                    if (result.profile_exists === false || result.profile_complete === false) {
+                        console.log('[LOGIN] Society profile incomplete, redirecting to profile setup');
+                        navigate('/society-profile-setup');
+                    } else {
+                        console.log('[LOGIN] Society profile complete, redirecting to dashboard');
+                        navigate('/subadmin');
+                    }
                 } else {
                     console.log('[LOGIN] Redirecting to home page with user ID:', userData.id);
                     // Redirect to home page with user ID
@@ -378,6 +403,17 @@ const Login = () => {
             
         } catch (error) {
             console.log('[LOGIN] Login failed:', error);
+            
+            // Handle registration_required for society users without registration form
+            if (error.registration_required) {
+                showPopup(
+                    'Registration Form Required',
+                    'Please complete your society registration form to continue.',
+                    'info',
+                    () => navigate('/registration-form')
+                );
+                return;
+            }
             
             // Handle specific error types for society users
             if (error.message?.includes('registration_pending')) {

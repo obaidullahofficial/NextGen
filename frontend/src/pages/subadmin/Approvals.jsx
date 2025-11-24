@@ -50,9 +50,18 @@ const Approvals = () => {
         const list = rawList.map((req) => {
           const filePath = req.floor_plan_file_url; // e.g., "uploads/user_profiles/.../file.json"
           const fileUrl = filePath ? `${API_URL}/file/${filePath}` : null;
+          
+          console.log('[Approvals] Processing request:', {
+            id: req._id,
+            plot: req.plot_number || req.plot_id,
+            filePath,
+            fileUrl
+          });
 
           return {
             id: req._id,
+            // Name of the user who initiated the approval request (from backend join)
+            requestedBy: req.requested_by_name || "",
             // Prefer human-readable plot_number; fall back to plot_id if needed
             plotNumber: req.plot_number || req.plot_id || "",
             plotDetails: req.plot_details || "",
@@ -278,6 +287,7 @@ const Approvals = () => {
                   <h3 className="text-lg font-semibold mb-2">Basic Information</h3>
                   <div className="space-y-2">
                     <p><span className="font-medium">Plot Number:</span> {selectedApproval.plotNumber}</p>
+                    <p><span className="font-medium">Requested By:</span> {selectedApproval.requestedBy || '-'} </p>
                     <p><span className="font-medium">Design Type:</span> {selectedApproval.designType}</p>
                     <p><span className="font-medium">Request Date:</span> {formatRequestDate(selectedApproval.requestDate)}</p>
                     <p><span className="font-medium">Status:</span> 
@@ -462,6 +472,7 @@ const Approvals = () => {
             <thead className="bg-[#2F3D57] text-white">
               <tr>
                 <th className="px-6 py-4 text-left">Plot Number</th>
+                <th className="px-6 py-4 text-left">Requested By</th>
                 <th className="px-6 py-4 text-left">Design Type</th>
                 <th className="px-6 py-4 text-left">Request Date</th>
                 {viewMode === 'history' && (
@@ -476,6 +487,7 @@ const Approvals = () => {
                 filteredApprovals.map(approval => (
                   <tr key={approval.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium">{approval.plotNumber}</td>
+                    <td className="px-6 py-4">{approval.requestedBy}</td>
                     <td className="px-6 py-4">{approval.designType}</td>
                     <td className="px-6 py-4">{formatRequestDate(approval.requestDate)}</td>
                     {viewMode === 'history' && (
@@ -529,7 +541,7 @@ const Approvals = () => {
               ) : (
               <tr>
                 <td
-                  colSpan={viewMode === 'history' ? 6 : 5}
+                  colSpan={viewMode === 'history' ? 7 : 6}
                   className="px-6 py-4 text-center text-gray-500"
                 >
                   No floor plan approvals found

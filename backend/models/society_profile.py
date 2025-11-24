@@ -2,12 +2,11 @@ from datetime import datetime
 from bson import ObjectId
 
 class SocietyProfile:
-    def __init__(self, user_id, user_email, name, description, location, 
+    def __init__(self, user_id, name, description, location, 
                  available_plots, price_range, society_logo=None, 
                  is_complete=False, created_at=None, updated_at=None):
         
         self.user_id = user_id
-        self.user_email = user_email
         
         # Basic Information
         self.name = name
@@ -27,7 +26,6 @@ class SocietyProfile:
     def to_dict(self):
         return {
             "user_id": self.user_id,
-            "user_email": self.user_email,
             "name": self.name,
             "description": self.description,
             "location": self.location,

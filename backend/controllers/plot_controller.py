@@ -26,9 +26,18 @@ class PlotController:
             db = get_db()
             user_email = get_jwt_identity()
             
+            # Get user_id from email
+            from models.user import user_collection
+            users = user_collection(db)
+            user = users.find_one({'email': user_email}, {'_id': 1})
+            if not user:
+                return jsonify({'error': 'User not found'}), 400
+            
+            user_id = str(user['_id'])
+            
             # Find the society profile for this user
             profiles = society_profile_collection(db)
-            profile = profiles.find_one({'user_email': user_email})
+            profile = profiles.find_one({'user_id': user_id})
             if not profile:
                 return jsonify({'error': 'Society profile not found for this user'}), 400
 
@@ -154,8 +163,17 @@ class PlotController:
         db = get_db()
         user_email = get_jwt_identity()
         
+        # Get user_id from email
+        from models.user import user_collection
+        users = user_collection(db)
+        user = users.find_one({'email': user_email}, {'_id': 1})
+        if not user:
+            return jsonify({'error': 'User not found'}), 400
+        
+        user_id = str(user['_id'])
+        
         profiles = society_profile_collection(db)
-        profile = profiles.find_one({'user_email': user_email})
+        profile = profiles.find_one({'user_id': user_id})
         if not profile:
             return jsonify({'error': 'Society profile not found'}), 400
         

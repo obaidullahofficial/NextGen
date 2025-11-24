@@ -6,7 +6,7 @@ from datetime import datetime
 
 class UserController:
     @staticmethod
-    def create_user(username, email, password, role='user', society_id=None):
+    def create_user(username, email, password, role='user'):
         db = get_db()
         users = user_collection(db)
         
@@ -18,15 +18,14 @@ class UserController:
             'username': username,
             'email': email,
             'password_hash': password_hash,
-            'role': role,
-            'society_id': society_id
+            'role': role
         }
         
         result = users.insert_one(user_data)
         return str(result.inserted_id), "User created successfully"
 
     @staticmethod
-    def signup_user(username, email, password, role='user', society_id=None):
+    def signup_user(username, email, password, role='user'):
         """
         Create a new user account with email verification
         
@@ -62,7 +61,6 @@ class UserController:
                 'email': email,
                 'password_hash': password_hash,
                 'role': role,
-                'society_id': society_id,
                 'is_verified': False,  # User must verify email
                 'created_at': datetime.utcnow()
             }
@@ -199,7 +197,7 @@ class UserController:
         # Single optimized query with only required fields including is_verified
         user = users.find_one(
             {'email': email},
-            {'email': 1, 'username': 1, 'password_hash': 1, 'role': 1, 'society_id': 1, 'is_verified': 1}
+            {'email': 1, 'username': 1, 'password_hash': 1, 'role': 1, 'is_verified': 1}
         )
         
         if not user:
