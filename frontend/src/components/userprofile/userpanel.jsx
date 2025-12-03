@@ -3,6 +3,7 @@ import PersonalInfoForm from './personalInfoForm';
 import UserDesignStatus from './UserDesignStatus';
 import MyProgress from './MyProgress';
 import ApprovalRequestForm from './ApprovalRequestForm';
+import Activity from './Activity';
 
 //const UserPanel = ({ activeTab, personalInfo, approvalRequests, history }) 
 const UserPanel = ({ activeTab,  approvalRequests,  }) => {
@@ -10,7 +11,7 @@ const UserPanel = ({ activeTab,  approvalRequests,  }) => {
     case 'personalInfo':
       return <PersonalInfoForm />;
     case 'approvalRequests':
-      return <UserDesignStatus requests={approvalRequests} />;
+      return <Activity />;
     case 'progress':
         return <MyProgress />;
          case 'approvalRequest':

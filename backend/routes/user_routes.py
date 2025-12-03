@@ -613,9 +613,195 @@ def login():
     
     return jsonify(response_data), 200
 
+@user_bp.route('/send-reset-otp', methods=['POST'])
+def send_reset_otp():
+    """Send OTP for password reset"""
+    try:
+        data = request.json
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({"error": "Email is required"}), 400
+        
+        print(f"[SEND RESET OTP] Request for email: {email}")
+        
+        db = get_db()
+        users = user_collection(db)
+        
+        # Check if user exists
+        user = users.find_one({'email': email})
+        
+        if not user:
+            # Don't reveal whether email exists or not for security
+            return jsonify({
+                "success": True,
+                "message": "If an account with this email exists, an OTP has been sent."
+            }), 200
+        
+        # Generate 6-digit OTP
+        import random
+        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        
+        # Store OTP in database with expiration (10 minutes)
+        from datetime import datetime, timedelta
+        expiration = datetime.now() + timedelta(minutes=10)
+        
+        users.update_one(
+            {'email': email},
+            {
+                '$set': {
+                    'reset_otp': otp,
+                    'reset_otp_expires': expiration.isoformat(),
+                    'otp_verified': False
+                }
+            }
+        )
+        
+        print(f"[SEND RESET OTP] OTP generated for: {email} - OTP: {otp}")
+        
+        # Send OTP via email
+        from utils.email_service import EmailService
+        email_sent, email_message = EmailService.send_password_reset_otp(email, otp)
+        
+        if not email_sent:
+            print(f"[SEND RESET OTP] Warning: Email failed to send - {email_message}")
+            # Still return success to user for security (don't reveal if email exists)
+            # But log the error for debugging
+        
+        return jsonify({
+            "success": True,
+            "message": "If an account with this email exists, an OTP has been sent to your email address.",
+            "debug_otp": otp if not email_sent else None  # Only show OTP if email failed
+        }), 200
+        
+    except Exception as e:
+        print(f"[SEND RESET OTP] Error: {str(e)}")
+        return jsonify({"error": "Failed to send OTP"}), 500
+
+@user_bp.route('/verify-reset-otp', methods=['POST'])
+def verify_reset_otp():
+    """Verify OTP for password reset"""
+    try:
+        data = request.json
+        email = data.get('email')
+        otp = data.get('otp')
+        
+        if not email or not otp:
+            return jsonify({"error": "Email and OTP are required"}), 400
+        
+        print(f"[VERIFY RESET OTP] Request for email: {email}")
+        
+        db = get_db()
+        users = user_collection(db)
+        
+        # Find user with valid OTP
+        from datetime import datetime
+        current_time = datetime.now()
+        
+        user = users.find_one({'email': email})
+        
+        if not user:
+            return jsonify({"error": "Invalid request"}), 400
+        
+        # Check if OTP exists and hasn't expired
+        if 'reset_otp' not in user or 'reset_otp_expires' not in user:
+            return jsonify({"error": "No OTP found. Please request a new one."}), 400
+        
+        otp_expires = datetime.fromisoformat(user['reset_otp_expires'])
+        
+        if current_time > otp_expires:
+            return jsonify({"error": "OTP has expired. Please request a new one."}), 400
+        
+        if user['reset_otp'] != otp:
+            return jsonify({"error": "Invalid OTP. Please try again."}), 400
+        
+        # Mark OTP as verified
+        users.update_one(
+            {'email': email},
+            {'$set': {'otp_verified': True}}
+        )
+        
+        print(f"[VERIFY RESET OTP] OTP verified successfully for: {email}")
+        
+        return jsonify({
+            "success": True,
+            "message": "OTP verified successfully."
+        }), 200
+        
+    except Exception as e:
+        print(f"[VERIFY RESET OTP] Error: {str(e)}")
+        return jsonify({"error": "Failed to verify OTP"}), 500
+
+@user_bp.route('/reset-password-otp', methods=['POST'])
+def reset_password_otp():
+    """Reset password using verified OTP"""
+    try:
+        data = request.json
+        email = data.get('email')
+        otp = data.get('otp')
+        new_password = data.get('password')
+        
+        if not email or not otp or not new_password:
+            return jsonify({"error": "Email, OTP, and new password are required"}), 400
+        
+        if len(new_password) < 6:
+            return jsonify({"error": "Password must be at least 6 characters long"}), 400
+        
+        print(f"[RESET PASSWORD OTP] Request for email: {email}")
+        
+        db = get_db()
+        users = user_collection(db)
+        
+        # Find user
+        from datetime import datetime
+        current_time = datetime.now()
+        
+        user = users.find_one({'email': email})
+        
+        if not user:
+            return jsonify({"error": "Invalid request"}), 400
+        
+        # Verify OTP is still valid and verified
+        if 'reset_otp' not in user or 'reset_otp_expires' not in user:
+            return jsonify({"error": "No OTP found. Please request a new one."}), 400
+        
+        otp_expires = datetime.fromisoformat(user['reset_otp_expires'])
+        
+        if current_time > otp_expires:
+            return jsonify({"error": "OTP has expired. Please request a new one."}), 400
+        
+        if user['reset_otp'] != otp:
+            return jsonify({"error": "Invalid OTP"}), 400
+        
+        if not user.get('otp_verified', False):
+            return jsonify({"error": "OTP not verified. Please verify OTP first."}), 400
+        
+        # Update password and remove OTP data
+        from werkzeug.security import generate_password_hash
+        password_hash = generate_password_hash(new_password)
+        
+        users.update_one(
+            {'email': email},
+            {
+                '$set': {'password_hash': password_hash},
+                '$unset': {'reset_otp': '', 'reset_otp_expires': '', 'otp_verified': ''}
+            }
+        )
+        
+        print(f"[RESET PASSWORD OTP] Password reset successful for: {email}")
+        
+        return jsonify({
+            "success": True,
+            "message": "Password has been reset successfully. You can now login with your new password."
+        }), 200
+        
+    except Exception as e:
+        print(f"[RESET PASSWORD OTP] Error: {str(e)}")
+        return jsonify({"error": "Failed to reset password"}), 500
+
 @user_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():
-    """Handle forgot password request"""
+    """Handle forgot password request (Legacy)"""
     try:
         data = request.json
         email = data.get('email')

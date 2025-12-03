@@ -331,3 +331,169 @@ NextGenArchitect Team
             
         except Exception as e:
             print(f"[EMAIL SERVICE ERROR] Failed to delete expired tokens: {str(e)}")
+    
+    @staticmethod
+    def send_password_reset_otp(email, otp):
+        """
+        Send password reset OTP email to user
+        
+        Args:
+            email: Recipient's email address
+            otp: 6-digit OTP code
+            
+        Returns:
+            tuple: (success: bool, message: str)
+        """
+        try:
+            # Get SMTP configuration from environment
+            smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
+            smtp_port = int(os.getenv('SMTP_PORT', 587))
+            sender_email = os.getenv('SENDER_EMAIL')
+            sender_password = os.getenv('SENDER_PASSWORD')
+            
+            # Validate configuration
+            if not sender_email or not sender_password:
+                return False, "Email configuration is incomplete. Please set SENDER_EMAIL and SENDER_PASSWORD in .env"
+            
+            # Create email message
+            message = MIMEMultipart('alternative')
+            message['Subject'] = 'Password Reset OTP - NextGenArchitect'
+            message['From'] = f"NextGenArchitect <{sender_email}>"
+            message['To'] = email
+            
+            # Plain text version
+            text_content = f"""
+Password Reset Request
+
+Hello,
+
+We received a request to reset your password for your NextGenArchitect account.
+
+Your password reset OTP is:
+
+{otp}
+
+This OTP will expire in 10 minutes.
+
+If you didn't request a password reset, please ignore this email or contact support if you have concerns.
+
+Best regards,
+NextGenArchitect Team
+"""
+            
+            # HTML version
+            html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #2F3D57 0%, #ED7600 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }}
+        .content {{
+            background-color: white;
+            padding: 30px;
+            border-radius: 0 0 5px 5px;
+        }}
+        .otp-box {{
+            background-color: #f0f0f0;
+            border: 2px dashed #ED7600;
+            padding: 20px;
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 10px;
+            color: #2F3D57;
+            margin: 20px 0;
+            border-radius: 5px;
+        }}
+        .warning {{
+            background-color: #fff3cd;
+            border-left: 4px solid #ff9800;
+            padding: 12px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }}
+        .footer {{
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 Password Reset Request</h1>
+        </div>
+        <div class="content">
+            <p>Hello,</p>
+            
+            <p>We received a request to reset your password for your NextGenArchitect account.</p>
+            
+            <p>Your password reset OTP is:</p>
+            
+            <div class="otp-box">{otp}</div>
+            
+            <p><strong>Important:</strong> This OTP will expire in 10 minutes.</p>
+            
+            <div class="warning">
+                <strong>⚠️ Security Notice:</strong> If you didn't request a password reset, please ignore this email or contact support if you have concerns.
+            </div>
+            
+            <p>Best regards,<br>NextGenArchitect Team</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated email. Please do not reply to this message.</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+            
+            # Attach both versions
+            part1 = MIMEText(text_content, 'plain')
+            part2 = MIMEText(html_content, 'html')
+            message.attach(part1)
+            message.attach(part2)
+            
+            # Send email
+            print(f"[EMAIL SERVICE] Connecting to {smtp_server}:{smtp_port}")
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                print(f"[EMAIL SERVICE] Logging in as {sender_email}")
+                server.login(sender_email, sender_password)
+                print(f"[EMAIL SERVICE] Sending password reset OTP to {email}")
+                server.send_message(message)
+            
+            print(f"[EMAIL SERVICE] ✅ Password reset OTP sent successfully to {email}")
+            return True, "Password reset OTP sent successfully"
+            
+        except smtplib.SMTPAuthenticationError:
+            error_msg = "Email authentication failed. Please check your SENDER_EMAIL and SENDER_PASSWORD (app password)"
+            print(f"[EMAIL SERVICE ERROR] {error_msg}")
+            return False, error_msg
+        except smtplib.SMTPException as e:
+            error_msg = f"SMTP error: {str(e)}"
+            print(f"[EMAIL SERVICE ERROR] {error_msg}")
+            return False, error_msg
+        except Exception as e:
+            error_msg = f"Failed to send email: {str(e)}"
+            print(f"[EMAIL SERVICE ERROR] {error_msg}")
+            return False, error_msg

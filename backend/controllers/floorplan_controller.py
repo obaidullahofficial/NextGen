@@ -88,20 +88,11 @@ def generate_floorplan():
             result = genai_generate_floorplans(inputG, n=num_plans)
             
             if 'error' in result:
-                error_message = result['error']
-                # Check if it's a quota error
-                if 'quota' in error_message.lower() or 'resource_exhausted' in error_message.lower():
-                    return jsonify({
-                        'success': False,
-                        'error': 'Gemini API quota limit exceeded. Please try again later or upgrade your API quota.',
-                        'error_type': 'quota_exceeded'
-                    }), 429  # Too Many Requests
-                else:
-                    return jsonify({
-                        'success': False,
-                        'error': error_message,
-                        'raw_response': result.get('raw', None)
-                    }), 500
+                return jsonify({
+                    'success': False,
+                    'error': result['error'],
+                    'raw_response': result.get('raw', None)
+                }), 500
             
             return jsonify({
                 'success': True,

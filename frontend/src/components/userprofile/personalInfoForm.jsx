@@ -229,7 +229,18 @@ const PersonalInfoForm = () => {
           alt="Profile"
           className="w-full h-full object-cover"
         />
-      ) : (
+      ) : existingProfile?.profile_image_url ? (
+        <img
+          src={`http://localhost:5000/api/file/${existingProfile.profile_image_url.replace(/^\//, '')}`}
+          alt="Profile"
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.target.style.display = 'none';
+            e.target.nextSibling.style.display = 'flex';
+          }}
+        />
+      ) : null}
+      {!form.profileImage && !existingProfile?.profile_image_url && (
         <svg
           className="w-12 h-12 text-gray-400"
           fill="currentColor"
@@ -246,7 +257,7 @@ const PersonalInfoForm = () => {
       )}
     </div>
     <label className="cursor-pointer bg-gray-100 px-4 py-2 rounded border border-gray-300 hover:bg-gray-200">
-      Upload photo
+      {existingProfile?.profile_image_url ? 'Change photo' : 'Upload photo'}
       <input
         type="file"
         name="profileImage"
@@ -258,7 +269,6 @@ const PersonalInfoForm = () => {
             profileImage: e.target.files[0],
           }))
         }
-        required
       />
     </label>
   </div>

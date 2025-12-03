@@ -179,7 +179,115 @@ export async function testTokenValidity() {
 }
 
 /**
- * Forgot password request
+ * Send password reset OTP to email
+ * @param {string} email - Email address to send OTP to
+ * @returns {Promise<Object>} Response with success status
+ */
+export async function sendPasswordResetOTP(email) {
+  if (!email) {
+    throw new Error('Email is required');
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/send-reset-otp`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to send OTP');
+    }
+
+    console.log('[Auth] Password reset OTP sent successfully');
+    return data;
+    
+  } catch (error) {
+    console.error('[Auth] Send OTP error:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Verify password reset OTP
+ * @param {string} email - Email address
+ * @param {string} otp - 6-digit OTP code
+ * @returns {Promise<Object>} Response with success status
+ */
+export async function verifyPasswordResetOTP(email, otp) {
+  if (!email || !otp) {
+    throw new Error('Email and OTP are required');
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/verify-reset-otp`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ email, otp }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Invalid OTP');
+    }
+
+    console.log('[Auth] OTP verified successfully');
+    return data;
+    
+  } catch (error) {
+    console.error('[Auth] Verify OTP error:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Reset password with verified OTP
+ * @param {string} email - Email address
+ * @param {string} otp - Verified 6-digit OTP code
+ * @param {string} password - New password
+ * @returns {Promise<Object>} Response with success status
+ */
+export async function resetPasswordWithOTP(email, otp, password) {
+  if (!email || !otp || !password) {
+    throw new Error('Email, OTP, and password are required');
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/reset-password-otp`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ email, otp, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to reset password');
+    }
+
+    console.log('[Auth] Password reset successful');
+    return data;
+    
+  } catch (error) {
+    console.error('[Auth] Reset password error:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Forgot password request (Legacy - kept for compatibility)
  * @param {string} email - Email address to send reset link to
  * @returns {Promise<Object>} Response with success status
  */
