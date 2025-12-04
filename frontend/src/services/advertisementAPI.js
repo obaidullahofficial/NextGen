@@ -1,13 +1,11 @@
-// Frontend API service for Advertisement CRUD operations
+// Advertisement API Service - Simplified Plan-Based System
 const API_BASE_URL = 'http://localhost:5000/api';
 
 class AdvertisementAPI {
-  // Get authentication token from localStorage
   getAuthToken() {
     return localStorage.getItem('token');
   }
 
-  // Get authorization headers
   getAuthHeaders() {
     const token = this.getAuthToken();
     return {
@@ -16,452 +14,158 @@ class AdvertisementAPI {
     };
   }
 
-  // GET /api/advertisements - Get all advertisements with filtering
-  async getAllAdvertisements(filters = {}) {
-    try {
-      const queryParams = new URLSearchParams();
-      
-      // Add filters to query params
-      Object.keys(filters).forEach(key => {
-        if (filters[key] !== undefined && filters[key] !== null && filters[key] !== '') {
-          if (Array.isArray(filters[key])) {
-            queryParams.append(key, filters[key].join(','));
-          } else {
-            queryParams.append(key, filters[key]);
-          }
-        }
-      });
+  // ===== ADVERTISEMENT OPERATIONS =====
 
-      const url = queryParams.toString() 
-        ? `${API_BASE_URL}/advertisements?${queryParams}`
-        : `${API_BASE_URL}/advertisements`;
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        return {
-          success: true,
-          data: data.data || [],
-          pagination: data.pagination || {},
-          message: data.message
-        };
-      } else {
-        return {
-          success: false,
-          error: data.error || 'Failed to fetch advertisements'
-        };
-      }
-    } catch (error) {
-      console.error('Error fetching advertisements:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
-    }
-  }
-
-  // GET /api/advertisements/:id - Get specific advertisement
-  async getAdvertisementById(advertisementId) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/advertisements/${advertisementId}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        return {
-          success: true,
-          data: data.data,
-          message: data.message
-        };
-      } else {
-        return {
-          success: false,
-          error: data.error || 'Failed to fetch advertisement'
-        };
-      }
-    } catch (error) {
-      console.error('Error fetching advertisement:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
-    }
-  }
-
-  // GET /api/advertisements/featured - Get featured advertisements
-  async getFeaturedAdvertisements(limit = 5) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/advertisements/featured?limit=${limit}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        return {
-          success: true,
-          data: data.data || [],
-          message: data.message
-        };
-      } else {
-        return {
-          success: false,
-          error: data.error || 'Failed to fetch featured advertisements'
-        };
-      }
-    } catch (error) {
-      console.error('Error fetching featured advertisements:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
-    }
-  }
-
-  // GET /api/advertisements/search - Search advertisements
-  async searchAdvertisements(searchTerm, page = 1, per_page = 10) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/advertisements/search?q=${encodeURIComponent(searchTerm)}&page=${page}&per_page=${per_page}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        return {
-          success: true,
-          data: data.data || [],
-          pagination: data.pagination || {},
-          message: data.message
-        };
-      } else {
-        return {
-          success: false,
-          error: data.error || 'Failed to search advertisements'
-        };
-      }
-    } catch (error) {
-      console.error('Error searching advertisements:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
-    }
-  }
-
-  // GET /api/users/:email/advertisements - Get advertisements by user
-  async getAdvertisementsByUser(userEmail, page = 1, per_page = 10) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(userEmail)}/advertisements?page=${page}&per_page=${per_page}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        return {
-          success: true,
-          data: data.data || [],
-          pagination: data.pagination || {},
-          message: data.message
-        };
-      } else {
-        return {
-          success: false,
-          error: data.error || 'Failed to fetch user advertisements'
-        };
-      }
-    } catch (error) {
-      console.error('Error fetching user advertisements:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
-    }
-  }
-
-  // POST /api/advertisements - Create new advertisement
-  async createAdvertisement(advertisementData) {
+  // Create new advertisement
+  async createAdvertisement(adData) {
     try {
       const response = await fetch(`${API_BASE_URL}/advertisements`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(advertisementData)
+        body: JSON.stringify(adData)
       });
 
       const data = await response.json();
-      
-      if (response.ok) {
-        return {
-          success: true,
-          data: data.data,
-          message: data.message
-        };
-      } else {
-        return {
-          success: false,
-          error: data.error || 'Failed to create advertisement'
-        };
-      }
+      return data;
     } catch (error) {
       console.error('Error creating advertisement:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
+      return { success: false, error: error.message };
     }
   }
 
-  // PUT /api/advertisements/:id - Update advertisement
-  async updateAdvertisement(advertisementId, updateData) {
+  // Get all advertisements (user sees only their ads, admin sees all)
+  async getAllAdvertisements(page = 1, perPage = 10, filters = {}) {
     try {
-      const response = await fetch(`${API_BASE_URL}/advertisements/${advertisementId}`, {
-        method: 'PUT',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(updateData)
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: perPage.toString(),
+        ...filters
       });
 
-      const data = await response.json();
-      
-      if (response.ok) {
-        return {
-          success: true,
-          data: data.data,
-          message: data.message
-        };
-      } else {
-        return {
-          success: false,
-          error: data.error || 'Failed to update advertisement'
-        };
-      }
-    } catch (error) {
-      console.error('Error updating advertisement:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
-    }
-  }
-
-  // DELETE /api/advertisements/:id - Delete advertisement
-  async deleteAdvertisement(advertisementId) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/advertisements/${advertisementId}`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders()
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        return {
-          success: true,
-          message: data.message
-        };
-      } else {
-        return {
-          success: false,
-          error: data.error || 'Failed to delete advertisement'
-        };
-      }
-    } catch (error) {
-      console.error('Error deleting advertisement:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
-    }
-  }
-
-  // POST /api/advertisements/:id/view - Increment view count
-  async incrementViewCount(advertisementId) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/advertisements/${advertisementId}/view`, {
-        method: 'POST',
-        headers: this.getAuthHeaders()
-      });
-
-      const data = await response.json();
-      
-      return {
-        success: response.ok,
-        message: data.message || (response.ok ? 'View count updated' : 'Failed to update view count')
-      };
-    } catch (error) {
-      console.error('Error incrementing view count:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
-    }
-  }
-
-  // POST /api/advertisements/:id/contact - Increment contact count
-  async incrementContactCount(advertisementId) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/advertisements/${advertisementId}/contact`, {
-        method: 'POST',
-        headers: this.getAuthHeaders()
-      });
-
-      const data = await response.json();
-      
-      return {
-        success: response.ok,
-        message: data.message || (response.ok ? 'Contact count updated' : 'Failed to update contact count')
-      };
-    } catch (error) {
-      console.error('Error incrementing contact count:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
-    }
-  }
-
-  // GET /api/advertisements/stats - Get advertisement statistics
-  async getAdvertisementStats() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/advertisements/stats`, {
+      const response = await fetch(`${API_BASE_URL}/advertisements?${params}`, {
         method: 'GET',
         headers: this.getAuthHeaders()
       });
 
       const data = await response.json();
-      
-      if (response.ok) {
-        return {
-          success: true,
-          data: data.data,
-          message: data.message
-        };
-      } else {
-        return {
-          success: false,
-          error: data.error || 'Failed to fetch advertisement statistics'
-        };
-      }
+      return data;
     } catch (error) {
-      console.error('Error fetching advertisement statistics:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
+      console.error('Error fetching advertisements:', error);
+      return { success: false, error: error.message };
     }
   }
 
-  // PUT /api/advertisements/:id/featured - Toggle featured status
-  async toggleFeaturedStatus(advertisementId, isFeatured) {
+  // Get advertisement by ID
+  async getAdvertisementById(adId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/advertisements/${advertisementId}/featured`, {
-        method: 'PUT',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ is_featured: isFeatured })
+      const response = await fetch(`${API_BASE_URL}/advertisements/${adId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
       });
 
       const data = await response.json();
-      
-      if (response.ok) {
-        return {
-          success: true,
-          data: data.data,
-          message: data.message
-        };
-      } else {
-        return {
-          success: false,
-          error: data.error || 'Failed to toggle featured status'
-        };
-      }
+      return data;
     } catch (error) {
-      console.error('Error toggling featured status:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
+      console.error('Error fetching advertisement:', error);
+      return { success: false, error: error.message };
     }
   }
 
-  // PUT /api/advertisements/:id/status - Update advertisement status
-  async updateAdvertisementStatus(advertisementId, status) {
+  // Get pending advertisements (admin only)
+  async getPendingAdvertisements(page = 1, perPage = 10) {
     try {
-      const response = await fetch(`${API_BASE_URL}/advertisements/${advertisementId}/status`, {
-        method: 'PUT',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ status })
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: perPage.toString()
+      });
+
+      const response = await fetch(`${API_BASE_URL}/advertisements/pending?${params}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
       });
 
       const data = await response.json();
-      
-      if (response.ok) {
-        return {
-          success: true,
-          data: data.data,
-          message: data.message
-        };
-      } else {
-        return {
-          success: false,
-          error: data.error || 'Failed to update advertisement status'
-        };
-      }
+      return data;
     } catch (error) {
-      console.error('Error updating advertisement status:', error);
-      return {
-        success: false,
-        error: error.message || 'Network error occurred'
-      };
+      console.error('Error fetching pending advertisements:', error);
+      return { success: false, error: error.message };
     }
   }
 
-  // Helper method to format advertisement for display
-  formatAdvertisementForDisplay(advertisement) {
-    if (!advertisement) return null;
+  // Approve advertisement (admin only)
+  async approveAdvertisement(adId, adminNotes = null) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/advertisements/${adId}/approve`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ admin_notes: adminNotes })
+      });
 
-    return {
-      id: advertisement._id,
-      title: advertisement.society_name,
-      location: advertisement.location,
-      plotSizes: advertisement.plot_sizes || [],
-      priceRange: {
-        start: advertisement.price_start,
-        end: advertisement.price_end,
-        formatted: advertisement.price_end 
-          ? `PKR ${(advertisement.price_start / 100000).toFixed(1)} - ${(advertisement.price_end / 100000).toFixed(1)} Lacs`
-          : `Starting from PKR ${(advertisement.price_start / 100000).toFixed(1)} Lacs`
-      },
-      contact: advertisement.contact_number,
-      description: advertisement.description,
-      facilities: advertisement.facilities,
-      status: advertisement.status,
-      isFeatured: advertisement.is_featured,
-      installmentsAvailable: advertisement.installments_available,
-      possessionStatus: advertisement.possession_status,
-      viewCount: advertisement.view_count || 0,
-      contactCount: advertisement.contact_count || 0,
-      createdBy: advertisement.created_by,
-      createdAt: new Date(advertisement.created_at),
-      updatedAt: new Date(advertisement.updated_at),
-      isActive: advertisement.status === 'active'
-    };
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error approving advertisement:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Reject advertisement (admin only)
+  async rejectAdvertisement(adId, adminNotes) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/advertisements/${adId}/reject`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ admin_notes: adminNotes })
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error rejecting advertisement:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get active advertisements (public)
+  async getActiveAdvertisements() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/advertisements/active`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching active advertisements:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Track click on advertisement
+  async trackClick(adId) {
+    try {
+      await fetch(`${API_BASE_URL}/advertisements/${adId}/click`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      console.error('Error tracking click:', error);
+    }
+  }
+
+  // Track impression of advertisement
+  async trackImpression(adId) {
+    try {
+      await fetch(`${API_BASE_URL}/advertisements/${adId}/impression`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      console.error('Error tracking impression:', error);
+    }
   }
 }
 
-// Export a singleton instance
-const advertisementAPI = new AdvertisementAPI();
-export default advertisementAPI;
+export default new AdvertisementAPI();
 
-// Also export the class for custom instances if needed
-export { AdvertisementAPI };

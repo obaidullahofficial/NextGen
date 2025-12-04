@@ -133,27 +133,41 @@ Table approval_requests {
   }
 }
 
-Table advertisements {
+Table advertisement_plans {
   _id ObjectId [pk]
-  society_id ObjectId [ref: > society_profiles._id]
-  title varchar
-  description text
-  image_url varchar
-  link_url varchar
-  ad_type varchar [note: 'banner, sidebar, popup']
-  placement varchar [note: 'home, society, plot']
-  status varchar [default: 'active', note: 'active, inactive, expired']
-  is_featured boolean [default: false]
-  view_count int [default: 0]
-  contact_count int [default: 0]
-  start_date timestamp
-  end_date timestamp
+  name varchar [note: 'weekly, monthly, quarterly, yearly']
+  duration_days int [note: 'Duration in days']
+  price decimal [note: 'Plan price']
+  is_active boolean [default: true]
   created_at timestamp
   updated_at timestamp
   indexes {
-    society_id
+    is_active
+  }
+}
+
+Table advertisements {
+  _id ObjectId [pk]
+  user_email varchar [note: 'User who created the ad']
+  title varchar [note: 'Advertisement title']
+  featured_image varchar [note: 'Main image URL/path']
+  link_url varchar [note: 'Optional - external link']
+  plan_id ObjectId [ref: > advertisement_plans._id]
+  plan_name varchar [note: 'Cached plan name']
+  price decimal [note: 'Amount paid']
+  start_date timestamp [note: 'When ad becomes active']
+  end_date timestamp [note: 'When ad expires']
+  status varchar [default: 'pending', note: 'pending, active, expired, rejected']
+  clicks int [default: 0]
+  impressions int [default: 0]
+  admin_notes text [note: 'Admin approval/rejection notes']
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    user_email
     status
-    is_featured
+    start_date
+    end_date
   }
 }
 

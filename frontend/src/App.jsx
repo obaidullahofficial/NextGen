@@ -40,6 +40,7 @@ import SocietyManagement from "./pages/admin/SocietyManagement";
 import ReviewManagement from "./pages/admin/ReviewManagement";  
 import ReportManagement from "./pages/admin/ReportManagement";
 import AdvertisementManagement from "./pages/admin/AdvertisementManagement";
+import AdvertisementPlanManagement from "./pages/admin/AdvertisementPlanManagement";
 
 // Wrapper for Admin Layout with Sidebar + Topbar + Data Context
 const AdminLayout = ({ children }) => (
@@ -124,6 +125,11 @@ function App() {
           <Route path="/advertisement-management" element={
             <ProtectedAdminRoute>
               <AdminLayout><AdvertisementManagement /></AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/advertisement-plan-management" element={
+            <ProtectedAdminRoute>
+              <AdminLayout><AdvertisementPlanManagement /></AdminLayout>
             </ProtectedAdminRoute>
           } />
           <Route path="/reports" element={

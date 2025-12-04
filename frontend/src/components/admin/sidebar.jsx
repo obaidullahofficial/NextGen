@@ -50,6 +50,11 @@ const Sidebar = () => {
       icon: <MessageSquare size={18} />,
     },
     {
+      name: "Advertisement Plans",
+      path: "/advertisement-plan-management",
+      icon: <BarChart3 size={18} />,
+    },
+    {
       name: "Reports",
       path: "/reports",
       icon: <BarChart3 size={18} />,

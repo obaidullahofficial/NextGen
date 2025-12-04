@@ -1,381 +1,356 @@
-import React, { useState, useEffect } from "react";
-import advertisementAPI from "../../services/advertisementAPI";
-import { getSocietyProfile } from "../../services/apiService";
-
-const plotSizeOptions = ["5 Marla", "10 Marla", "1 Kanal", "2 Kanal", "5 Kanal", "1 Acre"];
-const possessionOptions = ["ready", "under_construction", "planning"];
-const statusOptions = ["active", "inactive", "pending", "expired"];
+import React, { useState, useEffect } from 'react';
+import advertisementAPI from '../../services/advertisementAPI';
+import advertisementPlanAPI from '../../services/advertisementPlanAPI';
+import './Advertisement.css';
 
 const Advertisement = () => {
-  const [societyName, setSocietyName] = useState("");
-
+  const [plans, setPlans] = useState([]);
+  const [myAds, setMyAds] = useState([]);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  
   const [formData, setFormData] = useState({
-    location: "",
-    plot_sizes: [],
-    price_start: "",
-    price_end: "",
-    contact_number: "",
-    description: "",
-    facilities: "",
-    installments_available: false,
-    possession_status: "ready",
-    status: "pending",
-    is_featured: false,
+    title: '',
+    featured_image: '',
+    link_url: '',
+    plan_id: ''
   });
 
-  const [loading, setLoading] = useState(false);
-  const [societyLoading, setSocietyLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-
   useEffect(() => {
-    const loadSociety = async () => {
-      try {
-        const result = await getSocietyProfile();
-        const profile = result?.profile || result?.data || result;
-        const name = profile?.name || "";
-        setSocietyName(name);
-      } catch (e) {
-        console.error("Failed to load society profile for advertisement:", e);
-        setError(e.message || "Failed to load society information. Please ensure your society profile is set up.");
-      } finally {
-        setSocietyLoading(false);
-      }
-    };
-
-    loadSociety();
+    fetchPlans();
+    fetchMyAds();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  const handlePlotSizeToggle = (size) => {
-    setFormData((prev) => ({
-      ...prev,
-      plot_sizes: prev.plot_sizes.includes(size)
-        ? prev.plot_sizes.filter((s) => s !== size)
-        : [...prev.plot_sizes, size],
-    }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      location: "",
-      plot_sizes: [],
-      price_start: "",
-      price_end: "",
-      contact_number: "",
-      description: "",
-      facilities: "",
-      installments_available: false,
-      possession_status: "ready",
-      status: "pending",
-      is_featured: false,
-    });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setShowConfirmDialog(true);
-  };
-
-  const confirmSubmit = async () => {
-    setLoading(true);
-    setError("");
-    setSuccess("");
-    setShowConfirmDialog(false);
-
+  const fetchPlans = async () => {
     try {
-      const payload = {
-        ...formData,
-        society_name: societyName,
-        price_start: parseFloat(formData.price_start),
-        price_end: formData.price_end ? parseFloat(formData.price_end) : undefined,
-        status: "pending", // so admin can review and approve
-      };
-
-      const result = await advertisementAPI.createAdvertisement(payload);
-
+      setLoadingPlans(true);
+      const result = await advertisementPlanAPI.getAllPlans(true);
       if (result.success) {
-        setSuccess("Advertisement request submitted successfully. Admin can now review it.");
-        resetForm();
+        setPlans(result.data || []);
       } else {
-        setError(result.error || "Failed to submit advertisement request.");
+        setError(result.error || 'Failed to load plans');
       }
     } catch (err) {
-      console.error("Error creating advertisement:", err);
-      setError(err.message || "Failed to submit advertisement request. Please try again.");
+      setError('Failed to load advertisement plans');
+    } finally {
+      setLoadingPlans(false);
+    }
+  };
+
+  const fetchMyAds = async () => {
+    try {
+      const result = await advertisementAPI.getAllAdvertisements(1, 10);
+      if (result.success) {
+        setMyAds(result.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching ads:', err);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate image format
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        setError('Please select a valid image file (PNG, JPG, JPEG, GIF, or WebP)');
+        return;
+      }
+      
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image file size must be less than 5MB');
+        return;
+      }
+      
+      setImageFile(file);
+      setError('');
+      
+      // Create preview and base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target.result;
+        setImagePreview(base64);
+        setFormData(prev => ({
+          ...prev,
+          featured_image: base64
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePlanSelect = (plan) => {
+    setSelectedPlan(plan);
+    setFormData(prev => ({
+      ...prev,
+      plan_id: plan._id
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    // Validation
+    if (!formData.title || !formData.featured_image || !formData.plan_id) {
+      setError('Title, advertisement image, and plan selection are required');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const result = await advertisementAPI.createAdvertisement(formData);
+
+      if (result.success) {
+        setSuccess(`${result.message} Amount: $${result.price}`);
+        setFormData({
+          title: '',
+          featured_image: '',
+          link_url: '',
+          plan_id: ''
+        });
+        setImageFile(null);
+        setImagePreview('');
+        setSelectedPlan(null);
+        fetchMyAds();
+        
+        // Simulate payment redirect
+        setTimeout(() => {
+          alert(`Redirect to payment gateway for $${result.price}\nAdvertisement ID: ${result.advertisement_id}`);
+        }, 1500);
+      } else {
+        setError(result.error || 'Failed to create advertisement');
+      }
+    } catch (err) {
+      setError('Error creating advertisement: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'active':
+        return 'status-active';
+      case 'pending':
+        return 'status-pending';
+      case 'rejected':
+        return 'status-rejected';
+      case 'expired':
+        return 'status-expired';
+      default:
+        return '';
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f3f4f6] via-white to-[#e5e7eb] py-10 px-4 sm:px-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8 flex flex-col gap-3">
-          <h1 className="text-3xl font-bold text-[#2F3D57] tracking-tight flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#2F3D57] text-white text-xl font-semibold shadow-md">
-              Ad
-            </span>
-            <span>Create Advertisement</span>
-          </h1>
-          <p className="text-gray-600 text-sm sm:text-base max-w-3xl">
-            Fill in the details below to request an advertisement for your society. The admin will be able
-            to review, approve and feature your advertisement on the platform.
-          </p>
+    <div className="advertisement-container">
+      <div className="advertisement-header">
+        <h1>Create Advertisement</h1>
+        <p>Select a plan, upload your image, and submit for admin approval</p>
+      </div>
+
+      {error && (
+        <div className="alert alert-error">
+          <span className="alert-icon">⚠</span>
+          {error}
         </div>
+      )}
 
-        {error && (
-          <div className="mb-4 p-3 rounded-xl bg-red-50/80 text-red-700 border border-red-200 text-sm shadow-sm flex items-start gap-2">
-            <span className="mt-0.5 h-2 w-2 rounded-full bg-red-500" />
-            <span>{error}</span>
+      {success && (
+        <div className="alert alert-success">
+          <span className="alert-icon">✓</span>
+          {success}
+        </div>
+      )}
+
+      {/* Plan Selection */}
+      <div className="section-card">
+        <h2>Step 1: Select a Plan</h2>
+        {loadingPlans ? (
+          <div className="loading-spinner">Loading plans...</div>
+        ) : plans.length === 0 ? (
+          <p className="no-data">No plans available</p>
+        ) : (
+          <div className="plans-grid">
+            {plans.map(plan => (
+              <div
+                key={plan._id}
+                className={`plan-card ${selectedPlan?._id === plan._id ? 'plan-selected' : ''}`}
+                onClick={() => handlePlanSelect(plan)}
+              >
+                <div className="plan-header">
+                  <h3>{plan.name}</h3>
+                  <span className="plan-price">${plan.price}</span>
+                </div>
+                <div className="plan-details">
+                  <p><strong>{plan.duration_days}</strong> days</p>
+                  {selectedPlan?._id === plan._id && (
+                    <span className="plan-selected-badge">✓ Selected</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
+      </div>
 
-        {success && (
-          <div className="mb-4 p-3 rounded-xl bg-green-50/80 text-green-700 border border-green-200 text-sm shadow-sm flex items-start gap-2">
-            <span className="mt-0.5 h-2 w-2 rounded-full bg-green-500" />
-            <span>{success}</span>
-          </div>
-        )}
-
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8 space-y-6"
-        >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Location <span className="text-red-500">*</span>
+      {/* Advertisement Form */}
+      <div className="section-card">
+        <h2>Step 2: Advertisement Details</h2>
+        <form onSubmit={handleSubmit} className="ad-form">
+          <div className="form-group">
+            <label htmlFor="title">
+              Title <span className="required">*</span>
             </label>
             <input
               type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              placeholder="Enter advertisement title"
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-              placeholder="City / Area"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">
-            Plot Sizes <span className="text-red-500">*</span>
-          </label>
-          <div className="flex flex-wrap gap-3 mt-1">
-            {plotSizeOptions.map((size) => (
-              <label key={size} className="inline-flex items-center text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={formData.plot_sizes.includes(size)}
-                  onChange={() => handlePlotSizeToggle(size)}
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2"
-                />
-                {size}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Starting Price (PKR) <span className="text-red-500">*</span>
-              </label>
-            <input
-              type="number"
-              name="price_start"
-              value={formData.price_start}
-              onChange={handleChange}
-              required
-              min="0"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-              placeholder="e.g. 5000000"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Ending Price (PKR)</label>
-            <input
-              type="number"
-              name="price_end"
-              value={formData.price_end}
-              onChange={handleChange}
-              min="0"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-              placeholder="Optional"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">
-            Contact Number <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="contact_number"
-            value={formData.contact_number}
-            onChange={handleChange}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-            placeholder="e.g. +92 300 1234567"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">
-            Description <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            required
-            rows={4}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-            placeholder="Short description of the advertised plots / society"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Facilities</label>
-          <textarea
-            name="facilities"
-            value={formData.facilities}
-            onChange={handleChange}
-            rows={3}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-            placeholder="e.g. Gated community, electricity, gas, water, parks, schools, 24/7 security"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Possession Status</label>
-            <select
-              name="possession_status"
-              value={formData.possession_status}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-            >
-              {possessionOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option.charAt(0).toUpperCase() + option.slice(1).replace("_", " ")}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Status</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-            >
-              {statusOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option.charAt(0).toUpperCase() + option.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col space-y-3 mt-1">
-            <label className="inline-flex items-center text-sm font-medium text-gray-700">
-              <input
-                type="checkbox"
-                name="installments_available"
-                checked={formData.installments_available}
-                onChange={handleChange}
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2"
-              />
-              Installments Available
+          <div className="form-group">
+            <label htmlFor="featured_image">
+              Featured Image <span className="required">*</span>
             </label>
-            
-            <label className="inline-flex items-center text-sm font-medium text-gray-700">
-              <input
-                type="checkbox"
-                name="is_featured"
-                checked={formData.is_featured}
-                onChange={handleChange}
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2"
-              />
-              Featured Advertisement
-            </label>
+            <input
+              type="file"
+              id="featured_image"
+              name="featured_image"
+              accept="image/png, image/jpeg, image/jpg, image/gif, image/webp"
+              onChange={handleImageChange}
+              className="file-input"
+              required={!imagePreview}
+            />
+            <small>Upload your advertisement image (PNG, JPG, GIF, or WebP - Max 5MB)</small>
+            {imagePreview && (
+              <div className="image-preview-container">
+                <img src={imagePreview} alt="Advertisement preview" className="image-preview" />
+                <button
+                  type="button"
+                  className="btn-remove-image"
+                  onClick={() => {
+                    setImageFile(null);
+                    setImagePreview('');
+                    setFormData(prev => ({ ...prev, featured_image: '' }));
+                  }}
+                >
+                  ✕ Remove
+                </button>
+              </div>
+            )}
           </div>
-        </div>
 
+          <div className="form-group">
+            <label htmlFor="link_url">
+              Link URL <span className="optional">(Optional)</span>
+            </label>
+            <input
+              type="url"
+              id="link_url"
+              name="link_url"
+              value={formData.link_url}
+              onChange={handleInputChange}
+              placeholder="https://example.com"
+            />
+            <small>Users will be directed here when they click your ad</small>
+          </div>
 
-        <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 mt-4">
-          <button
-            type="button"
-            onClick={resetForm}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-            disabled={loading}
-          >
-            Reset
-          </button>
+          {!selectedPlan && (
+            <p className="form-warning">⚠ Please select a plan first</p>
+          )}
+
           <button
             type="submit"
-            disabled={loading}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#2F3D57] hover:bg-[#1E2A3B] disabled:opacity-50 transition-colors"
+            className="btn-submit"
+            disabled={loading || !selectedPlan}
           >
-            {loading ? "Submitting..." : "Submit Advertisement Request"}
+            {loading ? 'Creating...' : 'Create Advertisement & Pay'}
           </button>
-        </div>
-      </form>
+        </form>
+      </div>
 
-      {/* Confirmation Dialog */}
-      {showConfirmDialog && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 transform transition-all">
-            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-blue-200">
-              <svg className="w-8 h-8 text-[#2F3D57]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            
-            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
-              Submit Advertisement Request?
-            </h3>
-            
-            <p className="text-gray-600 text-center mb-6">
-              Are you sure you want to submit this advertisement request? The admin will review and approve it before it becomes visible.
-            </p>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowConfirmDialog(false)}
-                className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors"
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmSubmit}
-                className="flex-1 px-4 py-3 rounded-lg font-medium text-white transition-colors bg-[#2F3D57] hover:bg-[#1E2A3B]"
-                disabled={loading}
-              >
-                {loading ? "Submitting..." : "Yes, Submit"}
-              </button>
-            </div>
+      {/* My Advertisements */}
+      <div className="section-card">
+        <h2>My Advertisements</h2>
+        {myAds.length === 0 ? (
+          <p className="no-data">No advertisements yet</p>
+        ) : (
+          <div className="ads-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Plan</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Stats</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myAds.map(ad => (
+                  <tr key={ad._id}>
+                    <td>
+                      <div className="ad-title">
+                        {ad.title}
+                        {ad.link_url && <small>{ad.link_url}</small>}
+                      </div>
+                    </td>
+                    <td>{ad.plan_name}</td>
+                    <td>${ad.price}</td>
+                    <td>
+                      <span className={`status-badge ${getStatusBadgeClass(ad.status)}`}>
+                        {ad.status}
+                      </span>
+                    </td>
+                    <td>{formatDate(ad.start_date)}</td>
+                    <td>{formatDate(ad.end_date)}</td>
+                    <td>
+                      <div className="ad-stats">
+                        <span title="Clicks">👆 {ad.clicks || 0}</span>
+                        <span title="Impressions">👁 {ad.impressions || 0}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
-  </div>
   );
 };
 
