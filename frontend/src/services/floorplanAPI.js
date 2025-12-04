@@ -75,10 +75,26 @@ export const floorplanAPI = {
   /**
    * Delete a floor plan
    */
-  async deleteFloorplan(floorplanId) {
-    const response = await fetch(`${API_BASE_URL}/floorplan/${floorplanId}`, {
+  async deleteFloorplan(floorplanId, userId) {
+    const response = await fetch(`${API_BASE_URL}/floorplan/${floorplanId}?user_id=${userId}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Toggle favorite status of a floor plan
+   */
+  async toggleFavorite(floorplanId, userId, isFavorite) {
+    const response = await fetch(`${API_BASE_URL}/floorplan/update`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        floorplan_id: floorplanId,
+        user_id: userId,
+        is_favorite: isFavorite
+      }),
     });
     return handleResponse(response);
   },

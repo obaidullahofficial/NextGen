@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const PersonalInfoForm = () => {
   const navigate = useNavigate();
-  const { updateUserProfile } = useAuth();
+  const { updateUserProfile, user } = useAuth();
   const [form, setForm] = useState({
     cnic: '',
     cnicFront: null,
@@ -13,7 +13,7 @@ const PersonalInfoForm = () => {
     firstName: '',
     lastName: '',
     phone: '',
-    email: '',
+    email: user?.email || '',
     profileImage: null,
   });
 
@@ -25,6 +25,16 @@ const PersonalInfoForm = () => {
   useEffect(() => {
     loadProfile();
   }, []);
+  
+  // Set email from user context when available
+  useEffect(() => {
+    if (user?.email) {
+      setForm(prev => ({
+        ...prev,
+        email: user.email
+      }));
+    }
+  }, [user]);
 
   const loadProfile = async () => {
     try {
@@ -173,14 +183,23 @@ const PersonalInfoForm = () => {
         <div>
           <label className="block font-medium mb-1 text-gray-700">Phone Number</label>
           <input
-            type="text"
+            type="tel"
             name="phone"
             value={form.phone}
-            onChange={handleChange}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+              // Only allow 11 digits and must start with 0
+              if (value.length <= 11 && (value === '' || value.startsWith('0'))) {
+                setForm((prev) => ({ ...prev, phone: value }));
+              }
+            }}
+            maxLength={11}
+            pattern="^03[0-9]{9}$"
             className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#ED7600]"
-            placeholder="+92 300 1234567"
+            placeholder="03001234567"
             required
           />
+          <p className="text-xs text-gray-500 mt-1">Enter 11 digits starting with 03 (e.g., 03001234567)</p>
         </div>
         <div>
           <label className="block font-medium mb-1 text-gray-700">Email Address</label>
@@ -188,10 +207,9 @@ const PersonalInfoForm = () => {
             type="email"
             name="email"
             value={form.email}
-            onChange={handleChange}
+            readOnly
             disabled
             className="border border-gray-300 rounded-lg px-4 py-2 w-full bg-gray-100 text-gray-600 cursor-not-allowed"
-            placeholder="example@email.com"
             title="Email cannot be changed. This is your login email."
           />
           <p className="text-xs text-gray-500 mt-1">This is your login email and cannot be changed</p>

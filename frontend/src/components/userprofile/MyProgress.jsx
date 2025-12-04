@@ -20,8 +20,16 @@ const MyProgress = () => {
   const [error, setError] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [filterType, setFilterType] = useState('all'); // 'all', 'favorites', 'active'
+  const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Show notification and auto-hide after 3 seconds
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   useEffect(() => {
     fetchSavedPlans();
@@ -36,7 +44,17 @@ const MyProgress = () => {
       if (user && user.id) {
         const response = await floorplanAPI.getUserFloorplans(user.id);
         if (response.success) {
-          setSavedPlans(response.data || []);
+          const backendPlans = response.floor_plans || response.data || [];
+          
+          // Ensure each plan has required properties with defaults
+          const formattedPlans = backendPlans.map(plan => ({
+            ...plan,
+            status: 'active',
+            is_favorite: plan.is_favorite || false,
+            room_data: plan.room_data || plan.floor_plan_data?.rooms || []
+          }));
+          
+          setSavedPlans(formattedPlans);
         }
       } else {
         // Fallback to localStorage
@@ -90,8 +108,23 @@ const MyProgress = () => {
         state: { plotDimensions: { x: plan.constraints?.plotX, y: plan.constraints?.plotY } }
       });
     } else {
-      // Backend plan
-      setSelectedPlan(plan);
+      // Backend plan - Navigate to customization page with floor plan data
+      navigate('/floor-plan/customize', {
+        state: {
+          floorPlan: {
+            id: plan._id,
+            _id: plan._id,
+            projectName: plan.project_name,
+            rooms: plan.floor_plan_data?.rooms || plan.room_data || [],
+            walls: plan.floor_plan_data?.walls || [],
+            doors: plan.floor_plan_data?.doors || [],
+            plotDimensions: plan.dimensions || plan.floor_plan_data?.plotDimensions || {},
+            mapData: plan.floor_plan_data?.mapData || [],
+            constraints: plan.constraints || {},
+            user_id: user?.id
+          }
+        }
+      });
     }
   };
 
@@ -100,13 +133,43 @@ const MyProgress = () => {
       if (isLocalStorage) {
         localStorage.removeItem(planId);
       } else {
-        await floorplanAPI.deleteFloorplan(planId);
+        if (!user || !user.id) {
+          alert('User not authenticated');
+          return;
+        }
+        await floorplanAPI.deleteFloorplan(planId, user.id);
       }
       setSavedPlans(savedPlans.filter(p => p._id !== planId && p.key !== planId));
       setShowDeleteConfirm(null);
+      showNotification('🗑️ Floor plan deleted successfully', 'success');
     } catch (err) {
       console.error('Error deleting floor plan:', err);
-      alert('Failed to delete floor plan');
+      showNotification('Failed to delete floor plan: ' + (err.message || 'Unknown error'), 'error');
+    }
+  };
+
+  const handleToggleFavorite = async (planId, currentFavoriteStatus) => {
+    try {
+      if (!user || !user.id) {
+        showNotification('User not authenticated', 'error');
+        return;
+      }
+      
+      await floorplanAPI.toggleFavorite(planId, user.id, !currentFavoriteStatus);
+      
+      // Update local state
+      setSavedPlans(savedPlans.map(p => 
+        p._id === planId ? { ...p, is_favorite: !currentFavoriteStatus } : p
+      ));
+      
+      // Show success notification
+      showNotification(
+        !currentFavoriteStatus ? '⭐ Added to favorites!' : 'Removed from favorites',
+        'success'
+      );
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      showNotification('Failed to update favorite status', 'error');
     }
   };
 
@@ -130,6 +193,13 @@ const MyProgress = () => {
     return 0;
   };
 
+  // Filter plans based on selected filter
+  const filteredPlans = savedPlans.filter(plan => {
+    if (filterType === 'favorites') return plan.is_favorite;
+    if (filterType === 'active') return plan.status === 'active';
+    return true; // 'all'
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -144,14 +214,89 @@ const MyProgress = () => {
   return (
     <div className="p-8 bg-linear-to-br from-gray-50 to-gray-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
+        {/* Notification Toast */}
+        {notification && (
+          <div 
+            className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-2xl border-l-4 flex items-center gap-3 transition-all duration-300 ${
+            notification.type === 'success' 
+              ? 'bg-green-50 border-green-500 text-green-800' 
+              : 'bg-red-50 border-red-500 text-red-800'
+          }`}>
+            {notification.type === 'success' ? (
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            )}
+            <span className="font-medium">{notification.message}</span>
+          </div>
+        )}
+        
         {/* Header */}
         <div className="mb-8">
-          <h2 className="text-3xl font-extrabold text-gray-800 tracking-tight">
-            My Floor Plan Progress
-          </h2>
-          <p className="text-gray-600 mt-2">
-            Track and manage all your saved floor plan designs
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-extrabold text-gray-800 tracking-tight">
+                My Floor Plan Progress
+              </h2>
+              <p className="text-gray-600 mt-2">
+                Track and manage all your saved floor plan designs
+              </p>
+            </div>
+            
+            {/* Filter Buttons */}
+            <div className="flex items-center gap-2 bg-white rounded-lg shadow p-2">
+              <button
+                onClick={() => setFilterType('all')}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${
+                  filterType === 'all'
+                    ? 'bg-[#ED7600] text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                All Plans
+                <span className={`px-2 py-0.5 rounded-full text-xs ${
+                  filterType === 'all' ? 'bg-white text-[#ED7600]' : 'bg-gray-200'
+                }`}>
+                  {savedPlans.length}
+                </span>
+              </button>
+              <button
+                onClick={() => setFilterType('favorites')}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${
+                  filterType === 'favorites'
+                    ? 'bg-yellow-500 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <FiStar className={filterType === 'favorites' ? 'fill-current' : ''} />
+                Favorites
+                <span className={`px-2 py-0.5 rounded-full text-xs ${
+                  filterType === 'favorites' ? 'bg-white text-yellow-500' : 'bg-gray-200'
+                }`}>
+                  {savedPlans.filter(p => p.is_favorite).length}
+                </span>
+              </button>
+              <button
+                onClick={() => setFilterType('active')}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${
+                  filterType === 'active'
+                    ? 'bg-green-500 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Active
+                <span className={`px-2 py-0.5 rounded-full text-xs ${
+                  filterType === 'active' ? 'bg-white text-green-500' : 'bg-gray-200'
+                }`}>
+                  {savedPlans.filter(p => p.status === 'active').length}
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Statistics */}
@@ -190,9 +335,9 @@ const MyProgress = () => {
         </div>
 
         {/* Floor Plans Grid */}
-        {savedPlans.length > 0 ? (
+        {filteredPlans.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {savedPlans.map((plan) => (
+            {filteredPlans.map((plan) => (
               <div
                 key={plan._id || plan.key}
                 className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
@@ -208,9 +353,16 @@ const MyProgress = () => {
                         <p className="text-sm opacity-90 mt-1">Plot: {plan.plotId}</p>
                       )}
                     </div>
-                    {plan.is_favorite && (
-                      <FiStar className="text-yellow-300 fill-current" />
-                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavorite(plan._id, plan.is_favorite);
+                      }}
+                      className="hover:scale-110 transition-transform"
+                      title={plan.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <FiStar className={`text-2xl ${plan.is_favorite ? 'text-yellow-300 fill-current' : 'text-white opacity-50'}`} />
+                    </button>
                   </div>
                 </div>
 
@@ -263,6 +415,17 @@ const MyProgress = () => {
                     View
                   </button>
                   <button
+                    onClick={() => handleToggleFavorite(plan._id, plan.is_favorite)}
+                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-semibold ${
+                      plan.is_favorite
+                        ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                    title={plan.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
+                  >
+                    <FiStar className={plan.is_favorite ? 'fill-current' : ''} />
+                  </button>
+                  <button
                     onClick={() => setShowDeleteConfirm(plan._id || plan.key)}
                     className="flex items-center justify-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm font-semibold"
                   >
@@ -275,16 +438,36 @@ const MyProgress = () => {
         ) : (
           <div className="text-center py-16 px-8 bg-white rounded-xl shadow-md border-2 border-dashed border-gray-300">
             <FiInbox className="mx-auto text-6xl text-gray-400 mb-4" />
-            <h3 className="text-2xl font-semibold text-gray-800 mb-2">No Floor Plans Yet!</h3>
+            <h3 className="text-2xl font-semibold text-gray-800 mb-2">
+              {filterType === 'favorites' 
+                ? 'No Favorite Plans Yet!' 
+                : filterType === 'active'
+                ? 'No Active Plans!'
+                : 'No Floor Plans Yet!'}
+            </h3>
             <p className="text-gray-500 mb-6">
-              Start creating amazing floor plans for your projects
+              {filterType === 'favorites' 
+                ? 'Mark floor plans as favorites by clicking the star icon' 
+                : filterType === 'active'
+                ? 'Create new floor plans to see them here'
+                : 'Start creating amazing floor plans for your projects'}
             </p>
-            <button
-              onClick={() => navigate('/user/plot-browsing')}
-              className="bg-[#ED7600] text-white px-6 py-3 rounded-lg hover:bg-[#d46000] transition-colors font-semibold"
-            >
-              Browse Plots
-            </button>
+            {filterType !== 'all' && savedPlans.length > 0 && (
+              <button
+                onClick={() => setFilterType('all')}
+                className="bg-[#ED7600] text-white px-6 py-3 rounded-lg hover:bg-[#d46000] transition-colors font-semibold"
+              >
+                Show All Plans
+              </button>
+            )}
+            {savedPlans.length === 0 && (
+              <button
+                onClick={() => navigate('/user/plot-browsing')}
+                className="bg-[#ED7600] text-white px-6 py-3 rounded-lg hover:bg-[#d46000] transition-colors font-semibold"
+              >
+                Browse Plots
+              </button>
+            )}
           </div>
         )}
       </div>
