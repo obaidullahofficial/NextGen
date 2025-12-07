@@ -49,6 +49,7 @@ class PlotController:
                 data = {
                     'plot_number': request.form.get('plot_number', ''),
                     'area': request.form.get('area', ''),
+                    'marla_size': request.form.get('marla_size', ''),
                     'type': request.form.get('type', 'Residential'),
                     'price': request.form.get('price', ''),
                     'status': request.form.get('status', 'Available'),
@@ -116,6 +117,7 @@ class PlotController:
                 status=data.get('status', 'Available'),
                 type=data.get('type', 'Residential Plot'),
                 area=data.get('area', ''),
+                marla_size=data.get('marla_size', ''),
                 dimension_x=data.get('dimension_x', 0),
                 dimension_y=data.get('dimension_y', 0),
                 description=data.get('description', [])

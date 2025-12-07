@@ -24,6 +24,8 @@ const SubadminDashboard = () => {
       navigate('/subadmin/society-profile');
     } else if (tab === 'advertisement') {
       navigate('/subadmin/advertisement');
+    } else if (tab === 'floorPlan') {
+      navigate('/subadmin/floorPlan');
     } else {
       navigate(`/subadmin/${tab === 'plotManagement' ? '' : tab}`);
     }

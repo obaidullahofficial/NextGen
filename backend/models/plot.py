@@ -6,7 +6,7 @@ class Plot:
     Represents a plot document in the database.
     """
     def __init__(self, plot_number, societyId, price, status='Available', type='Residential Plot',
-                 area='', dimension_x=0, dimension_y=0, description=None,
+                 area='', marla_size='', dimension_x=0, dimension_y=0, description=None,
                  image=None, plot_id=None, created_at=None, updated_at=None):
         
         self.plot_id = plot_id
@@ -17,6 +17,7 @@ class Plot:
         self.status = status
         self.type = type
         self.area = area
+        self.marla_size = marla_size
         self.dimension_x = dimension_x
         self.dimension_y = dimension_y
         self.description = description or []
@@ -33,6 +34,7 @@ class Plot:
             "status": self.status,
             "type": self.type,
             "area": self.area,
+            "marla_size": self.marla_size,
             "dimension_x": self.dimension_x,
             "dimension_y": self.dimension_y,
             "description": self.description,

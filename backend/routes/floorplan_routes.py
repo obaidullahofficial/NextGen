@@ -3,6 +3,7 @@ from controllers.floorplan_controller import (
     generate_floorplan,
     save_floorplan,
     get_user_floorplans,
+    get_society_floorplans,
     get_floorplan_details,
     delete_floorplan,
     update_floorplan
@@ -29,6 +30,14 @@ def get_user_floorplans_route(user_id):
     request.args = request.args.copy()
     request.args['user_id'] = user_id
     return get_user_floorplans()
+
+@floorplan_bp.route('/floorplan/society/<user_id>', methods=['GET'])
+def get_society_floorplans_route(user_id):
+    """Get all floor plans for a society (subadmin view)"""
+    from flask import request
+    request.args = request.args.copy()
+    request.args['user_id'] = user_id
+    return get_society_floorplans()
 
 @floorplan_bp.route('/floorplan/<floorplan_id>', methods=['GET'])
 def get_floorplan_details_route(floorplan_id):

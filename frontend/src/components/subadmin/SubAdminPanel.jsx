@@ -17,7 +17,8 @@ const SubAdminPanel = ({ activeTab, setActiveTab }) => {
   
   const handleTabClick = (tab) => {
     if (tab === 'floorPlan') {
-      navigate('/floor-plan/generate');
+      // Just set the active tab, parent will handle showing FloorPlanManager
+      setActiveTab(tab);
     } else {
       setActiveTab(tab);
     }
@@ -70,7 +71,7 @@ const SubAdminPanel = ({ activeTab, setActiveTab }) => {
           }`}
         >
           <FiLayers className="mr-3 text-lg" />
-          Generate Floor Plan
+          Floor Plans
         </button>
         <button
           onClick={() => handleTabClick('approvals')}

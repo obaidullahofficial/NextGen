@@ -159,6 +159,13 @@ def save_floorplan():
     try:
         data = request.get_json()
         
+        print(f"\n{'='*60}")
+        print(f"💾 SAVE FLOOR PLAN REQUEST")
+        print(f"User ID: {data.get('user_id', 'N/A')}")
+        print(f"Society ID: {data.get('society_id', 'N/A')}")
+        print(f"Project Name: {data.get('project_name', 'N/A')}")
+        print(f"{'='*60}\n")
+        
         # Validate required fields
         required_fields = ['user_id', 'floor_plan_data', 'project_name']
         for field in required_fields:
@@ -171,6 +178,7 @@ def save_floorplan():
         # Create floor plan document
         floorplan_doc = {
             'user_id': data['user_id'],
+            'society_id': data.get('society_id'),  # Store society_id if provided
             'project_name': data['project_name'],
             'floor_plan_data': data['floor_plan_data'],
             'room_data': data.get('room_data', []),
@@ -203,8 +211,107 @@ def save_floorplan():
             'error': 'Failed to save floor plan'
         }), 500
 
+def get_society_floorplans():
+    """Get all floor plans for a society (for subadmin view)"""
+    try:
+        user_id = request.args.get('user_id')
+        print(f"\n{'='*60}")
+        print(f"🏢 GET SOCIETY FLOOR PLANS - Subadmin User ID: {user_id}")
+        print(f"{'='*60}")
+        
+        if not user_id:
+            return jsonify({
+                'success': False,
+                'error': 'User ID is required'
+            }), 400
+        
+        db = get_db()
+        
+        # Get the subadmin's society profile to find society_id
+        society_collection = db['society_profiles']
+        society = society_collection.find_one({'user_id': user_id})
+        
+        print(f"📋 Society profile found: {society is not None}")
+        if society:
+            print(f"🏘️ Society Name: {society.get('name', 'N/A')}")
+            print(f"🆔 Society ID: {str(society['_id'])}")
+        
+        if not society:
+            print("⚠️ No society found for this user")
+            return jsonify({
+                'success': True,
+                'floorplans': [],
+                'count': 0
+            })
+        
+        society_id = str(society['_id'])
+        
+        # Get all floor plans where society_id matches OR user_id is the subadmin
+        collection = floorplan_collection(db)
+        query = {
+            '$or': [
+                {'society_id': society_id},
+                {'user_id': user_id}
+            ]
+        }
+        print(f"🔍 Query: {query}")
+        
+        floorplans = list(collection.find(query).sort('created_at', -1))
+        print(f"📊 Found {len(floorplans)} floor plans")
+        
+        for i, plan in enumerate(floorplans):
+            print(f"  {i+1}. Project: {plan.get('project_name', 'N/A')}, Society ID: {plan.get('society_id', 'None')}, User ID: {plan.get('user_id', 'None')}")
+        
+        # Convert ObjectId to string and format data
+        for plan in floorplans:
+            plan['_id'] = str(plan['_id'])
+            plan['id'] = str(plan['_id'])
+            if 'is_favorite' not in plan:
+                plan['is_favorite'] = False
+            if 'tags' not in plan:
+                plan['tags'] = []
+            if 'room_data' not in plan and 'floor_plan_data' in plan:
+                plan['room_data'] = plan['floor_plan_data'].get('rooms', [])
+            
+            # Extract dimensions and room counts
+            if 'dimensions' in plan:
+                plan['plot_x'] = plan['dimensions'].get('width', 0)
+                plan['plot_y'] = plan['dimensions'].get('height', 0)
+            elif 'floor_plan_data' in plan and isinstance(plan['floor_plan_data'], dict):
+                plot_dims = plan['floor_plan_data'].get('plotDimensions', {})
+                plan['plot_x'] = plot_dims.get('width', 0)
+                plan['plot_y'] = plot_dims.get('height', 0)
+            
+            # Count rooms by type
+            rooms = plan.get('room_data', [])
+            room_counts = {}
+            for room in rooms:
+                room_type = room.get('type', 'unknown')
+                room_counts[room_type] = room_counts.get(room_type, 0) + 1
+            
+            plan['bedrooms'] = room_counts.get('bedroom', 0)
+            plan['bathrooms'] = room_counts.get('bathroom', 0)
+            plan['living_rooms'] = room_counts.get('livingroom', 0)
+            plan['kitchens'] = room_counts.get('kitchen', 0)
+            plan['name'] = plan.get('project_name', 'Unnamed Floor Plan')
+        
+        return jsonify({
+            'success': True,
+            'floorplans': floorplans,
+            'count': len(floorplans)
+        })
+        
+    except Exception as e:
+        print(f"Error getting society floor plans: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Failed to retrieve floor plans'
+        }), 500
+
 def get_user_floorplans():
-    """Get all floor plans for a user"""
+    """Get all floor plans for a specific user"""
     try:
         user_id = request.args.get('user_id')
         if not user_id:

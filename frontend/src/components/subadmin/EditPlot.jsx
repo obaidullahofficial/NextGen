@@ -2,6 +2,27 @@ import React, { useState, useEffect } from "react";
 import { FiPhone } from "react-icons/fi";
 import AlertModal from '../common/AlertModal';
 import { useAlert } from '../../hooks/useAlert';
+import { getSocietyProfile } from '../../services/apiService';
+
+// Hardcoded marla dimensions (in feet)
+const MARLA_DIMENSIONS = {
+  '5 Marla': { x: 30, y: 50 },
+  '6 Marla': { x: 30, y: 60 },
+  '7 Marla': { x: 35, y: 60 },
+  '8 Marla': { x: 40, y: 60 },
+  '9 Marla': { x: 45, y: 60 },
+  '10 Marla': { x: 50, y: 60 },
+  '11 Marla': { x: 44, y: 75 },
+  '12 Marla': { x: 48, y: 75 },
+  '13 Marla': { x: 52, y: 75 },
+  '14 Marla': { x: 56, y: 75 },
+  '15 Marla': { x: 60, y: 75 },
+  '16 Marla': { x: 64, y: 75 },
+  '17 Marla': { x: 68, y: 75 },
+  '18 Marla': { x: 72, y: 75 },
+  '19 Marla': { x: 76, y: 75 },
+  '20 Marla (1 Kanal)': { x: 80, y: 75 }
+};
 
 const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
   const [form, setForm] = useState({
@@ -10,19 +31,41 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
     status: "Available",
     type: "Residential",
     area: "",
+    marla_size: "",
     dimension_x: "",
     dimension_y: "",
     description: [""],
     images: []
   });
+  const [availablePlotSizes, setAvailablePlotSizes] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false); // Prevent double submission
   const [imageError, setImageError] = useState(false); // Track image validation error
   const [plotNumberError, setPlotNumberError] = useState('');
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const { alertState, showError } = useAlert();
 
+  // Fetch society profile to get available plot sizes first
   useEffect(() => {
-    if (plot) {
+    const fetchSocietyProfile = async () => {
+      setIsLoadingProfile(true);
+      try {
+        const result = await getSocietyProfile();
+        if (result.success && result.profile && result.profile.available_plots) {
+          setAvailablePlotSizes(result.profile.available_plots);
+        }
+      } catch (error) {
+        console.error('Error fetching society profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+    fetchSocietyProfile();
+  }, []);
+
+  // Load plot data after profile is loaded
+  useEffect(() => {
+    if (plot && !isLoadingProfile) {
       console.log('EditPlot - FULL plot data received:', JSON.stringify(plot, null, 2));
       console.log('EditPlot - plot.image field:', plot.image);
       console.log('EditPlot - plot.images field:', plot.images);
@@ -33,6 +76,7 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
         status: plot.status || "Available",
         type: plot.type || "Residential",
         area: plot.area || "",
+        marla_size: plot.marla_size || "",
         dimension_x: plot.dimension_x || "",
         dimension_y: plot.dimension_y || "",
         description: Array.isArray(plot.description) ? plot.description : (plot.description ? [plot.description] : [""]),
@@ -124,7 +168,7 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
         });
       });
     }
-  }, [plot]);
+  }, [plot, isLoadingProfile]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -142,20 +186,21 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
       
       setForm({ ...form, [name]: cleaned });
     }
-    // Auto-calculate area when dimension_x or dimension_y changes
-    else if (name === 'dimension_x' || name === 'dimension_y') {
-      const newForm = { ...form, [name]: value };
-      
-      // Calculate area if both dimensions are available
-      if (name === 'dimension_x' && newForm.dimension_y) {
-        const area = parseFloat(value) * parseFloat(newForm.dimension_y);
-        newForm.area = area ? `${area.toFixed(2)} sq ft` : '';
-      } else if (name === 'dimension_y' && newForm.dimension_x) {
-        const area = parseFloat(newForm.dimension_x) * parseFloat(value);
-        newForm.area = area ? `${area.toFixed(2)} sq ft` : '';
+    // Auto-populate dimensions and calculate area when marla_size is selected
+    else if (name === 'marla_size') {
+      const dimensions = MARLA_DIMENSIONS[value];
+      if (dimensions) {
+        const area = dimensions.x * dimensions.y;
+        setForm({ 
+          ...form, 
+          marla_size: value,
+          dimension_x: dimensions.x.toString(),
+          dimension_y: dimensions.y.toString(),
+          area: `${area.toFixed(2)} sq ft`
+        });
+      } else {
+        setForm({ ...form, [name]: value });
       }
-      
-      setForm(newForm);
     }
     else {
       setForm({ ...form, [name]: value });
@@ -236,6 +281,7 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
       // Create FormData like society profile
       const formData = new FormData();
       formData.append('plot_number', form.plot_number);
+      formData.append('marla_size', form.marla_size);
       formData.append('price', form.price);
       formData.append('status', form.status);
       formData.append('type', form.type);
@@ -333,6 +379,36 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
               )}
               <p className="text-gray-500 text-xs mt-1">Numbers only</p>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Plot Size (Marla) <span className="text-red-600">*</span>
+              </label>
+              <select
+                name="marla_size"
+                value={form.marla_size}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#ED7600] focus:border-transparent"
+                required
+              >
+                <option value="">Select plot size</option>
+                {availablePlotSizes.length > 0 ? (
+                  availablePlotSizes.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>No plot sizes available in profile</option>
+                )}
+              </select>
+              {availablePlotSizes.length === 0 && (
+                <p className="text-orange-600 text-xs mt-1">
+                  Please add available plot sizes in your Society Profile first
+                </p>
+              )}
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
               <input
@@ -390,8 +466,9 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
                   type="number"
                   name="dimension_x"
                   value={form.dimension_x}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#ED7600] focus:border-transparent"
+                  readOnly
+                  className="w-full border border-gray-300 rounded-md p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+                  placeholder="Auto-filled from marla size"
                   required
                 />
               </div>
@@ -401,8 +478,9 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
                   type="number"
                   name="dimension_y"
                   value={form.dimension_y}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#ED7600] focus:border-transparent"
+                  readOnly
+                  className="w-full border border-gray-300 rounded-md p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+                  placeholder="Auto-filled from marla size"
                   required
                 />
               </div>

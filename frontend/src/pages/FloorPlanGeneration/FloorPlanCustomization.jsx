@@ -283,6 +283,17 @@ const FloorPlanCustomization = () => {
   const handleSave = async () => {
     if (!floorPlanData) return;
 
+    // Prompt user for project name
+    const projectName = prompt(
+      'Enter a name for your floor plan:',
+      floorPlanData.projectName || `Floor Plan - ${new Date().toLocaleDateString()}`
+    );
+    
+    // If user cancels or enters empty name, don't save
+    if (projectName === null || projectName.trim() === '') {
+      return;
+    }
+
     setIsSaving(true);
     try {
       // Get authentication data
@@ -298,10 +309,34 @@ const FloorPlanCustomization = () => {
       const isNewFloorPlan = !floorPlanData.id || !floorPlanData._id;
       
       if (isNewFloorPlan) {
+        // Get society_id - for subadmin, fetch from society profile
+        let societyId = user.societyId;
+        
+        // If user is subadmin and doesn't have societyId in token, fetch from society profile
+        if (user.role === 'subadmin' && !societyId) {
+          try {
+            const profileResponse = await fetch('http://localhost:5000/api/society-profile', {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            });
+            if (profileResponse.ok) {
+              const profileData = await profileResponse.json();
+              societyId = profileData._id || profileData.id;
+              console.log('📍 Fetched society_id from profile:', societyId);
+            }
+          } catch (error) {
+            console.error('Error fetching society profile:', error);
+          }
+        }
+        
+        console.log('💾 Saving floor plan with user_id:', user.id, 'society_id:', societyId);
+        
         // Save new floor plan
         const saveData = {
           user_id: user.id,
-          project_name: floorPlanData.projectName || `Floor Plan - ${new Date().toLocaleDateString()}`,
+          society_id: societyId,  // Include society_id if user is part of a society
+          project_name: projectName.trim(),
           floor_plan_data: {
             rooms: floorPlanData.rooms || [],
             walls: floorPlanData.walls || [],
@@ -315,6 +350,8 @@ const FloorPlanCustomization = () => {
           height: floorPlanData.plotDimensions?.height || 1000,
           tags: []
         };
+        
+        console.log('📤 Sending save data:', saveData);
 
         const response = await fetch('http://localhost:5000/api/floorplan/save', {
           method: 'POST',
@@ -327,6 +364,7 @@ const FloorPlanCustomization = () => {
 
         if (response.ok) {
           const result = await response.json();
+          console.log('✅ Floor plan saved successfully! ID:', result.floorplan_id);
           
           // Update floor plan data with the new ID
           const updatedFloorPlan = {
@@ -339,7 +377,15 @@ const FloorPlanCustomization = () => {
           localStorage.setItem('currentFloorPlan', JSON.stringify(updatedFloorPlan));
           setHasUnsavedChanges(false);
           
-          alert('✅ Floor plan saved successfully! You can view it in "My Progress".');
+          alert('✅ Floor plan saved successfully!');
+          
+          // Navigate back to floor plans list for subadmins
+          if (user.role === 'subadmin') {
+            console.log('🔄 Redirecting subadmin to /subadmin/floorPlan');
+            setTimeout(() => {
+              navigate('/subadmin/floorPlan');
+            }, 500);
+          }
         } else {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Failed to save floor plan');
@@ -525,7 +571,7 @@ const FloorPlanCustomization = () => {
                     <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    {floorPlanData?.id ? 'Update Floor Plan' : 'Save Floor Plan'}
+                    Save Floor Plan
                   </>
                 )}
               </button>

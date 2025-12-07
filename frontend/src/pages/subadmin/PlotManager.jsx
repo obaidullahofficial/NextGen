@@ -329,16 +329,13 @@ const PlotManager = () => {
               <tr>
                 <th className="px-4 py-3 text-left font-medium text-xs">Plot #</th>
                 <th className="px-4 py-3 text-left font-medium text-xs">Type</th>
+                <th className="px-4 py-3 text-left font-medium text-xs">Plot Size</th>
                 <th className="px-4 py-3 text-left font-medium text-xs">Area</th>
                 <th className="px-4 py-3 text-left font-medium text-xs">Dim X</th>
                 <th className="px-4 py-3 text-left font-medium text-xs">Dim Y</th>
                 <th className="px-4 py-3 text-left font-medium text-xs">Price</th>
                 <th className="px-4 py-3 text-left font-medium text-xs">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-xs">Location</th>
-                <th className="px-4 py-3 text-left font-medium text-xs">Contact Name</th>
-                <th className="px-4 py-3 text-left font-medium text-xs">Contact Phone</th>
                 <th className="px-4 py-3 text-left font-medium text-xs">Description</th>
-                <th className="px-4 py-3 text-left font-medium text-xs">Amenities</th>
                 <th className="px-4 py-3 text-left font-medium text-xs">Images</th>
                 <th className="px-4 py-3 text-left font-medium text-xs">Created</th>
                 <th className="px-4 py-3 text-left font-medium text-xs">Updated</th>
@@ -355,6 +352,7 @@ const PlotManager = () => {
                         {plot.type}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-xs">{plot.marla_size || 'N/A'}</td>
                     <td className="px-4 py-3 text-xs">{plot.area}</td>
                     <td className="px-4 py-3 text-xs">{plot.dimension_x}</td>
                     <td className="px-4 py-3 text-xs">{plot.dimension_y}</td>
@@ -368,11 +366,7 @@ const PlotManager = () => {
                         {plot.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs max-w-32 truncate" title={plot.location}>{plot.location}</td>
-                    <td className="px-4 py-3 text-xs max-w-32 truncate" title={plot.contactName}>{plot.contactName}</td>
-                    <td className="px-4 py-3 text-xs max-w-32 truncate" title={plot.contactPhone}>{plot.contactPhone}</td>
                     <td className="px-4 py-3 text-xs max-w-40 truncate" title={plot.description}>{plot.description}</td>
-                    <td className="px-4 py-3 text-xs max-w-32 truncate" title={plot.amenities}>{plot.amenities}</td>
                     <td className="px-4 py-3 text-xs max-w-32 truncate" title={plot.images}>{plot.images}</td>
                     <td className="px-4 py-3 text-xs">{plot.createdDate}</td>
                     <td className="px-4 py-3 text-xs">{plot.lastUpdated}</td>

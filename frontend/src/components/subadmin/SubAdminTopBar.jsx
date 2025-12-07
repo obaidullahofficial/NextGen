@@ -31,9 +31,7 @@ const SubAdminTopBar = () => {
         <span className="text-xs font-semibold tracking-wide text-gray-400 uppercase">
           Societies Dashboard
         </span>
-        <span className="text-sm text-gray-500">
-          Manage plots, floor plans, approvals and advertisements
-        </span>
+        
       </div>
 
       <div className="flex items-center gap-3 ml-auto">
