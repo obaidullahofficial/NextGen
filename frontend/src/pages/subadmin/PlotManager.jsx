@@ -44,6 +44,7 @@ const PlotManager = () => {
         plotNumber: plot.plot_number || plot.plotNumber || `PL-${Math.floor(1000 + Math.random() * 9000)}`,
         name: plot.name || 'Residential Plot',
         type: plot.type || 'Residential',
+        marla_size: plot.marla_size || 'N/A',
         area: plot.area || 'N/A',
         dimension_x: plot.dimension_x || 'N/A',
         dimension_y: plot.dimension_y || 'N/A',

@@ -48,12 +48,16 @@ const Approvals = () => {
         }
 
         const list = rawList.map((req) => {
+          // Prefer floor_plan_data from database (new approach for cloud compatibility)
+          // Fall back to floor_plan_file_url for backward compatibility with old data
+          const hasFloorPlanData = req.floor_plan_data && typeof req.floor_plan_data === 'object';
           const filePath = req.floor_plan_file_url; // e.g., "uploads/user_profiles/.../file.json"
           const fileUrl = filePath ? `${API_URL}/file/${filePath}` : null;
           
           console.log('[Approvals] Processing request:', {
             id: req._id,
             plot: req.plot_number || req.plot_id,
+            hasFloorPlanData,
             filePath,
             fileUrl
           });
@@ -75,11 +79,13 @@ const Approvals = () => {
               architect: "",
               area: req.area || "",
               floors: "",
-              submittedDocuments: fileUrl
+              submittedDocuments: (hasFloorPlanData || fileUrl)
                 ? [
                     {
                       name: "Floor Plan",
                       url: fileUrl,
+                      // Store floor plan JSON data directly for cloud access
+                      data: hasFloorPlanData ? req.floor_plan_data : null,
                     },
                   ]
                 : [],
@@ -231,17 +237,32 @@ const Approvals = () => {
 
   const handleOpenInGenerator = (approval) => {
     const doc = approval.details.submittedDocuments?.[0];
-    if (!doc || !doc.url) {
+    if (!doc) {
       alert('No floor plan JSON is attached to this approval request.');
       return;
     }
 
-    navigate('/floor-plan/generate', {
-      state: {
-        importFromUrl: doc.url,
-        approvalRequestId: approval.id,
-      },
-    });
+    // Prefer floor_plan_data from database (cloud-compatible)
+    // Fall back to URL for backward compatibility
+    if (doc.data) {
+      // Floor plan data is stored directly in database
+      navigate('/floor-plan/generate', {
+        state: {
+          importFromData: doc.data,  // Direct JSON data from database
+          approvalRequestId: approval.id,
+        },
+      });
+    } else if (doc.url) {
+      // Backward compatibility: fetch from file URL
+      navigate('/floor-plan/generate', {
+        state: {
+          importFromUrl: doc.url,
+          approvalRequestId: approval.id,
+        },
+      });
+    } else {
+      alert('No floor plan JSON is attached to this approval request.');
+    }
   };
 
   const handleCloseDocument = () => {
@@ -302,30 +323,6 @@ const Approvals = () => {
                       </span>
                     </p>
                   </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Project Details</h3>
-                  <div className="space-y-2">
-                    <p><span className="font-medium">Area:</span> {selectedApproval.details.area}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">Submitted Documents</h3>
-                <div className="space-y-2">
-                  {selectedApproval.details.submittedDocuments.map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                      <span>{doc.name}</span>
-                      <button
-                        onClick={() => handleViewDocument(doc)}
-                        className="text-[#2F3D57] hover:text-[#1E2A3B] flex items-center gap-1"
-                      >
-                        <FaEye size={14} /> View
-                      </button>
-                    </div>
-                  ))}
                 </div>
               </div>
               

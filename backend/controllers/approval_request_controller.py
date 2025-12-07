@@ -17,13 +17,24 @@ class ApprovalRequestController:
             db = get_db()
             requests = approval_request_collection(db)
 
-            # Handle floor plan file upload
+            # Handle floor plan file upload - store JSON content directly in database
             if files and 'floor_plan_file' in files and files['floor_plan_file']:
-                floor_plan_path = UserProfileController._save_file(
-                    files['floor_plan_file'], f"user_{user_id}/floor_plans"
-                )
-                if floor_plan_path:
-                    request_data['floor_plan_file_url'] = floor_plan_path
+                floor_plan_file = files['floor_plan_file']
+                try:
+                    # Read the JSON content from the uploaded file
+                    import json
+                    floor_plan_content = floor_plan_file.read().decode('utf-8')
+                    floor_plan_json = json.loads(floor_plan_content)
+                    # Store the JSON content directly in the database
+                    request_data['floor_plan_data'] = floor_plan_json
+                except Exception as json_err:
+                    print(f"Error parsing floor plan JSON: {json_err}")
+                    # Fallback: save as file if JSON parsing fails
+                    floor_plan_path = UserProfileController._save_file(
+                        floor_plan_file, f"user_{user_id}/floor_plans"
+                    )
+                    if floor_plan_path:
+                        request_data['floor_plan_file_url'] = floor_plan_path
 
             # Create approval request object
             approval_request = ApprovalRequest(user_id, **request_data)

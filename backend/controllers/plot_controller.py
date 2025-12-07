@@ -200,8 +200,14 @@ class PlotController:
         db = get_db()
         plot_col = plot_collection(db)
         
+        # Convert society_id string to ObjectId for querying (societyId stored as ObjectId FK)
+        try:
+            society_id_obj = ObjectId(society_id) if isinstance(society_id, str) else society_id
+        except Exception as e:
+            return jsonify({'error': f'Invalid society ID format: {str(e)}'}), 400
+        
         # Find all plots belonging to the specified society ID
-        plots = list(plot_col.find({'societyId': society_id}))
+        plots = list(plot_col.find({'societyId': society_id_obj}))
         
         # If no plots exist for this society, return an empty list with 200 OK
         if not plots:
@@ -210,6 +216,9 @@ class PlotController:
         # Convert ObjectId to string for JSON serialization
         for plot in plots:
             plot['_id'] = str(plot['_id'])
+            # Convert societyId ObjectId to string for JSON response
+            if 'societyId' in plot:
+                plot['societyId'] = str(plot['societyId'])
             
         return jsonify(plots)
 

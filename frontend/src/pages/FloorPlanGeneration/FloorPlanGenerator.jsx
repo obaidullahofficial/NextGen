@@ -40,6 +40,26 @@ const FloorPlanGenerator = () => {
   // If coming from an approval request, import external JSON floor plan
   useEffect(() => {
     const importUrl = location.state?.importFromUrl;
+    const importData = location.state?.importFromData;
+    
+    // Prefer importFromData (database) over importFromUrl (file) for cloud compatibility
+    if (importData) {
+      try {
+        // Floor plan data directly from database (no network request needed)
+        const plans = Array.isArray(importData) ? importData : [importData];
+        if (plans.length > 0) {
+          setGeneratedPlans(plans);
+          setCurrentPlanIndex(0);
+          setCurrentStep(3); // Jump directly to review/visualization step
+        }
+      } catch (err) {
+        console.error('Failed to parse floor plan data from database:', err);
+        alert('❌ Could not load floor plan data from approval request.\n\nError: ' + err.message);
+      }
+      return;
+    }
+    
+    // Fallback to URL-based import for backward compatibility
     if (!importUrl) return;
 
     const loadImportedPlan = async () => {

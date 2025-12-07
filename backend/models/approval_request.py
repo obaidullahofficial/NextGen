@@ -13,6 +13,8 @@ class ApprovalRequest:
         self.plot_id = kwargs.get('plot_id', '')  # plot document _id (string)
         self.design_type = kwargs.get('design_type', '')
         self.floor_plan_file_url = kwargs.get('floor_plan_file_url', '')
+        # Store floor plan JSON data directly in database instead of as file
+        self.floor_plan_data = kwargs.get('floor_plan_data', None)
         self.notes = kwargs.get('notes', '')
         self.status = kwargs.get('status', 'Pending')  # Pending, Approved, Rejected, In Review
         self.request_date = kwargs.get('request_date', datetime.utcnow())
@@ -30,6 +32,7 @@ class ApprovalRequest:
             'plot_id': self.plot_id,
             'design_type': self.design_type,
             'floor_plan_file_url': self.floor_plan_file_url,
+            'floor_plan_data': self.floor_plan_data,
             'notes': self.notes,
             'status': self.status,
             'request_date': self.request_date.isoformat() if isinstance(self.request_date, datetime) else self.request_date,
