@@ -13,7 +13,7 @@ def create_review():
     """Create a new review"""
     try:
         data = request.json
-        plot_id = data.get('plot_id')
+        society_id = data.get('society_id')
         rating = data.get('rating')
         comment = data.get('comment')
         
@@ -21,8 +21,8 @@ def create_review():
         user_email = get_jwt_identity()
         
         # Validate required fields
-        if not plot_id:
-            return jsonify({"success": False, "error": "plot_id is required"}), 400
+        if not society_id:
+            return jsonify({"success": False, "error": "society_id is required"}), 400
         if not rating:
             return jsonify({"success": False, "error": "rating is required"}), 400
         if not comment:
@@ -32,7 +32,7 @@ def create_review():
         if not isinstance(rating, (int, float)) or rating < 1 or rating > 5:
             return jsonify({"success": False, "error": "rating must be between 1 and 5"}), 400
             
-        result = ReviewController.create_review(plot_id, user_email, rating, comment)
+        result = ReviewController.create_review(society_id, user_email, rating, comment)
         
         if result["success"]:
             return jsonify(result), 201
@@ -49,7 +49,7 @@ def get_all_reviews():
         # Get query parameters
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
-        plot_id = request.args.get('plot_id')
+        society_id = request.args.get('society_id')
         user_email = request.args.get('user_email')
         min_rating = request.args.get('min_rating', type=float)
         max_rating = request.args.get('max_rating', type=float)
@@ -63,7 +63,7 @@ def get_all_reviews():
         result = ReviewController.get_all_reviews(
             page=page, 
             per_page=per_page,
-            plot_id=plot_id,
+            society_id=society_id,
             user_email=user_email,
             min_rating=min_rating,
             max_rating=max_rating
@@ -87,15 +87,15 @@ def get_review_by_id(review_id):
     except Exception as e:
         return jsonify({"success": False, "error": f"Internal server error: {str(e)}"}), 500
 
-# READ - Get reviews by plot ID
-@review_bp.route('/plots/<plot_id>/reviews', methods=['GET'])
-def get_reviews_by_plot(plot_id):
-    """Get all reviews for a specific plot"""
+# READ - Get reviews by society ID
+@review_bp.route('/societies/<society_id>/reviews', methods=['GET'])
+def get_reviews_by_society(society_id):
+    """Get all reviews for a specific society"""
     try:
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
         
-        result = ReviewController.get_reviews_by_plot(plot_id, page=page, per_page=per_page)
+        result = ReviewController.get_reviews_by_society(society_id, page=page, per_page=per_page)
         
         return jsonify(result), 200
     except Exception as e:
@@ -158,12 +158,12 @@ def delete_review(review_id):
     except Exception as e:
         return jsonify({"success": False, "error": f"Internal server error: {str(e)}"}), 500
 
-# ANALYTICS - Get review statistics for a plot
-@review_bp.route('/plots/<plot_id>/reviews/stats', methods=['GET'])
-def get_plot_review_stats(plot_id):
-    """Get review statistics for a specific plot"""
+# ANALYTICS - Get review statistics for a society
+@review_bp.route('/societies/<society_id>/reviews/stats', methods=['GET'])
+def get_society_review_stats(society_id):
+    """Get review statistics for a specific society"""
     try:
-        result = ReviewController.get_plot_review_stats(plot_id)
+        result = ReviewController.get_society_review_stats(society_id)
         
         return jsonify(result), 200
     except Exception as e:

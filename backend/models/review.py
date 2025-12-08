@@ -3,8 +3,8 @@ from datetime import datetime
 from bson import ObjectId
 
 class Review:
-    def __init__(self, plot_id, user_email, rating, comment, created_at=None, updated_at=None):
-        self.plot_id = plot_id
+    def __init__(self, society_id, user_email, rating, comment, created_at=None, updated_at=None):
+        self.society_id = society_id
         self.user_email = user_email  # Changed from user_id to user_email for consistency
         self.rating = rating
         self.comment = comment
@@ -13,7 +13,7 @@ class Review:
 
     def to_dict(self):
         review_dict = {
-            "plot_id": self.plot_id,
+            "society_id": self.society_id,
             "user_email": self.user_email,
             "rating": self.rating,
             "comment": self.comment,
@@ -30,7 +30,7 @@ class Review:
     def from_dict(cls, data):
         """Create a Review instance from a dictionary"""
         return cls(
-            plot_id=data.get('plot_id'),
+            society_id=data.get('society_id'),
             user_email=data.get('user_email'),
             rating=data.get('rating'),
             comment=data.get('comment'),

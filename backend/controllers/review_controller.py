@@ -7,27 +7,27 @@ import math
 
 class ReviewController:
     @staticmethod
-    def create_review(plot_id, user_email, rating, comment):
-        """Create a new review for a plot"""
+    def create_review(society_id, user_email, rating, comment):
+        """Create a new review for a society"""
         try:
             db = get_db()
             reviews = review_collection(db)
             
-            # Check if user has already reviewed this plot
+            # Check if user has already reviewed this society
             existing_review = reviews.find_one({
-                'plot_id': plot_id,
+                'society_id': society_id,
                 'user_email': user_email
             })
             
             if existing_review:
                 return {
                     "success": False,
-                    "error": "You have already reviewed this plot. Use PUT to update your review."
+                    "error": "You have already reviewed this society. Use PUT to update your review."
                 }
             
             # Create a new review object
             new_review = Review(
-                plot_id=plot_id,
+                society_id=society_id,
                 user_email=user_email,
                 rating=rating,
                 comment=comment
@@ -52,7 +52,7 @@ class ReviewController:
             }
     
     @staticmethod
-    def get_all_reviews(page=1, per_page=10, plot_id=None, user_email=None, min_rating=None, max_rating=None):
+    def get_all_reviews(page=1, per_page=10, society_id=None, user_email=None, min_rating=None, max_rating=None):
         """Get all reviews with optional filtering and pagination"""
         try:
             db = get_db()
@@ -60,8 +60,8 @@ class ReviewController:
             
             # Build filter query
             filter_query = {}
-            if plot_id:
-                filter_query['plot_id'] = plot_id
+            if society_id:
+                filter_query['society_id'] = society_id
             if user_email:
                 filter_query['user_email'] = user_email
             if min_rating is not None or max_rating is not None:
@@ -146,8 +146,8 @@ class ReviewController:
             }
     
     @staticmethod
-    def get_reviews_by_plot(plot_id, page=1, per_page=10):
-        """Get all reviews for a specific plot with pagination"""
+    def get_reviews_by_society(society_id, page=1, per_page=10):
+        """Get all reviews for a specific society with pagination"""
         try:
             db = get_db()
             reviews = review_collection(db)
@@ -155,12 +155,12 @@ class ReviewController:
             # Calculate pagination
             skip = (page - 1) * per_page
             
-            # Get total count for this plot
-            total_count = reviews.count_documents({'plot_id': plot_id})
+            # Get total count for this society
+            total_count = reviews.count_documents({'society_id': society_id})
             total_pages = math.ceil(total_count / per_page)
             
-            # Find all reviews for the given plot_id
-            found_reviews = list(reviews.find({'plot_id': plot_id})
+            # Find all reviews for the given society_id
+            found_reviews = list(reviews.find({'society_id': society_id})
                                .sort('created_at', -1)
                                .skip(skip)
                                .limit(per_page))
@@ -180,7 +180,7 @@ class ReviewController:
                     "has_next": page < total_pages,
                     "has_prev": page > 1
                 },
-                "message": f"Retrieved {len(found_reviews)} reviews for plot {plot_id}"
+                "message": f"Retrieved {len(found_reviews)} reviews for society {society_id}"
             }
         except Exception as e:
             return {
@@ -364,15 +364,15 @@ class ReviewController:
             }
     
     @staticmethod
-    def get_plot_review_stats(plot_id):
-        """Get review statistics for a specific plot"""
+    def get_society_review_stats(society_id):
+        """Get review statistics for a specific society"""
         try:
             db = get_db()
             reviews = review_collection(db)
             
             # Aggregation pipeline to calculate statistics
             pipeline = [
-                {'$match': {'plot_id': plot_id}},
+                {'$match': {'society_id': society_id}},
                 {'$group': {
                     '_id': None,
                     'total_reviews': {'$sum': 1},
@@ -389,14 +389,14 @@ class ReviewController:
                 return {
                     "success": True,
                     "data": {
-                        "plot_id": plot_id,
+                        "society_id": society_id,
                         "total_reviews": 0,
                         "average_rating": 0,
                         "rating_distribution": {
                             "1": 0, "2": 0, "3": 0, "4": 0, "5": 0
                         }
                     },
-                    "message": "No reviews found for this plot"
+                    "message": "No reviews found for this society"
                 }
             
             stats = result[0]
@@ -409,7 +409,7 @@ class ReviewController:
             return {
                 "success": True,
                 "data": {
-                    "plot_id": plot_id,
+                    "society_id": society_id,
                     "total_reviews": stats['total_reviews'],
                     "average_rating": round(stats['average_rating'], 2) if stats['average_rating'] else 0,
                     "rating_distribution": rating_dist
