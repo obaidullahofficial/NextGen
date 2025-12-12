@@ -29,9 +29,25 @@ def subadmin_required(f):
             if user.get('role') not in ['society', 'subadmin']:
                 return jsonify({'success': False, 'message': 'Sub-admin access required'}), 403
             
+            # Get the society profile to use its _id (same as plot controller does)
+            society_profiles = db['society_profiles']  # FIXED: Added 's' to match collection name
+            user_id_str = str(user['_id'])
+            print(f"[Compliance Auth] Looking for society_profile with user_id: {user_id_str}")
+            
+            society_profile = society_profiles.find_one({'user_id': user_id_str})
+            
+            if not society_profile:
+                print(f"[Compliance Auth] Society profile not found for user_id: {user_id_str}")
+                # Check what profiles exist
+                all_profiles = list(society_profiles.find({}, {'user_id': 1, '_id': 1}))
+                print(f"[Compliance Auth] All society profiles: {all_profiles[:3]}")
+                return jsonify({'success': False, 'message': 'Society profile not found'}), 404
+            
+            print(f"[Compliance Auth] Found society_profile with _id: {society_profile['_id']}")
+            
             # Store user_id and society_id in request for later use
             request.user_id = str(user['_id'])
-            request.society_id = str(user['_id'])  # For society users, their user_id IS their society_id
+            request.society_id = str(society_profile['_id'])  # Use society_profile's _id (matches plot.societyId)
             
         except Exception as e:
             print(f"[Compliance Auth] Error: {str(e)}")

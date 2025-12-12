@@ -32,7 +32,16 @@ const FloorPlanCustomization = () => {
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [viewMode, setViewMode] = useState('2d'); // '2d' or '3d'
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showTemplateSaveModal, setShowTemplateSaveModal] = useState(false);
+  const [templateData, setTemplateData] = useState({
+    template_name: '',
+    template_description: '',
+    plot_size: '5 Marla'
+  });
   const autoSaveTimeoutRef = useRef(null);
+
+  // Check if we're creating a template (from location state)
+  const isCreatingTemplate = location.state?.isCreatingTemplate || false;
 
   // Authentication helper
   const getAuthData = useCallback(() => {
@@ -286,7 +295,13 @@ const FloorPlanCustomization = () => {
   const handleSave = async () => {
     if (!floorPlanData) return;
 
-    // Prompt user for project name
+    // If creating template, show modal instead of prompt
+    if (isCreatingTemplate) {
+      setShowTemplateSaveModal(true);
+      return;
+    }
+
+    // Normal save flow with prompt
     const projectName = prompt(
       'Enter a name for your floor plan:',
       floorPlanData.projectName || `Floor Plan - ${new Date().toLocaleDateString()}`
@@ -426,6 +441,91 @@ const FloorPlanCustomization = () => {
     } catch (error) {
       console.error('Error saving floor plan:', error);
       alert(`❌ Failed to save floor plan: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Save as template
+  const handleSaveAsTemplate = async () => {
+    if (!templateData.template_name.trim()) {
+      alert('Please enter a template name');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { token, user } = getAuthData();
+      
+      if (!token || !user) {
+        alert('Please log in to save template');
+        setIsSaving(false);
+        return;
+      }
+
+      // Get society profile ID
+      const profileResponse = await fetch('http://localhost:5000/api/society-profile', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const profileData = await profileResponse.json();
+      const societyId = profileData.profile?._id;
+
+      if (!societyId) {
+        alert('Society profile not found');
+        setIsSaving(false);
+        return;
+      }
+
+      // Save floor plan first
+      const saveResponse = await fetch('http://localhost:5000/api/floorplan/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: user.user_id || user.id || user._id,
+          project_name: templateData.template_name,
+          floor_plan_data: floorPlanData,
+          room_data: floorPlanData.rooms || [],
+          dimensions: floorPlanData.plotDimensions || { width: 1000, height: 1000 },
+          constraints: floorPlanData.constraints || {}
+        }),
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save floor plan');
+      }
+
+      const saveData = await saveResponse.json();
+      const floorplanId = saveData.floorplan_id || saveData.id;
+
+      // Mark as template
+      const templateResponse = await fetch('http://localhost:5000/api/templates/approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          floorplan_id: floorplanId,
+          template_name: templateData.template_name,
+          template_description: templateData.template_description,
+          plot_size: templateData.plot_size,
+          society_id: societyId
+        }),
+      });
+
+      if (!templateResponse.ok) {
+        throw new Error('Failed to mark as template');
+      }
+
+      alert('✅ Template created successfully!');
+      setShowTemplateSaveModal(false);
+      navigate('/subadmin/floor-plans');
+    } catch (error) {
+      console.error('Error saving template:', error);
+      alert(`❌ Failed to save template: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -735,6 +835,73 @@ const FloorPlanCustomization = () => {
           )}
         </div>
       </div>
+
+      {/* Template Save Modal */}
+      {showTemplateSaveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[200]">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold mb-4 text-gray-800">Save as Society Template</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Template Name *
+                </label>
+                <input
+                  type="text"
+                  value={templateData.template_name}
+                  onChange={(e) => setTemplateData({...templateData, template_name: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  placeholder="e.g., Modern 4 Bedroom House"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={templateData.template_description}
+                  onChange={(e) => setTemplateData({...templateData, template_description: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900"
+                  placeholder="e.g., Perfect for families, Modern design, Spacious layout"
+                  rows="3"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Plot Size *
+                </label>
+                <select
+                  value={templateData.plot_size}
+                  onChange={(e) => setTemplateData({...templateData, plot_size: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                >
+                  <option value="5 Marla">5 Marla</option>
+                  <option value="6 Marla">6 Marla</option>
+                  <option value="7 Marla">7 Marla</option>
+                  <option value="10 Marla">10 Marla</option>
+                  <option value="1 Kanal">1 Kanal</option>
+                  <option value="2 Kanal">2 Kanal</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowTemplateSaveModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveAsTemplate}
+                disabled={!templateData.template_name.trim() || isSaving}
+                className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {isSaving ? 'Saving...' : 'Save Template'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

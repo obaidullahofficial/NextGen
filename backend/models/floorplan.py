@@ -34,7 +34,14 @@ floorplan_schema = {
     'is_favorite': bool,  # User favorite flag
     'tags': list,  # User-defined tags for categorization
     'status': str,  # 'active', 'archived', 'draft'
-    'version': int  # Version number for tracking changes
+    'version': int,  # Version number for tracking changes
+    # Template fields
+    'is_template': bool,  # Whether this is marked as a template
+    'is_approved': bool,  # Whether template is approved by society admin
+    'template_name': str,  # Display name for the template
+    'template_description': str,  # Description like "Perfect for families", "Modern design"
+    'plot_size': str,  # Plot size (5 Marla, 6 Marla, etc.) for filtering
+    'society_id': str  # Society that approved this template
 }
 
 def create_floorplan_document(user_id, project_name, floor_plan_data, **kwargs):
@@ -53,7 +60,14 @@ def create_floorplan_document(user_id, project_name, floor_plan_data, **kwargs):
         'is_favorite': kwargs.get('is_favorite', False),
         'tags': kwargs.get('tags', []),
         'status': kwargs.get('status', 'active'),
-        'version': kwargs.get('version', 1)
+        'version': kwargs.get('version', 1),
+        # Template fields
+        'is_template': kwargs.get('is_template', False),
+        'is_approved': kwargs.get('is_approved', False),
+        'template_name': kwargs.get('template_name', ''),
+        'template_description': kwargs.get('template_description', ''),
+        'plot_size': kwargs.get('plot_size', ''),
+        'society_id': kwargs.get('society_id', '')
     }
 
 def validate_floorplan_data(data):

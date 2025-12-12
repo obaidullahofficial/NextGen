@@ -16,14 +16,16 @@ class ComplianceController:
             db = get_db()
             compliances = compliance_collection(db)
             
+            marla_size = compliance_data.get('marla_size')
+            
             # Check if compliance already exists for this society and marla size
             existing = compliances.find_one({
                 'society_id': ObjectId(society_id),
-                'marla_size': compliance_data.get('marla_size')
+                'marla_size': marla_size
             })
             
             if existing:
-                return None, "Compliance rules already exist for this plot size. Please update instead."
+                return None, f"Compliance rules for '{marla_size}' already exist in your society. Please edit the existing rules or choose a different plot size."
             
             # Add created_by field
             compliance_data['created_by'] = ObjectId(user_id)

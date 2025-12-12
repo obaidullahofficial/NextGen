@@ -1,18 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiTrash, FiEye, FiDownload, FiLayers, FiHome, FiGrid, FiStar, FiCalendar } from 'react-icons/fi';
+import { FiPlus, FiTrash, FiEye, FiDownload, FiLayers, FiHome, FiGrid, FiStar, FiCalendar, FiCheckCircle } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { floorplanAPI } from '../../services/floorplanAPI';
 import { useAuth } from '../../context/AuthContext';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import { useConfirm } from '../../hooks/useConfirm';
 import jsPDF from 'jspdf';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Remove the SaveFloorPlanModal component as it's not needed anymore
 
 // Floor Plan Card Component
-const FloorPlanCard = ({ plan, onView, onDelete, onDownload }) => {
+const FloorPlanCard = ({ plan, onView, onDelete, onDownload, onApproveTemplate, isSubAdmin }) => {
+  const isTemplate = plan.is_template && plan.is_approved;
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all overflow-hidden">
+      {isTemplate && (
+        <div className="bg-green-500 text-white text-xs font-semibold px-3 py-1 flex items-center gap-1">
+          <FiCheckCircle size={14} />
+          Approved Template
+        </div>
+      )}
       <div className="aspect-video bg-gray-100 flex items-center justify-center relative">
         {plan.image_data ? (
           <img src={plan.image_data} alt={plan.name} className="w-full h-full object-cover" />
@@ -45,6 +55,15 @@ const FloorPlanCard = ({ plan, onView, onDelete, onDownload }) => {
             <FiEye size={16} />
             View
           </button>
+          {isSubAdmin && !isTemplate && (
+            <button
+              onClick={() => onApproveTemplate(plan)}
+              className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded text-sm transition-all"
+              title="Approve as Template"
+            >
+              <FiCheckCircle size={16} />
+            </button>
+          )}
           <button
             onClick={() => onDownload(plan)}
             className="bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded text-sm transition-all"
@@ -71,6 +90,14 @@ const FloorPlanManager = () => {
   const [floorPlans, setFloorPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const { confirmState, showConfirm } = useConfirm();
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [templateData, setTemplateData] = useState({
+    template_name: '',
+    template_description: '',
+    plot_size: '5 Marla'
+  });
 
   // Fetch floor plans on mount and when user changes
   useEffect(() => {
@@ -131,6 +158,16 @@ const FloorPlanManager = () => {
     navigate('/floor-plan/generate');
   };
 
+  const handleCreateTemplate = () => {
+    // Navigate to generation with template creation mode
+    navigate('/floor-plan/generate', { 
+      state: { 
+        isCreatingTemplate: true,
+        returnTo: '/subadmin/floor-plans'
+      } 
+    });
+  };
+
   const handleDownload = async (plan) => {
     try {
       const pdf = new jsPDF({
@@ -182,6 +219,55 @@ const FloorPlanManager = () => {
     } catch (error) {
       console.error('Error deleting floor plan:', error);
       showNotification('Failed to delete floor plan', 'error');
+    }
+  };
+
+  const handleApproveTemplate = (plan) => {
+    setSelectedPlan(plan);
+    setTemplateData({
+      template_name: plan.name || plan.project_name || '',
+      template_description: '',
+      plot_size: '5 Marla'
+    });
+    setShowTemplateModal(true);
+  };
+
+  const submitTemplateApproval = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/society-profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const societyId = response.data?.profile?._id;
+
+      if (!societyId) {
+        showNotification('Society profile not found', 'error');
+        return;
+      }
+
+      await axios.post(
+        `${API_URL}/templates/approve`,
+        {
+          floorplan_id: selectedPlan.id || selectedPlan._id,
+          template_name: templateData.template_name,
+          template_description: templateData.template_description,
+          plot_size: templateData.plot_size,
+          society_id: societyId
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      showNotification('✅ Floor plan approved as template!', 'success');
+      setShowTemplateModal(false);
+      fetchFloorPlans();
+    } catch (error) {
+      console.error('Error approving template:', error);
+      showNotification(error.response?.data?.error || 'Failed to approve template', 'error');
     }
   };
 
@@ -281,13 +367,22 @@ const FloorPlanManager = () => {
                 </p>
               </div>
               
-              <button
-                onClick={handleGenerateFloorPlan}
-                className="bg-[#ED7600] hover:bg-[#d46000] text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
-              >
-                <FiPlus size={20} />
-                Generate Floor Plan
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCreateTemplate}
+                  className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
+                >
+                  <FiCheckCircle size={20} />
+                  Create Template
+                </button>
+                <button
+                  onClick={handleGenerateFloorPlan}
+                  className="bg-[#ED7600] hover:bg-[#d46000] text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-all shadow-lg hover:shadow-xl"
+                >
+                  <FiPlus size={20} />
+                  Generate Floor Plan
+                </button>
+              </div>
             </div>
           </div>
 
@@ -354,6 +449,12 @@ const FloorPlanManager = () => {
                       <FiEye size={16} />
                       View
                     </button>
+                    {plan.is_template && plan.is_approved && (
+                      <div className="bg-blue-100 text-blue-700 py-2 px-3 rounded-lg text-xs font-semibold flex items-center gap-1">
+                        <FiCheckCircle size={14} />
+                        Recommended
+                      </div>
+                    )}
                     <button
                       onClick={() => handleDelete(plan.id || plan._id)}
                       className="bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg text-sm transition-all"
@@ -368,6 +469,73 @@ const FloorPlanManager = () => {
           )}
         </div>
       </div>
+      
+      {/* Approve Template Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold mb-4">Approve as Template</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Template Name *
+                </label>
+                <input
+                  type="text"
+                  value={templateData.template_name}
+                  onChange={(e) => setTemplateData({...templateData, template_name: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., Modern 4 Bedroom House"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={templateData.template_description || ''}
+                  onChange={(e) => setTemplateData({...templateData, template_description: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder="e.g., Perfect for families, Modern design, Spacious layout"
+                  rows="2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Plot Size *
+                </label>
+                <select
+                  value={templateData.plot_size}
+                  onChange={(e) => setTemplateData({...templateData, plot_size: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="5 Marla">5 Marla</option>
+                  <option value="6 Marla">6 Marla</option>
+                  <option value="7 Marla">7 Marla</option>
+                  <option value="10 Marla">10 Marla</option>
+                  <option value="1 Kanal">1 Kanal</option>
+                  <option value="2 Kanal">2 Kanal</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowTemplateModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitTemplateApproval}
+                disabled={!templateData.template_name.trim()}
+                className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Approve Template
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Confirm Modal */}
       <ConfirmModal {...confirmState} />

@@ -1,10 +1,19 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import KonvaFloorPlan from '../../components/FloorPlan/KonvaFloorPlan';
+import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const FloorPlanGenerator = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  
+  // Get template creation flag from location state
+  const isCreatingTemplate = location.state?.isCreatingTemplate || false;
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlans, setGeneratedPlans] = useState([]);
@@ -14,6 +23,8 @@ const FloorPlanGenerator = () => {
   const [availableAreaPercentage, setAvailableAreaPercentage] = useState(100);
   const [areaDistributionMode, setAreaDistributionMode] = useState('auto'); // 'auto' or 'manual'
   const [generatingEngine, setGeneratingEngine] = useState(null); // Track which engine is currently generating: 'ga' or 'genai'
+  const [societyCompliances, setSocietyCompliances] = useState([]);
+  const [loadingCompliances, setLoadingCompliances] = useState(true);
 
   const [formData, setFormData] = useState({
     // Use sensible default strings to avoid controlled/uncontrolled warnings in number inputs
@@ -36,6 +47,35 @@ const FloorPlanGenerator = () => {
     areas: false,
     connections: false
   });
+
+  // Fetch society compliances to show only available plot sizes
+  useEffect(() => {
+    const fetchSocietyCompliances = async () => {
+      try {
+        setLoadingCompliances(true);
+        const societyId = user?.societyId || user?.id || user?._id;
+        
+        if (!societyId) {
+          console.log('[FloorPlanGenerator] No society ID found');
+          setLoadingCompliances(false);
+          return;
+        }
+
+        const response = await axios.get(`${API_URL}/compliance/society/${societyId}`);
+        
+        if (response.data.success && response.data.data) {
+          setSocietyCompliances(response.data.data);
+          console.log('[FloorPlanGenerator] Loaded compliances:', response.data.data);
+        }
+      } catch (error) {
+        console.error('[FloorPlanGenerator] Error fetching compliances:', error);
+      } finally {
+        setLoadingCompliances(false);
+      }
+    };
+
+    fetchSocietyCompliances();
+  }, [user]);
 
   // If coming from an approval request, import external JSON floor plan
   useEffect(() => {
@@ -407,30 +447,62 @@ const FloorPlanGenerator = () => {
   };
 
   // Plot size configurations (1 marla = 272.25 sq ft = 25.29 sq meters)
-  const plotSizes = {
-    5: { marla: 5, sqFt: 1361.25, sqMeters: 126.45, commonDimensions: [
+  const allPlotSizes = {
+    5: { marla: 5, label: '5 Marla', sqFt: 1361.25, sqMeters: 126.45, commonDimensions: [
       { length: 25, width: 45 },
       { length: 30, width: 37.5 },
       { length: 22.5, width: 50 }
     ]},
-    7: { marla: 7, sqFt: 1905.75, sqMeters: 177.03, commonDimensions: [
+    7: { marla: 7, label: '7 Marla', sqFt: 1905.75, sqMeters: 177.03, commonDimensions: [
       { length: 35, width: 45 },
       { length: 30, width: 52.5 },
       { length: 37.5, width: 42 }
     ]},
-    10: { marla: 10, sqFt: 2722.5, sqMeters: 252.9, commonDimensions: [
+    10: { marla: 10, label: '10 Marla', sqFt: 2722.5, sqMeters: 252.9, commonDimensions: [
       { length: 45, width: 50 },
       { length: 40, width: 56.25 },
       { length: 37.5, width: 60 }
     ]},
-    20: { marla: 20, sqFt: 5445, sqMeters: 505.8, commonDimensions: [
+    20: { marla: 20, label: '1 Kanal', sqFt: 5445, sqMeters: 505.8, commonDimensions: [
       { length: 60, width: 75 },
       { length: 50, width: 90 },
       { length: 67.5, width: 66.7 }
     ]}
   };
 
-  const [selectedPlotSize, setSelectedPlotSize] = useState(10);
+  // Get available plot sizes based on society compliances
+  const getAvailablePlotSizes = () => {
+    if (loadingCompliances || societyCompliances.length === 0) {
+      // Return all sizes if no compliances configured yet
+      return allPlotSizes;
+    }
+
+    // Map compliance marla_size to plot size numbers
+    const marlaMap = {
+      '5 Marla': 5,
+      '7 Marla': 7,
+      '10 Marla': 10,
+      '1 Kanal': 20,
+      '2 Kanal': 40
+    };
+
+    const availableSizes = {};
+    societyCompliances.forEach(compliance => {
+      const marlaNum = marlaMap[compliance.marla_size];
+      if (marlaNum && allPlotSizes[marlaNum]) {
+        availableSizes[marlaNum] = allPlotSizes[marlaNum];
+      }
+    });
+
+    return Object.keys(availableSizes).length > 0 ? availableSizes : allPlotSizes;
+  };
+
+  const plotSizes = getAvailablePlotSizes();
+  
+  const [selectedPlotSize, setSelectedPlotSize] = useState(() => {
+    const available = Object.keys(plotSizes);
+    return available.length > 0 ? parseInt(available[0]) : 10;
+  });
   const [plotDimensions, setPlotDimensions] = useState({ length: 45, width: 50 });
   const [dimensionError, setDimensionError] = useState('');
 
@@ -710,10 +782,12 @@ const FloorPlanGenerator = () => {
     if (!currentPlan) return;
 
     // Navigate to customization page with floor plan data
+    // Pass through isCreatingTemplate flag if we're in template creation mode
     navigate('/floor-plan/customize', {
       state: {
         floorPlan: currentPlan,
-        returnPath: '/floor-plan/generate'
+        returnPath: '/floor-plan/generate',
+        isCreatingTemplate: isCreatingTemplate  // Pass through template flag
       }
     });
   };
@@ -1126,17 +1200,49 @@ const FloorPlanGenerator = () => {
                         {/* Plot Size Dropdown */}
                         <div className="space-y-2">
                           <label className="block text-sm font-semibold text-[#2F3D57]">Plot Size</label>
-                          <select
-                            value={selectedPlotSize}
-                            onChange={(e) => handlePlotSizeChange(parseInt(e.target.value))}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED7600]/20 focus:border-[#ED7600] transition-all duration-200 bg-white"
-                          >
-                            {Object.entries(plotSizes).map(([marla, info]) => (
-                              <option key={marla} value={marla}>
-                                {marla} Marla ({info.sqFt.toLocaleString()} sq ft / {info.sqMeters.toFixed(1)} sq m)
-                              </option>
-                            ))}
-                          </select>
+                          {loadingCompliances ? (
+                            <div className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-50 text-gray-500 flex items-center gap-2">
+                              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Loading available plot sizes...
+                            </div>
+                          ) : (
+                            <>
+                              <select
+                                value={selectedPlotSize}
+                                onChange={(e) => handlePlotSizeChange(parseInt(e.target.value))}
+                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED7600]/20 focus:border-[#ED7600] transition-all duration-200 bg-white"
+                              >
+                                {Object.entries(plotSizes).map(([marla, info]) => (
+                                  <option key={marla} value={marla}>
+                                    {info.label || `${marla} Marla`} ({info.sqFt.toLocaleString()} sq ft / {info.sqMeters.toFixed(1)} sq m)
+                                  </option>
+                                ))}
+                              </select>
+                              {societyCompliances.length > 0 && (
+                                <div className="flex items-start gap-2 mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                                  <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+                                  </svg>
+                                  <p className="text-xs text-blue-800">
+                                    <strong>Showing only configured plots:</strong> These plot sizes have compliance rules set by your society administrator.
+                                  </p>
+                                </div>
+                              )}
+                              {societyCompliances.length === 0 && (
+                                <div className="flex items-start gap-2 mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                  <svg className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                                  </svg>
+                                  <p className="text-xs text-yellow-800">
+                                    <strong>No compliance rules configured:</strong> All plot sizes are available. Contact your society admin to set up compliance rules.
+                                  </p>
+                                </div>
+                              )}
+                            </>
+                          )}
                         </div>
 
                         {/* Visual Plot Map */}

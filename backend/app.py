@@ -84,6 +84,10 @@ app.register_blueprint(payment_bp, url_prefix='/api/payment')
 from routes.compliance_routes import compliance_bp
 app.register_blueprint(compliance_bp, url_prefix='/api/compliance')
 
+# Import and register template blueprint
+from routes.template_routes import template_bp
+app.register_blueprint(template_bp, url_prefix='/api/templates')
+
 
 # ========== FILE SERVING ROUTES (for uploaded user documents) ==========
 

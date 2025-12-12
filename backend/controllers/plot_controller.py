@@ -210,11 +210,19 @@ class PlotController:
         except Exception as e:
             return jsonify({'error': f'Invalid society ID format: {str(e)}'}), 400
         
+        print(f"[get_plots_by_society_id] Searching for societyId: {society_id_obj}")
+        
         # Find all plots belonging to the specified society ID
         plots = list(plot_col.find({'societyId': society_id_obj}))
         
-        # If no plots exist for this society, return an empty list with 200 OK
+        print(f"[get_plots_by_society_id] Found {len(plots)} plots")
+        
+        # If no plots, let's check what societyIds exist in the database
         if not plots:
+            all_plots = list(plot_col.find({}, {'societyId': 1, 'plot_number': 1}))
+            print(f"[get_plots_by_society_id] Total plots in DB: {len(all_plots)}")
+            for p in all_plots[:5]:  # Show first 5
+                print(f"  - Plot {p.get('plot_number')}: societyId = {p.get('societyId')} (type: {type(p.get('societyId'))})")
             return jsonify([]), 200
             
         # Convert ObjectId to string for JSON serialization
