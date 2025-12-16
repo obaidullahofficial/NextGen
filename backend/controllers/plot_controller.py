@@ -139,7 +139,9 @@ class PlotController:
     @jwt_required()
     def get_all_plots():
         """
-        Retrieves all plots associated with the current user's society.
+        Retrieves all plots.
+        - For admin users: returns all plots from all societies
+        - For society users: returns plots associated with their society
         """
         db = get_db()
         user_email = get_jwt_identity()
@@ -147,22 +149,28 @@ class PlotController:
         # Get user_id from email
         from models.user import user_collection
         users = user_collection(db)
-        user = users.find_one({'email': user_email}, {'_id': 1})
+        user = users.find_one({'email': user_email}, {'_id': 1, 'role': 1})
         if not user:
             return jsonify({'error': 'User not found'}), 400
         
         user_id = str(user['_id'])
+        user_role = user.get('role', 'user')
         
-        profiles = society_profile_collection(db)
-        profile = profiles.find_one({'user_id': user_id})
-        if not profile:
-            return jsonify({'error': 'Society profile not found'}), 400
-        
-        # Use ObjectId to match the foreign key format stored in plots
-        society_id = profile['_id'] if isinstance(profile['_id'], ObjectId) else ObjectId(profile['_id'])
         plot_col = plot_collection(db)
         
-        plots = list(plot_col.find({'societyId': society_id}))
+        # If admin, return all plots
+        if user_role == 'admin':
+            plots = list(plot_col.find({}))
+        else:
+            # For non-admin users, check for society profile
+            profiles = society_profile_collection(db)
+            profile = profiles.find_one({'user_id': user_id})
+            if not profile:
+                return jsonify({'error': 'Society profile not found'}), 400
+            
+            # Use ObjectId to match the foreign key format stored in plots
+            society_id = profile['_id'] if isinstance(profile['_id'], ObjectId) else ObjectId(profile['_id'])
+            plots = list(plot_col.find({'societyId': society_id}))
         
         for plot in plots:
             plot['_id'] = str(plot['_id'])

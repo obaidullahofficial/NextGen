@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback } 
 import userAPI from '../services/userAPI';
 import reviewAPI from '../services/reviewAPI';
 import advertisementAPI from '../services/advertisementAPI';
+import { getPlots } from '../services/plotService';
 
 // API for Society Registrations
 const societyRegistrationAPI = {
@@ -45,6 +46,7 @@ const initialState = {
     societies: false,
     reviews: false,
     advertisements: false,
+    plots: false,
     overall: false
   },
   
@@ -53,7 +55,8 @@ const initialState = {
     users: null,
     societies: null,
     reviews: null,
-    advertisements: null
+    advertisements: null,
+    plots: null
   },
   
   // Data
@@ -61,6 +64,7 @@ const initialState = {
   societies: [],
   reviews: [],
   advertisements: [],
+  plots: [],
   
   // Computed statistics
   stats: {
@@ -93,6 +97,12 @@ const initialState = {
       rejected: 0,
       totalViews: 0,
       totalContacts: 0
+    },
+    plots: {
+      total: 0,
+      available: 0,
+      sold: 0,
+      reserved: 0
     }
   },
   
@@ -101,7 +111,8 @@ const initialState = {
     users: null,
     societies: null,
     reviews: null,
-    advertisements: null
+    advertisements: null,
+    plots: null
   },
   
   // Configuration
@@ -117,6 +128,7 @@ const ActionTypes = {
   SET_SOCIETIES: 'SET_SOCIETIES',
   SET_REVIEWS: 'SET_REVIEWS',
   SET_ADVERTISEMENTS: 'SET_ADVERTISEMENTS',
+  SET_PLOTS: 'SET_PLOTS',
   SET_STATS: 'SET_STATS',
   SET_LAST_UPDATED: 'SET_LAST_UPDATED',
   CLEAR_ERROR: 'CLEAR_ERROR',
@@ -194,6 +206,16 @@ const adminDataReducer = (state, action) => {
         }
       };
       
+    case ActionTypes.SET_PLOTS:
+      return {
+        ...state,
+        plots: action.payload,
+        lastUpdated: {
+          ...state.lastUpdated,
+          plots: new Date().toISOString()
+        }
+      };
+      
     case ActionTypes.SET_STATS:
       return {
         ...state,
@@ -215,7 +237,7 @@ const adminDataReducer = (state, action) => {
 };
 
 // Helper function to calculate statistics
-const calculateStats = (users, societies, reviews, advertisements) => {
+const calculateStats = (users, societies, reviews, advertisements, plots = []) => {
   // User statistics
   const currentDate = new Date();
   const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
@@ -294,11 +316,29 @@ const calculateStats = (users, societies, reviews, advertisements) => {
     totalContacts: advertisements.reduce((sum, ad) => sum + (ad.contact_count || 0), 0)
   };
 
+  // Plot statistics
+  const plotStats = {
+    total: plots.length,
+    available: plots.filter(plot => 
+      plot.status === 'Available' || 
+      plot.status === 'available'
+    ).length,
+    sold: plots.filter(plot => 
+      plot.status === 'Sold' || 
+      plot.status === 'sold'
+    ).length,
+    reserved: plots.filter(plot => 
+      plot.status === 'Reserved' || 
+      plot.status === 'reserved'
+    ).length
+  };
+
   return {
     users: userStats,
     societies: societyStats,
     reviews: reviewStats,
-    advertisements: adStats
+    advertisements: adStats,
+    plots: plotStats
   };
 };
 
@@ -414,6 +454,30 @@ export const AdminDataProvider = ({ children }) => {
     }
   }, []);
 
+  // Load plots data
+  const loadPlots = useCallback(async () => {
+    dispatch({ type: ActionTypes.SET_LOADING, payload: { type: 'plots', loading: true } });
+    dispatch({ type: ActionTypes.CLEAR_ERROR, payload: { type: 'plots' } });
+
+    try {
+      console.log('[AdminDataContext] Loading plots...');
+      const result = await getPlots();
+      
+      if (result.success) {
+        const plots = Array.isArray(result.data) ? result.data : [];
+        dispatch({ type: ActionTypes.SET_PLOTS, payload: plots });
+        console.log(`[AdminDataContext] Plots loaded: ${plots.length}`);
+      } else {
+        throw new Error(result.error || 'Failed to load plots');
+      }
+    } catch (error) {
+      console.error('[AdminDataContext] Error loading plots:', error);
+      dispatch({ type: ActionTypes.SET_ERROR, payload: { type: 'plots', error: error.message } });
+    } finally {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: { type: 'plots', loading: false } });
+    }
+  }, []);
+
   // Load all data
   const loadAllData = useCallback(async () => {
     console.log('[AdminDataContext] Starting background data load...');
@@ -425,7 +489,8 @@ export const AdminDataProvider = ({ children }) => {
         loadUsers(),
         loadSocieties(),
         loadReviews(),
-        loadAdvertisements()
+        loadAdvertisements(),
+        loadPlots()
       ]);
 
       console.log('[AdminDataContext] Background data load completed');
@@ -434,7 +499,7 @@ export const AdminDataProvider = ({ children }) => {
     } finally {
       dispatch({ type: ActionTypes.SET_LOADING, payload: { overall: false } });
     }
-  }, [loadUsers, loadSocieties, loadReviews, loadAdvertisements]);
+  }, [loadUsers, loadSocieties, loadReviews, loadAdvertisements, loadPlots]);
 
   // Refresh specific data type
   const refreshData = useCallback(async (dataType) => {
@@ -451,18 +516,21 @@ export const AdminDataProvider = ({ children }) => {
       case 'advertisements':
         await loadAdvertisements();
         break;
+      case 'plots':
+        await loadPlots();
+        break;
       case 'all':
       default:
         await loadAllData();
         break;
     }
-  }, [loadUsers, loadSocieties, loadReviews, loadAdvertisements, loadAllData]);
+  }, [loadUsers, loadSocieties, loadReviews, loadAdvertisements, loadPlots, loadAllData]);
 
   // Calculate and update statistics whenever data changes
   useEffect(() => {
-    const stats = calculateStats(state.users, state.societies, state.reviews, state.advertisements);
+    const stats = calculateStats(state.users, state.societies, state.reviews, state.advertisements, state.plots);
     dispatch({ type: ActionTypes.SET_STATS, payload: stats });
-  }, [state.users, state.societies, state.reviews, state.advertisements]);
+  }, [state.users, state.societies, state.reviews, state.advertisements, state.plots]);
 
   // Auto-refresh data at intervals
   useEffect(() => {
@@ -496,6 +564,7 @@ export const AdminDataProvider = ({ children }) => {
     loadSocieties,
     loadReviews,
     loadAdvertisements,
+    loadPlots,
     loadAllData,
     refreshData,
     
@@ -518,6 +587,8 @@ export const AdminDataProvider = ({ children }) => {
           return state.reviews.length > 0;
         case 'advertisements':
           return state.advertisements.length > 0;
+        case 'plots':
+          return state.plots.length > 0;
         default:
           return false;
       }

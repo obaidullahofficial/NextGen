@@ -17,10 +17,32 @@ export async function getPlots() {
     }, 'getPlots');
     
     console.log('[getPlots] Response:', result);
-    return result;
+    
+    // Backend returns array directly, wrap it in expected format
+    if (Array.isArray(result)) {
+      return {
+        success: true,
+        data: result
+      };
+    }
+    
+    // If result already has the expected format
+    if (result.success !== undefined) {
+      return result;
+    }
+    
+    // Fallback: treat result as data
+    return {
+      success: true,
+      data: result
+    };
   } catch (error) {
     console.error('[getPlots] Error:', error);
-    throw error;
+    return {
+      success: false,
+      error: error.message,
+      data: []
+    };
   }
 }
 

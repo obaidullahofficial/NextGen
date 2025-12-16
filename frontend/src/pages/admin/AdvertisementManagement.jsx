@@ -10,6 +10,7 @@ const AdvertisementManagement = () => {
   const [success, setSuccess] = useState('');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({});
+  const [totalPendingCount, setTotalPendingCount] = useState(0);
   
   const [selectedAd, setSelectedAd] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
@@ -38,6 +39,7 @@ const AdvertisementManagement = () => {
       if (result.success) {
         setPendingAds(result.data || []);
         setPagination(result.pagination || {});
+        setTotalPendingCount(result.pagination?.total_count || 0);
       } else {
         setError(result.error || 'Failed to load pending advertisements');
       }
@@ -277,7 +279,7 @@ const AdvertisementManagement = () => {
               setPage(1);
             }}
           >
-            Pending Approval ({pendingAds.length})
+            Pending Approval ({totalPendingCount})
           </button>
           <button
             className={`px-6 py-3 font-medium transition-colors border-b-2 ${

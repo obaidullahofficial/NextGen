@@ -58,6 +58,7 @@ const ReportManagement = () => {
   const [dateRange, setDateRange] = useState("7days");
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState("cards");
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Get data from global context
   const {
@@ -65,6 +66,7 @@ const ReportManagement = () => {
     societies,
     reviews,
     advertisements,
+    plots,
     stats,
     loading,
     errors,
@@ -100,6 +102,12 @@ const ReportManagement = () => {
     totalContacts: stats.advertisements.totalContacts || 0,
     avgViewsPerAd: stats.advertisements.totalViews > 0 ? 
       (stats.advertisements.totalViews / stats.advertisements.total) : 0,
+    
+    // Plots statistics
+    totalPlots: stats.plots.total || 0,
+    availablePlots: stats.plots.available || 0,
+    soldPlots: stats.plots.sold || 0,
+    reservedPlots: stats.plots.reserved || 0,
     
     // Additional calculated metrics
     userGrowthRate: stats.users.growthRate || 0,
@@ -139,189 +147,17 @@ const ReportManagement = () => {
   // No longer need useEffect for data loading since we use global context
   // Data is automatically loaded when AdminDataProvider mounts
 
-  // Alternative simpler PDF export method
-  const exportReportSimple = async () => {
+  // Professional PDF Report Generator
+  const exportReport = async () => {
     try {
-      setLoading(true);
+      setPdfLoading(true);
       
       const currentDate = new Date().toISOString().split('T')[0];
-      
-      // Create PDF with just text data (fallback method)
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      let yPosition = 30;
-
-      // Title
-      pdf.setFontSize(20);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('NextGen Architect - Analytics Report', pdfWidth / 2, yPosition, { align: 'center' });
-      
-      yPosition += 20;
-      pdf.setFontSize(12);
-      pdf.setFont(undefined, 'normal');
-      pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, pdfWidth / 2, yPosition, { align: 'center' });
-      
-      yPosition += 10;
-      pdf.text(`Report Period: ${dateRange}`, pdfWidth / 2, yPosition, { align: 'center' });
-      
-      yPosition += 20;
-      const tabNames = {
-        overview: 'Executive Overview',
-        users: 'User Analytics',
-        properties: 'Property Insights', 
-        reviews: 'Review Analytics',
-        listings: 'Listing Performance'
-      };
-      pdf.text(`Current View: ${tabNames[activeTab] || activeTab}`, pdfWidth / 2, yPosition, { align: 'center' });
-
-      // Statistics
-      yPosition += 30;
-      pdf.setFontSize(16);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Analytics Summary', 10, yPosition);
-      
-      yPosition += 15;
-      pdf.setFontSize(12);
-      pdf.setFont(undefined, 'normal');
-      
       const safeUsers = users || [];
       const safeReviews = reviews || [];
       const safeAdvertisements = advertisements || [];
       const safeSocieties = societies || [];
-      
-      const stats = [
-        `Total Users: ${safeUsers.length}`,
-        `Total Society Registrations: ${safeSocieties.length}`,
-        `Total Reviews: ${safeReviews.length}`,
-        `Total Listings: ${safeAdvertisements.length}`,
-        `Average Rating: ${safeReviews.length > 0 ? (safeReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / safeReviews.length).toFixed(1) : '0.0'} Stars`,
-        `Active Users: ${Math.round(safeUsers.length * 0.7)}`,
-        `Approved Societies: ${safeSocieties.filter(s => s.status === 'approved').length}`,
-        `Pending Reviews: ${safeReviews.filter(r => r.status === 'pending').length}`
-      ];
-
-      stats.forEach(stat => {
-        pdf.text(`• ${stat}`, 15, yPosition);
-        yPosition += 8;
-      });
-
-      // Current tab specific data
-      yPosition += 15;
-      pdf.setFontSize(14);
-      pdf.setFont(undefined, 'bold');
-      pdf.text(`${tabNames[activeTab]} Details:`, 10, yPosition);
-      
-      yPosition += 15;
-      pdf.setFontSize(10);
-      pdf.setFont(undefined, 'normal');
-
-      // Add tab-specific content
-      if (activeTab === 'overview') {
-        pdf.text('Executive Overview showing comprehensive analytics across all metrics.', 15, yPosition);
-        yPosition += 6;
-        pdf.text('This includes user growth, property listings, review sentiment, and performance indicators.', 15, yPosition);
-      } else if (activeTab === 'users') {
-        pdf.text('User Analytics showing registration trends, engagement metrics, and user activity.', 15, yPosition);
-        yPosition += 6;
-        pdf.text(`New users this month: ${safeUsers.filter(u => {
-          try {
-            const userDate = new Date(u.createdAt || u.dateCreated);
-            const monthAgo = new Date();
-            monthAgo.setMonth(monthAgo.getMonth() - 1);
-            return userDate >= monthAgo;
-          } catch (error) {
-            return false;
-          }
-        }).length}`, 15, yPosition);
-      } else if (activeTab === 'properties') {
-        pdf.text('Property Insights showing listing performance and market trends.', 15, yPosition);
-      } else if (activeTab === 'reviews') {
-        pdf.text('Review Analytics showing sentiment analysis and customer feedback.', 15, yPosition);
-        yPosition += 6;
-        pdf.text(`Positive reviews: ${safeReviews.filter(r => (r.rating || 0) >= 4).length}`, 15, yPosition);
-        yPosition += 6;
-        pdf.text(`Negative reviews: ${safeReviews.filter(r => (r.rating || 0) <= 2).length}`, 15, yPosition);
-      } else if (activeTab === 'listings') {
-        pdf.text('Listing Performance showing property advertisement effectiveness.', 15, yPosition);
-      }
-
-      pdf.save(`NextGen-Analytics-Report-${tabNames[activeTab]}-${currentDate}.pdf`);
-      console.log('Simple PDF exported successfully!');
-      
-    } catch (error) {
-      console.error('Error generating simple PDF:', error);
-      alert('Error generating PDF. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const exportReport = async () => {
-    try {
-      setLoading(true);
-      
-      // Get the current date for filename
-      const currentDate = new Date().toISOString().split('T')[0];
-      
-      // Create a temporary container for better PDF formatting
-      const input = reportRef.current;
-      
-      if (!input) {
-        console.error('Report content not found');
-        return;
-      }
-
-      // Create a clone of the element to modify styles for PDF compatibility
-      const clonedElement = input.cloneNode(true);
-      
-      // Remove problematic styles that cause oklch errors
-      const allElements = clonedElement.querySelectorAll('*');
-      allElements.forEach(el => {
-        // Convert modern CSS to compatible formats
-        const computedStyle = window.getComputedStyle(el);
-        
-        // Reset problematic gradient and color properties
-        el.style.background = computedStyle.backgroundColor || '#ffffff';
-        el.style.color = computedStyle.color || '#000000';
-        el.style.borderColor = computedStyle.borderColor || '#e5e7eb';
-        
-        // Remove gradient backgrounds that might use oklch
-        if (el.style.background && el.style.background.includes('gradient')) {
-          el.style.background = '#ffffff';
-        }
-      });
-
-      // Temporarily add clone to document for rendering
-      document.body.appendChild(clonedElement);
-      clonedElement.style.position = 'absolute';
-      clonedElement.style.left = '-9999px';
-      clonedElement.style.top = '0';
-      clonedElement.style.zIndex = '-1';
-
-      // Configure html2canvas options for better quality and compatibility
-      const canvas = await html2canvas(clonedElement, {
-        scale: 1.5, // Reduced scale to avoid memory issues
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false, // Disable logging to reduce console noise
-        ignoreElements: (element) => {
-          // Ignore elements that might cause issues
-          return element.tagName === 'SCRIPT' || 
-                 element.tagName === 'STYLE' ||
-                 element.hasAttribute('data-html2canvas-ignore');
-        }
-      });
-
-      // Remove the cloned element
-      document.body.removeChild(clonedElement);
-
-      const imgData = canvas.toDataURL('image/png', 0.8); // Reduced quality for smaller file size
+      const safePlots = plots || [];
       
       // Create PDF
       const pdf = new jsPDF({
@@ -330,80 +166,372 @@ const ReportManagement = () => {
         format: 'a4'
       });
 
-      // Calculate dimensions
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth - 20; // 10mm margin on each side
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const margin = 15;
+      let yPosition = margin;
 
-      let heightLeft = imgHeight;
-      let position = 10; // Top margin
-
-      // Add title page
-      pdf.setFontSize(20);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('NextGen Architect - Analytics Report', pdfWidth / 2, 30, { align: 'center' });
-      
-      pdf.setFontSize(12);
-      pdf.setFont(undefined, 'normal');
-      pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, pdfWidth / 2, 45, { align: 'center' });
-      pdf.text(`Report Period: ${dateRange}`, pdfWidth / 2, 55, { align: 'center' });
-      
-      // Add current tab info
-      const tabNames = {
-        overview: 'Executive Overview',
-        users: 'User Analytics',
-        properties: 'Property Insights', 
-        reviews: 'Review Analytics',
-        listings: 'Listing Performance'
+      // Helper function to add new page if needed
+      const checkAddPage = (requiredSpace = 20) => {
+        if (yPosition + requiredSpace > pdfHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+          return true;
+        }
+        return false;
       };
-      pdf.text(`Current View: ${tabNames[activeTab] || activeTab}`, pdfWidth / 2, 65, { align: 'center' });
 
-      // Add summary statistics
-      pdf.setFontSize(14);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Summary Statistics:', 10, 85);
+      // Helper function to draw section header
+      const addSectionHeader = (title) => {
+        checkAddPage(25);
+        pdf.setFillColor(237, 118, 0); // Orange color
+        pdf.rect(margin, yPosition, pdfWidth - 2 * margin, 8, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(12);
+        pdf.setFont(undefined, 'bold');
+        pdf.text(title, margin + 3, yPosition + 6);
+        pdf.setTextColor(0, 0, 0);
+        yPosition += 15;
+      };
+
+      // Helper function to draw key-value pair
+      const addKeyValue = (key, value, isBold = false) => {
+        checkAddPage();
+        pdf.setFontSize(10);
+        pdf.setFont(undefined, isBold ? 'bold' : 'normal');
+        pdf.text(`${key}:`, margin + 5, yPosition);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(String(value), margin + 60, yPosition);
+        yPosition += 7;
+      };
+
+      // Helper function to draw a simple bar chart
+      const addBarChart = (title, data, maxValue) => {
+        checkAddPage(60);
+        pdf.setFontSize(11);
+        pdf.setFont(undefined, 'bold');
+        pdf.text(title, margin, yPosition);
+        yPosition += 8;
+
+        const chartHeight = 40;
+        const chartWidth = pdfWidth - 2 * margin - 40;
+        const barWidth = chartWidth / data.length - 5;
+
+        data.forEach((item, index) => {
+          const barHeight = (item.value / maxValue) * chartHeight;
+          const xPos = margin + index * (barWidth + 5);
+          const yPos = yPosition + chartHeight - barHeight;
+
+          // Draw bar
+          pdf.setFillColor(59, 130, 246); // Blue color
+          pdf.rect(xPos, yPos, barWidth, barHeight, 'F');
+
+          // Draw value on top
+          pdf.setFontSize(8);
+          pdf.text(String(item.value), xPos + barWidth / 2, yPos - 2, { align: 'center' });
+
+          // Draw label
+          pdf.text(item.label, xPos + barWidth / 2, yPosition + chartHeight + 5, { align: 'center' });
+        });
+
+        yPosition += chartHeight + 12;
+      };
+
+      // Helper function to draw pie chart representation
+      const addPieChart = (title, data) => {
+        checkAddPage(70);
+        pdf.setFontSize(11);
+        pdf.setFont(undefined, 'bold');
+        pdf.text(title, margin, yPosition);
+        yPosition += 8;
+
+        const centerX = pdfWidth / 2;
+        const centerY = yPosition + 25;
+        const radius = 20;
+        const colors = [
+          [59, 130, 246],   // Blue
+          [16, 185, 129],   // Green
+          [245, 158, 11],   // Orange
+          [239, 68, 68],    // Red
+          [139, 92, 246]    // Purple
+        ];
+
+        let startAngle = 0;
+        const total = data.reduce((sum, item) => sum + item.value, 0);
+
+        data.forEach((item, index) => {
+          const angle = (item.value / total) * 360;
+          const endAngle = startAngle + angle;
+
+          // Draw pie slice
+          pdf.setFillColor(...colors[index % colors.length]);
+          
+          // Draw arc (simplified as wedge)
+          const startRad = (startAngle * Math.PI) / 180;
+          const endRad = (endAngle * Math.PI) / 180;
+          
+          pdf.setFillColor(...colors[index % colors.length]);
+          pdf.circle(centerX + Math.cos(startRad + (endRad - startRad) / 2) * radius * 0.7, 
+                    centerY + Math.sin(startRad + (endRad - startRad) / 2) * radius * 0.7, 
+                    radius / 3, 'F');
+
+          startAngle = endAngle;
+        });
+
+        // Draw legend
+        let legendY = yPosition + 55;
+        data.forEach((item, index) => {
+          pdf.setFillColor(...colors[index % colors.length]);
+          pdf.rect(margin + 5, legendY - 3, 4, 4, 'F');
+          pdf.setFontSize(9);
+          pdf.setTextColor(0, 0, 0);
+          pdf.text(`${item.label}: ${item.value} (${((item.value / total) * 100).toFixed(1)}%)`, margin + 12, legendY);
+          legendY += 6;
+        });
+
+        yPosition = legendY + 5;
+      };
+
+      // ======================
+      // PAGE 1: COVER PAGE
+      // ======================
       
+      // Header with branding
+      pdf.setFillColor(237, 118, 0);
+      pdf.rect(0, 0, pdfWidth, 40, 'F');
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(24);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('NextGen Architect', pdfWidth / 2, 20, { align: 'center' });
+      
+      pdf.setFontSize(16);
+      pdf.setFont(undefined, 'normal');
+      pdf.text('Analytics Report', pdfWidth / 2, 32, { align: 'center' });
+      
+      pdf.setTextColor(0, 0, 0);
+      yPosition = 60;
+
+      // Report metadata
+      pdf.setFontSize(12);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Report Information', margin, yPosition);
+      yPosition += 10;
+
       pdf.setFontSize(10);
       pdf.setFont(undefined, 'normal');
-      const safeUsers = users || [];
-      const safeReviews = reviews || [];
-      const safeAdvertisements = advertisements || [];
-      const safeSocieties = societies || [];
+      addKeyValue('Generated On', new Date().toLocaleString());
+      addKeyValue('Report Period', dateRange === '7days' ? 'Last 7 Days' : dateRange === '30days' ? 'Last 30 Days' : 'Last 90 Days');
+      addKeyValue('Report Type', 'Executive Summary');
       
-      pdf.text(`• Total Users: ${safeUsers.length}`, 15, 95);
-      pdf.text(`• Total Society Registrations: ${safeSocieties.length}`, 15, 105);
-      pdf.text(`• Total Reviews: ${safeReviews.length}`, 15, 115);
-      pdf.text(`• Total Listings: ${safeAdvertisements.length}`, 15, 125);
-      pdf.text(`• Average Rating: ${safeReviews.length > 0 ? (safeReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / safeReviews.length).toFixed(1) : '0.0'} Stars`, 15, 135);
+      yPosition += 10;
 
-      // Add new page for the dashboard screenshot
+      // Executive Summary Box
+      pdf.setDrawColor(237, 118, 0);
+      pdf.setLineWidth(0.5);
+      pdf.rect(margin, yPosition, pdfWidth - 2 * margin, 80);
+      
+      yPosition += 8;
+      pdf.setFontSize(14);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Executive Summary', margin + 5, yPosition);
+      yPosition += 12;
+
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'normal');
+      const summaryText = `This report provides a comprehensive analysis of the NextGen Architect platform's performance and key metrics. The platform currently serves ${safeUsers.length} registered users across ${safeSocieties.length} housing societies, with ${safePlots.length} plots managed and ${safeReviews.length} customer reviews collected.`;
+      
+      const splitSummary = pdf.splitTextToSize(summaryText, pdfWidth - 2 * margin - 10);
+      pdf.text(splitSummary, margin + 5, yPosition);
+      yPosition += splitSummary.length * 5 + 15;
+
+      // Key Highlights Grid
+      pdf.setFontSize(12);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Key Performance Indicators', margin, yPosition);
+      yPosition += 10;
+
+      const kpis = [
+        { label: 'Total Users', value: safeUsers.length, color: [59, 130, 246] },
+        { label: 'Active Societies', value: safeSocieties.filter(s => s.status === 'approved').length, color: [16, 185, 129] },
+        { label: 'Total Reviews', value: safeReviews.length, color: [245, 158, 11] },
+        { label: 'Available Plots', value: safePlots.filter(p => p.status === 'Available' || p.status === 'available').length, color: [139, 92, 246] }
+      ];
+
+      const kpiWidth = (pdfWidth - 2 * margin - 10) / 2;
+      const kpiHeight = 25;
+      kpis.forEach((kpi, index) => {
+        const col = index % 2;
+        const row = Math.floor(index / 2);
+        const xPos = margin + col * (kpiWidth + 10);
+        const yPos = yPosition + row * (kpiHeight + 5);
+
+        // Draw KPI box
+        pdf.setFillColor(...kpi.color);
+        pdf.setDrawColor(200, 200, 200);
+        pdf.rect(xPos, yPos, kpiWidth, kpiHeight, 'FD');
+
+        // Draw text
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(20);
+        pdf.setFont(undefined, 'bold');
+        pdf.text(String(kpi.value), xPos + kpiWidth / 2, yPos + 12, { align: 'center' });
+        
+        pdf.setFontSize(9);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(kpi.label, xPos + kpiWidth / 2, yPos + 20, { align: 'center' });
+      });
+
+      pdf.setTextColor(0, 0, 0);
+      yPosition += 60;
+
+      // ======================
+      // PAGE 2: USER ANALYTICS
+      // ======================
       pdf.addPage();
-      
-      // Add the dashboard image
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight - 20; // Account for margins
+      yPosition = margin;
 
-      // Add additional pages if content is too long
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight + 10; // Add margin
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight - 20;
+      addSectionHeader('USER ANALYTICS');
+
+      // User statistics
+      addKeyValue('Total Registered Users', safeUsers.length, true);
+      addKeyValue('Active Users', safeUsers.filter(u => u.status === 'active' || !u.status).length);
+      
+      const newUsersThisMonth = safeUsers.filter(u => {
+        try {
+          const userDate = new Date(u.created_at || u.createdAt || u.dateCreated);
+          const monthAgo = new Date();
+          monthAgo.setMonth(monthAgo.getMonth() - 1);
+          return userDate >= monthAgo;
+        } catch {
+          return false;
+        }
+      }).length;
+      
+      addKeyValue('New Users (Last 30 Days)', newUsersThisMonth);
+      addKeyValue('Growth Rate', `${safeUsers.length > 0 ? ((newUsersThisMonth / safeUsers.length) * 100).toFixed(1) : '0'}%`);
+      
+      yPosition += 5;
+
+      // User role distribution
+      const userRoles = {};
+      safeUsers.forEach(user => {
+        const role = user.role || 'user';
+        userRoles[role] = (userRoles[role] || 0) + 1;
+      });
+
+      const roleData = Object.entries(userRoles).map(([label, value]) => ({
+        label: label.charAt(0).toUpperCase() + label.slice(1),
+        value
+      }));
+
+      addPieChart('User Role Distribution', roleData);
+
+      // ======================
+      // PAGE 3: SOCIETY ANALYTICS
+      // ======================
+      pdf.addPage();
+      yPosition = margin;
+
+      addSectionHeader('SOCIETY ANALYTICS');
+
+      addKeyValue('Total Societies', safeSocieties.length, true);
+      addKeyValue('Approved Societies', safeSocieties.filter(s => s.status === 'approved' || s.registration_status === 'approved').length);
+      addKeyValue('Pending Approval', safeSocieties.filter(s => s.status === 'pending' || s.registration_status === 'pending').length);
+      addKeyValue('Rejected', safeSocieties.filter(s => s.status === 'rejected' || s.registration_status === 'rejected').length);
+      
+      yPosition += 5;
+
+      // Society status distribution
+      const societyStatusData = [
+        { label: 'Approved', value: safeSocieties.filter(s => s.status === 'approved' || s.registration_status === 'approved').length },
+        { label: 'Pending', value: safeSocieties.filter(s => s.status === 'pending' || s.registration_status === 'pending').length },
+        { label: 'Rejected', value: safeSocieties.filter(s => s.status === 'rejected' || s.registration_status === 'rejected').length }
+      ].filter(item => item.value > 0);
+
+      if (societyStatusData.length > 0) {
+        addPieChart('Society Status Distribution', societyStatusData);
+      }
+
+      // ======================
+      // PAGE 4: REVIEW & PLOT ANALYTICS
+      // ======================
+      pdf.addPage();
+      yPosition = margin;
+
+      addSectionHeader('REVIEW ANALYTICS');
+
+      const avgRating = safeReviews.length > 0 
+        ? (safeReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / safeReviews.length).toFixed(1) 
+        : '0.0';
+
+      addKeyValue('Total Reviews', safeReviews.length, true);
+      addKeyValue('Average Rating', `${avgRating} / 5.0`);
+      addKeyValue('Positive Reviews (4+ stars)', safeReviews.filter(r => (r.rating || 0) >= 4).length);
+      addKeyValue('Negative Reviews (≤2 stars)', safeReviews.filter(r => (r.rating || 0) <= 2).length);
+      
+      yPosition += 5;
+
+      // Rating distribution chart
+      const ratingDist = [1, 2, 3, 4, 5].map(rating => ({
+        label: `${rating}★`,
+        value: safeReviews.filter(r => Math.round(r.rating || 0) === rating).length
+      }));
+
+      const maxRating = Math.max(...ratingDist.map(r => r.value), 1);
+      addBarChart('Rating Distribution', ratingDist, maxRating);
+
+      yPosition += 10;
+      addSectionHeader('PLOT ANALYTICS');
+
+      addKeyValue('Total Plots', safePlots.length, true);
+      addKeyValue('Available Plots', safePlots.filter(p => p.status === 'Available' || p.status === 'available').length);
+      addKeyValue('Sold Plots', safePlots.filter(p => p.status === 'Sold' || p.status === 'sold').length);
+      addKeyValue('Reserved Plots', safePlots.filter(p => p.status === 'Reserved' || p.status === 'reserved').length);
+      
+      yPosition += 5;
+
+      // Plot status distribution
+      const plotStatusData = [
+        { label: 'Available', value: safePlots.filter(p => p.status === 'Available' || p.status === 'available').length },
+        { label: 'Sold', value: safePlots.filter(p => p.status === 'Sold' || p.status === 'sold').length },
+        { label: 'Reserved', value: safePlots.filter(p => p.status === 'Reserved' || p.status === 'reserved').length }
+      ].filter(item => item.value > 0);
+
+      if (plotStatusData.length > 0) {
+        addPieChart('Plot Status Distribution', plotStatusData);
+      }
+
+      // ======================
+      // FOOTER ON ALL PAGES
+      // ======================
+      const pageCount = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(128, 128, 128);
+        pdf.text(`Page ${i} of ${pageCount}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
+        pdf.text(`Generated: ${new Date().toLocaleDateString()}`, pdfWidth - margin, pdfHeight - 10, { align: 'right' });
+        pdf.text('NextGen Architect', margin, pdfHeight - 10);
       }
 
       // Save the PDF
-      pdf.save(`NextGen-Analytics-Report-${tabNames[activeTab]}-${currentDate}.pdf`);
+      const tabNames = {
+        overview: 'Executive-Overview',
+        users: 'User-Analytics',
+        properties: 'Property-Insights', 
+        reviews: 'Review-Analytics',
+        plots: 'Plots-Overview'
+      };
       
-      console.log('PDF exported successfully!');
+      pdf.save(`NextGen-Analytics-Report-${tabNames[activeTab] || 'Report'}-${currentDate}.pdf`);
+      console.log('Professional PDF exported successfully!');
       
     } catch (error) {
       console.error('Error generating PDF:', error);
-      console.log('Falling back to simple PDF export...');
-      // Fallback to simple text-based PDF
-      await exportReportSimple();
+      alert('Error generating PDF. Please try again.');
     } finally {
-      setLoading(false);
+      setPdfLoading(false);
     }
   };
 
@@ -412,6 +540,7 @@ const ReportManagement = () => {
     const safeUsers = users || [];
     const safeReviews = reviews || [];
     const safeAdvertisements = advertisements || [];
+    const safePlots = plots || [];
     
     const last7Days = [];
     for (let i = 6; i >= 0; i--) {
@@ -463,6 +592,7 @@ const ReportManagement = () => {
   const safeReviews = reviews || [];
   const safeAdvertisements = advertisements || [];
   const safeUsers = users || [];
+  const safePlots = plots || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-100">
@@ -476,7 +606,7 @@ const ReportManagement = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                  Society Registration Analytics Dashboard
+                  Statistics
                 </h1>
                 <p className="text-gray-600 mt-1">
                   Real-time insights and comprehensive platform analytics
@@ -509,12 +639,12 @@ const ReportManagement = () => {
               
               <button
                 onClick={exportReport}
-                disabled={loading.overall}
+                disabled={pdfLoading || loading.overall}
                 className={`flex items-center px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 shadow-lg hover:shadow-xl font-medium ${
-                  loading.overall ? 'opacity-50 cursor-not-allowed' : ''
+                  (pdfLoading || loading.overall) ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
-                {loading ? (
+                {pdfLoading ? (
                   <>
                     <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     Generating PDF...
@@ -617,22 +747,22 @@ const ReportManagement = () => {
             <div className="relative">
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-purple-600 rounded-xl shadow-lg">
-                  <MessageSquare className="h-6 w-6 text-white" />
+                  <MapPin className="h-6 w-6 text-white" />
                 </div>
                 <div className="flex items-center text-emerald-600 text-sm font-medium bg-emerald-50 px-2 py-1 rounded-full">
                   <ArrowUpRight className="h-3 w-3 mr-1" />
-                  +{overviewStats.listingApprovalRate ? overviewStats.listingApprovalRate.toFixed(0) : '22'}%
+                  {overviewStats.availablePlots > 0 ? ((overviewStats.availablePlots / overviewStats.totalPlots) * 100).toFixed(0) : '0'}%
                 </div>
               </div>
-              <h3 className="text-sm font-medium text-purple-800 mb-1">Listings</h3>
-              <p className="text-3xl font-bold text-purple-900">{overviewStats.totalAdvertisements.toLocaleString()}</p>
+              <h3 className="text-sm font-medium text-purple-800 mb-1">Plots</h3>
+              <p className="text-3xl font-bold text-purple-900">{overviewStats.totalPlots.toLocaleString()}</p>
               <div className="mt-3 space-y-1">
                 <p className="text-sm text-purple-700 flex items-center">
-                  <Eye className="h-3 w-3 mr-1" />
-                  {overviewStats.totalViews.toLocaleString()} total views
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  {overviewStats.availablePlots.toLocaleString()} available
                 </p>
                 <p className="text-xs text-purple-600">
-                  {overviewStats.totalContacts.toLocaleString()} contacts made
+                  {overviewStats.soldPlots.toLocaleString()} sold
                 </p>
               </div>
             </div>
@@ -648,7 +778,7 @@ const ReportManagement = () => {
                 { id: "users", label: "Users", icon: Users },
                 { id: "properties", label: "Properties", icon: Building },
                 { id: "reviews", label: "Reviews", icon: Star },
-                { id: "listings", label: "Listings", icon: MessageSquare }
+                { id: "plots", label: "Plots", icon: MapPin }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -751,12 +881,12 @@ const ReportManagement = () => {
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl">
                     <div className="flex items-center">
                       <div className="p-2 bg-purple-600 rounded-lg mr-3">
-                        <MessageSquare className="h-4 w-4 text-white" />
+                        <MapPin className="h-4 w-4 text-white" />
                       </div>
-                      <span className="font-medium text-gray-700">Listing Approval Rate</span>
+                      <span className="font-medium text-gray-700">Plot Availability Rate</span>
                     </div>
                     <span className="text-lg font-bold text-purple-600">
-                      {(overviewStats.listingApprovalRate || 0).toFixed(1)}%
+                      {overviewStats.totalPlots > 0 ? ((overviewStats.availablePlots / overviewStats.totalPlots) * 100).toFixed(1) : '0'}%
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl">
@@ -784,13 +914,12 @@ const ReportManagement = () => {
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-rose-50 to-rose-100 rounded-xl">
                     <div className="flex items-center">
                       <div className="p-2 bg-rose-600 rounded-lg mr-3">
-                        <Eye className="h-4 w-4 text-white" />
+                        <Target className="h-4 w-4 text-white" />
                       </div>
-                      <span className="font-medium text-gray-700">Avg Views per Listing</span>
+                      <span className="font-medium text-gray-700">Plot Sales Rate</span>
                     </div>
                     <span className="text-lg font-bold text-rose-600">
-                      {(overviewStats.avgViewsPerAd && typeof overviewStats.avgViewsPerAd === 'number') ? 
-                        overviewStats.avgViewsPerAd.toFixed(0) : '0'}
+                      {overviewStats.totalPlots > 0 ? ((overviewStats.soldPlots / overviewStats.totalPlots) * 100).toFixed(1) : '0'}%
                     </span>
                   </div>
                 </div>
@@ -904,9 +1033,9 @@ const ReportManagement = () => {
                   <div className="text-xs text-yellow-600 mt-1">{(overviewStats.avgRating || 0).toFixed(1)} ⭐ average</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
-                  <div className="text-2xl font-bold text-gray-900">{overviewStats.totalAdvertisements.toLocaleString()}</div>
-                  <div className="text-sm text-gray-600 mt-1">Listings</div>
-                  <div className="text-xs text-purple-600 mt-1">{overviewStats.totalViews.toLocaleString()} views</div>
+                  <div className="text-2xl font-bold text-gray-900">{overviewStats.totalPlots.toLocaleString()}</div>
+                  <div className="text-sm text-gray-600 mt-1">Plots</div>
+                  <div className="text-xs text-purple-600 mt-1">{overviewStats.availablePlots.toLocaleString()} available</div>
                 </div>
               </div>
             </div>
@@ -1162,18 +1291,18 @@ const ReportManagement = () => {
           </div>
         )}
 
-        {activeTab === "listings" && (
+        {activeTab === "plots" && (
           <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Listing Status</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Plot Status Distribution</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie 
                       data={[
-                        { name: "Approved", value: overviewStats.approvedAds },
-                        { name: "Pending", value: overviewStats.pendingAds },
-                        { name: "Rejected", value: overviewStats.rejectedAds }
+                        { name: "Available", value: overviewStats.availablePlots },
+                        { name: "Sold", value: overviewStats.soldPlots },
+                        { name: "Reserved", value: overviewStats.reservedPlots }
                       ].filter(item => item.value > 0)} 
                       dataKey="value" 
                       nameKey="name" 
@@ -1192,31 +1321,35 @@ const ReportManagement = () => {
               </div>
 
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Listing Performance</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Plot Statistics</h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center p-4 bg-purple-50 rounded-xl">
-                    <span className="font-medium text-gray-700">Total Listings</span>
-                    <span className="text-xl font-bold text-purple-600">{overviewStats.totalAdvertisements}</span>
+                    <span className="font-medium text-gray-700">Total Plots</span>
+                    <span className="text-xl font-bold text-purple-600">{overviewStats.totalPlots}</span>
                   </div>
                   <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-xl">
-                    <span className="font-medium text-gray-700">Approved</span>
-                    <span className="text-xl font-bold text-emerald-600">{overviewStats.approvedAds}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-4 bg-amber-50 rounded-xl">
-                    <span className="font-medium text-gray-700">Pending</span>
-                    <span className="text-xl font-bold text-amber-600">{overviewStats.pendingAds}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl">
-                    <span className="font-medium text-gray-700">Total Views</span>
-                    <span className="text-xl font-bold text-blue-600">{overviewStats.totalViews.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-4 bg-indigo-50 rounded-xl">
-                    <span className="font-medium text-gray-700">Total Contacts</span>
-                    <span className="text-xl font-bold text-indigo-600">{overviewStats.totalContacts.toLocaleString()}</span>
+                    <span className="font-medium text-gray-700">Available</span>
+                    <span className="text-xl font-bold text-emerald-600">{overviewStats.availablePlots}</span>
                   </div>
                   <div className="flex justify-between items-center p-4 bg-rose-50 rounded-xl">
-                    <span className="font-medium text-gray-700">Approval Rate</span>
-                    <span className="text-xl font-bold text-rose-600">{(overviewStats.listingApprovalRate || 0).toFixed(1)}%</span>
+                    <span className="font-medium text-gray-700">Sold</span>
+                    <span className="text-xl font-bold text-rose-600">{overviewStats.soldPlots}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-amber-50 rounded-xl">
+                    <span className="font-medium text-gray-700">Reserved</span>
+                    <span className="text-xl font-bold text-amber-600">{overviewStats.reservedPlots}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl">
+                    <span className="font-medium text-gray-700">Availability Rate</span>
+                    <span className="text-xl font-bold text-blue-600">
+                      {overviewStats.totalPlots > 0 ? ((overviewStats.availablePlots / overviewStats.totalPlots) * 100).toFixed(1) : '0'}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-indigo-50 rounded-xl">
+                    <span className="font-medium text-gray-700">Sales Rate</span>
+                    <span className="text-xl font-bold text-indigo-600">
+                      {overviewStats.totalPlots > 0 ? ((overviewStats.soldPlots / overviewStats.totalPlots) * 100).toFixed(1) : '0'}%
+                    </span>
                   </div>
                 </div>
               </div>

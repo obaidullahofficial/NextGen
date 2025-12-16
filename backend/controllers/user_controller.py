@@ -7,6 +7,18 @@ from datetime import datetime
 class UserController:
     @staticmethod
     def create_user(username, email, password, role='user'):
+        """
+        Create a new user account (Admin-created users are pre-verified)
+        
+        Args:
+            username: User's display name
+            email: User's email address
+            password: Plain text password (will be hashed)
+            role: User role (user/society/admin)
+            
+        Returns:
+            tuple: (user_id: str or None, message: str)
+        """
         db = get_db()
         users = user_collection(db)
         
@@ -18,7 +30,9 @@ class UserController:
             'username': username,
             'email': email,
             'password_hash': password_hash,
-            'role': role
+            'role': role,
+            'is_verified': True,  # Admin-created users are pre-verified
+            'created_at': datetime.utcnow()
         }
         
         result = users.insert_one(user_data)
