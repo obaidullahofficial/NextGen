@@ -458,6 +458,9 @@ def update_floorplan():
                 'error': 'Floor plan ID and user ID are required'
             }), 400
         
+        # Convert floorplan_id to string if it's an integer
+        floorplan_id = str(floorplan_id)
+        
         # Prepare update data
         update_data = {
             'updated_at': datetime.utcnow()
@@ -476,10 +479,26 @@ def update_floorplan():
         # Update in database
         db = get_db()
         collection = floorplan_collection(db)
-        result = collection.update_one(
-            {'_id': ObjectId(floorplan_id), 'user_id': user_id},
-            {'$set': update_data}
-        )
+        
+        # Try to query by ObjectId first, if that fails, query by integer id field
+        try:
+            result = collection.update_one(
+                {'_id': ObjectId(floorplan_id), 'user_id': user_id},
+                {'$set': update_data}
+            )
+        except:
+            # If ObjectId conversion fails, try with integer id
+            try:
+                floorplan_id_int = int(floorplan_id)
+                result = collection.update_one(
+                    {'id': floorplan_id_int, 'user_id': user_id},
+                    {'$set': update_data}
+                )
+            except:
+                return jsonify({
+                    'success': False,
+                    'error': 'Invalid floor plan ID format'
+                }), 400
         
         if result.matched_count == 0:
             return jsonify({

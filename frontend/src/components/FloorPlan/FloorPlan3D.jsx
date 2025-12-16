@@ -824,7 +824,7 @@ const analyzeFloorPlanData = (data) => {
         console.log(`  Added mapData room:`, rooms[rooms.length - 1]);
       } 
       // Extract wall data
-      else if (item.type === 'wall' && item.x1 !== undefined) {
+      else if ((item.type === 'wall' || item.type === 'Wall') && item.x1 !== undefined) {
         const wallData = {
           x1: parseFloat(item.x1 || 0),
           y1: parseFloat(item.y1 || 0),
@@ -834,19 +834,41 @@ const analyzeFloorPlanData = (data) => {
         walls.push(wallData);
         console.log('🧱 Found wall:', wallData);
       } 
-      // Extract door data - Enhanced to detect brown rectangles as doors
-      else if (item.type === 'door' || (item.x !== undefined && item.width !== undefined && item.height !== undefined && 
-                (item.width < 100 || item.height < 100) && // Small rectangles are likely doors
-                (item.tag === 'door' || item.name === 'door' || item.roomType === 'door'))) {
-        doors.push({
-          id: `door-${doors.length}`,
-          x: parseFloat(item.x || 0),
-          y: parseFloat(item.y || 0),
-          width: parseFloat(item.width || 30),
-          height: parseFloat(item.height || 80),
-          rotation: parseFloat(item.rotation || 0),
-          type: 'door'
-        });
+      // Extract door data - Enhanced to detect doors in multiple formats
+      else if (item.type === 'door' || item.type === 'Door' || item.type === 'Wall') {
+        // Check if this is a door (Wall type from backend but might be door)
+        if (item.type === 'Wall') {
+          // Skip walls, handle them separately
+        } else if (item.x1 !== undefined && item.y1 !== undefined && item.x2 !== undefined && item.y2 !== undefined) {
+          // Line format from mapData (x1, y1, x2, y2)
+          const x = Math.min(item.x1, item.x2);
+          const y = Math.min(item.y1, item.y2);
+          const width = Math.abs(item.x2 - item.x1) || 30;
+          const height = Math.abs(item.y2 - item.y1) || 80;
+          
+          doors.push({
+            id: item.id || `door-${doors.length}`,
+            x: parseFloat(x),
+            y: parseFloat(y),
+            width: Math.max(parseFloat(width), 10),
+            height: Math.max(parseFloat(height), 10),
+            rotation: parseFloat(item.rotation || 0),
+            type: 'door'
+          });
+          console.log('🚪 Found door (line format):', doors[doors.length - 1]);
+        } else if (item.x !== undefined && item.width !== undefined && item.height !== undefined) {
+          // Rectangle format
+          doors.push({
+            id: item.id || `door-${doors.length}`,
+            x: parseFloat(item.x || 0),
+            y: parseFloat(item.y || 0),
+            width: parseFloat(item.width || 30),
+            height: parseFloat(item.height || 80),
+            rotation: parseFloat(item.rotation || 0),
+            type: 'door'
+          });
+          console.log('🚪 Found door (rect format):', doors[doors.length - 1]);
+        }
       }
       // Handle rooms without explicit type (legacy format) - only if no direct rooms
       else if (!item.type && item.x !== undefined && item.width !== undefined && rooms.length === 0) {
@@ -1778,41 +1800,6 @@ const FirstPersonController = ({ bounds, rooms, onPlayerPositionChange }) => {
       case 'ShiftRight':
         setMoveState(prev => ({ ...prev, sprint: true }));
         event.preventDefault();
-        break;
-      case 'ArrowLeft':
-        if (!isPointerLocked) {
-          // Use arrow keys for camera rotation when pointer lock is not available
-          euler.current.setFromQuaternion(camera.quaternion);
-          euler.current.y += 0.05;
-          camera.quaternion.setFromEuler(euler.current);
-          event.preventDefault();
-        }
-        break;
-      case 'ArrowRight':
-        if (!isPointerLocked) {
-          euler.current.setFromQuaternion(camera.quaternion);
-          euler.current.y -= 0.05;
-          camera.quaternion.setFromEuler(euler.current);
-          event.preventDefault();
-        }
-        break;
-      case 'ArrowUp':
-        if (!isPointerLocked) {
-          euler.current.setFromQuaternion(camera.quaternion);
-          euler.current.x += 0.05;
-          euler.current.x = Math.max(-PI_2, Math.min(PI_2, euler.current.x));
-          camera.quaternion.setFromEuler(euler.current);
-          event.preventDefault();
-        }
-        break;
-      case 'ArrowDown':
-        if (!isPointerLocked) {
-          euler.current.setFromQuaternion(camera.quaternion);
-          euler.current.x -= 0.05;
-          euler.current.x = Math.max(-PI_2, Math.min(PI_2, euler.current.x));
-          camera.quaternion.setFromEuler(euler.current);
-          event.preventDefault();
-        }
         break;
     }
   }, []);
