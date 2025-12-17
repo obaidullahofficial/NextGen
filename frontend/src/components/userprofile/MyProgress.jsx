@@ -109,19 +109,24 @@ const MyProgress = () => {
       });
     } else {
       // Backend plan - Navigate to customization page with floor plan data
+      console.log('🔍 Viewing saved floor plan:', plan);
       navigate('/floor-plan/customize', {
         state: {
           floorPlan: {
             id: plan._id,
             _id: plan._id,
-            projectName: plan.project_name,
+            project_name: plan.project_name, // Ensure project name is passed
+            projectName: plan.project_name, // Legacy compatibility
             rooms: plan.floor_plan_data?.rooms || plan.room_data || [],
             walls: plan.floor_plan_data?.walls || [],
             doors: plan.floor_plan_data?.doors || [],
-            plotDimensions: plan.dimensions || plan.floor_plan_data?.plotDimensions || {},
+            plotDimensions: plan.dimensions || plan.floor_plan_data?.plotDimensions || { width: 1000, height: 1000 },
             mapData: plan.floor_plan_data?.mapData || [],
             constraints: plan.constraints || {},
-            user_id: user?.id
+            user_id: user?.id,
+            // Include all floor plan data for proper rendering
+            floor_plan_data: plan.floor_plan_data,
+            room_data: plan.room_data
           }
         }
       });

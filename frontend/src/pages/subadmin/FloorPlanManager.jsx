@@ -272,19 +272,28 @@ const FloorPlanManager = () => {
   };
 
   const handleView = (plan) => {
-    // Navigate to customization page with floor plan data
-    localStorage.setItem('currentFloorPlan', JSON.stringify({
-      id: plan.id,
-      _id: plan._id || plan.id,
-      projectName: plan.name || plan.project_name,
-      rooms: plan.room_data || plan.floor_plan_data?.rooms || [],
-      walls: plan.floor_plan_data?.walls || [],
-      doors: plan.floor_plan_data?.doors || [],
-      plotDimensions: plan.dimensions || plan.floor_plan_data?.plotDimensions || { width: plan.plot_x || 1000, height: plan.plot_y || 1000 },
-      mapData: plan.floor_plan_data?.mapData || [],
-      constraints: plan.constraints || {}
-    }));
-    navigate('/floor-plan/customize');
+    // Navigate to customization page with floor plan data using navigation state
+    console.log('🔍 Subadmin viewing floor plan:', plan);
+    navigate('/floor-plan/customize', {
+      state: {
+        floorPlan: {
+          id: plan.id,
+          _id: plan._id || plan.id,
+          project_name: plan.name || plan.project_name,
+          projectName: plan.name || plan.project_name, // Legacy compatibility
+          rooms: plan.room_data || plan.floor_plan_data?.rooms || [],
+          walls: plan.floor_plan_data?.walls || [],
+          doors: plan.floor_plan_data?.doors || [],
+          plotDimensions: plan.dimensions || plan.floor_plan_data?.plotDimensions || { width: plan.plot_x || 1000, height: plan.plot_y || 1000 },
+          mapData: plan.floor_plan_data?.mapData || [],
+          constraints: plan.constraints || {},
+          // Include all floor plan data for proper rendering
+          floor_plan_data: plan.floor_plan_data,
+          room_data: plan.room_data,
+          user_id: user?.id
+        }
+      }
+    });
   };
 
   const formatDate = (dateString) => {

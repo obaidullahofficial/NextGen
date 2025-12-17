@@ -195,10 +195,25 @@ def save_floorplan():
                     'error': f'Missing required field: {field}'
                 }), 400
         
+        # Get user info to determine society_id for subadmin visibility
+        user_id = data['user_id']
+        db = get_db()
+        
+        # Check if user is subadmin and get their society_id
+        society_id = data.get('society_id')
+        if not society_id:
+            # Try to get society_id from user's society profile (if subadmin)
+            from models.society_profile import society_profile_collection
+            society_profiles = society_profile_collection(db)
+            user_society = society_profiles.find_one({'user_id': user_id})
+            if user_society:
+                society_id = str(user_society['_id'])
+                print(f"🏢 Found society_id for subadmin: {society_id}")
+        
         # Create floor plan document
         floorplan_doc = {
-            'user_id': data['user_id'],
-            'society_id': data.get('society_id'),  # Store society_id if provided
+            'user_id': user_id,
+            'society_id': society_id,  # Will be set if user is subadmin or provided
             'project_name': data['project_name'],
             'floor_plan_data': data['floor_plan_data'],
             'room_data': data.get('room_data', []),
@@ -210,11 +225,11 @@ def save_floorplan():
             'created_at': datetime.utcnow(),
             'updated_at': datetime.utcnow(),
             'is_favorite': False,
-            'tags': data.get('tags', [])
+            'tags': data.get('tags', []),
+            'creator_type': 'subadmin' if society_id else 'user'  # Track creator type
         }
         
         # Save to database
-        db = get_db()
         collection = floorplan_collection(db)
         result = collection.insert_one(floorplan_doc)
         

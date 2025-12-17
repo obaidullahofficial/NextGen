@@ -29,85 +29,38 @@ const FloorPlanCustomization = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [viewMode, setViewMode] = useState('2d'); // '2d' or '3d'
+  const [isFirstSave, setIsFirstSave] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Get floor plan data from navigation state
   useEffect(() => {
     const initializeFloorPlan = async () => {
+      // Prevent duplicate initialization
+      if (isInitialized) {
+        console.log('⏭️ Already initialized, skipping');
+        return;
+      }
+      
       if (location.state?.floorPlan) {
         const floorPlan = location.state.floorPlan;
         
-        // If floor plan doesn't have a database ID (_id), save it to database first
-        // Note: floorPlan.id is just the GA-generated ID (1,2,3...), not a database ID
+        // Check if floor plan has database ID to determine if it's a new or existing floorplan
         if (!floorPlan._id) {
-          console.log('🆕 Floor plan has no database ID, saving to database...');
+          console.log('🆕 New floor plan from generator (no database ID)');
           console.log('Floor plan data:', floorPlan);
-          
-          try {
-            const userStr = localStorage.getItem('user');
-            const user = userStr ? JSON.parse(userStr) : null;
-            
-            console.log('User from localStorage:', user);
-            
-            if (!user || !user.id) {
-              console.error('❌ User not authenticated');
-              alert('User not authenticated. Please log in again.');
-              navigate('/login', { replace: true });
-              return;
-            }
-
-            const savePayload = {
-              user_id: user.id,
-              project_name: `Floor Plan ${new Date().toLocaleString()}`,
-              floor_plan_data: {
-                rooms: floorPlan.rooms || [],
-                mapData: floorPlan.mapData || [],
-                plotDimensions: floorPlan.plotDimensions || { width: 1000, height: 1000 }
-              }
-            };
-
-            console.log('📤 Sending save request:', savePayload);
-
-            // Save the floor plan to get an ID
-            const response = await fetch('/api/floorplan/save', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(savePayload),
-            });
-
-            console.log('📥 Save response status:', response.status);
-
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-              const text = await response.text();
-              console.error('❌ Non-JSON response:', text);
-              throw new Error('Server returned non-JSON response');
-            }
-
-            const result = await response.json();
-            console.log('📥 Save result:', result);
-            
-            if (response.ok && result.success) {
-              console.log('✅ Floor plan saved with ID:', result.floorplan_id);
-              // Add the ID to the floor plan data
-              floorPlan._id = result.floorplan_id;
-              setFloorPlanData(floorPlan);
-            } else {
-              throw new Error(result.error || 'Failed to save floor plan');
-            }
-          } catch (error) {
-            console.error('❌ Error auto-saving floor plan:', error);
-            alert(`Failed to initialize floor plan: ${error.message}`);
-            // Still set the floor plan data even if save failed
-            setFloorPlanData(floorPlan);
-          }
+          setFloorPlanData(floorPlan);
+          setIsFirstSave(true); // This is a new floorplan
         } else {
           console.log('✅ Floor plan already has ID:', floorPlan._id || floorPlan.id);
           setFloorPlanData(floorPlan);
+          setIsFirstSave(false); // This is an existing floorplan
         }
+        
+        // Mark as initialized to prevent re-processing
+        setIsInitialized(true);
       } else {
         console.log('❌ No floor plan in navigation state');
+        setIsInitialized(true); // Mark as initialized even if no data
         // If no floor plan data, redirect back to generator
         navigate('/floor-plan/generate', { replace: true });
       }
@@ -305,19 +258,32 @@ const FloorPlanCustomization = () => {
 
   // Save floor plan
   const handleSave = async () => {
-    if (!floorPlanData || !hasUnsavedChanges) return;
+    if (!floorPlanData || isSaving) return;
 
-    // Prompt user for project name
+    // Determine save type and name handling
     const currentName = floorPlanData.project_name || `Floor Plan ${new Date().toLocaleDateString()}`;
-    const projectName = prompt('Enter a name for your floor plan:', currentName);
     
-    // If user cancels, don't save
-    if (projectName === null) return;
+    let projectName;
+    if (hasUnsavedChanges && !isFirstSave) {
+      // Show confirmation dialog for changes to existing floorplan
+      const confirmMessage = `Do you want to save changes to "${currentName}"?`;
+      const shouldSave = window.confirm(confirmMessage);
+      if (!shouldSave) return;
+      projectName = currentName; // Keep existing name for updates
+    } else {
+      // Prompt for name on first save or when saving without changes
+      projectName = prompt(
+        isFirstSave ? 'Enter a name for your floor plan:' : 'Save floor plan as:', 
+        currentName
+      );
+      
+      // If user cancels, don't save
+      if (projectName === null) return;
+    }
     
     // If user enters empty name, use default
     const finalName = projectName.trim() || currentName;
 
-    setIsSaving(true);
     try {
       // Get user info from localStorage or auth context
       const userStr = localStorage.getItem('user');
@@ -329,24 +295,42 @@ const FloorPlanCustomization = () => {
         return;
       }
 
-      // Prepare floor plan data for saving
+      // Prepare comprehensive floor plan data for saving
       const saveData = {
         floorplan_id: floorPlanData._id || floorPlanData.id || floorPlanData.floorplan_id,
         user_id: user.id,
         project_name: finalName,
         floor_plan_data: {
-          rooms: floorPlanData.rooms || [],
+          rooms: floorPlanData.rooms || floorPlanData.room_data || [],
           mapData: floorPlanData.mapData || [],
+          walls: floorPlanData.walls || [],
+          doors: floorPlanData.doors || [],
           plotDimensions: floorPlanData.plotDimensions || { width: 1000, height: 1000 }
         },
-        room_data: floorPlanData.rooms || [] // Include room data for room count
+        room_data: floorPlanData.rooms || floorPlanData.room_data || [], // Include room data for room count
+        constraints: floorPlanData.constraints || {},
+        dimensions: floorPlanData.dimensions || floorPlanData.plotDimensions || { width: 1000, height: 1000 }
       };
 
-      console.log('💾 Saving floor plan:', saveData);
+      console.log('💾 Preparing to save floor plan:', {
+        isFirstSave,
+        hasId: !!floorPlanData._id,
+        roomCount: saveData.room_data?.length || 0,
+        projectName: finalName
+      });
 
-      // Send updated floor plan data to backend
-      const response = await fetch('/api/floorplan/update', {
-        method: 'PUT',
+      // Determine API endpoint based on whether this is first save or update
+      const apiEndpoint = (floorPlanData._id && !isFirstSave) ? '/api/floorplan/update' : '/api/floorplan/save';
+      const method = (floorPlanData._id && !isFirstSave) ? 'PUT' : 'POST';
+      
+      console.log(`📤 ${isFirstSave ? 'Creating new' : 'Updating existing'} floor plan via ${apiEndpoint}`);
+      
+      // Prevent multiple concurrent saves
+      setIsSaving(true);
+      
+      // Send floor plan data to backend
+      const response = await fetch(apiEndpoint, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -369,13 +353,26 @@ const FloorPlanCustomization = () => {
 
       if (response.ok && result.success) {
         setHasUnsavedChanges(false);
-        // Update the project name in local state
+        setIsFirstSave(false);
+        
+        // Update the project name and ID in local state
         setFloorPlanData(prev => ({
           ...prev,
-          project_name: finalName
+          project_name: finalName,
+          _id: result.floorplan_id || prev._id
         }));
-        // Show success message
-        alert(`Floor plan "${finalName}" saved successfully!`);
+        
+        // Show appropriate success message
+        const message = hasUnsavedChanges && !isFirstSave 
+          ? `Changes saved to "${finalName}"!` 
+          : `Floor plan "${finalName}" saved successfully!`;
+        alert(message);
+        
+        console.log('✅ Floor plan saved successfully:', {
+          id: result.floorplan_id,
+          name: finalName,
+          isUpdate: !isFirstSave
+        });
       } else {
         throw new Error(result.error || 'Failed to save floor plan');
       }
@@ -485,10 +482,12 @@ const FloorPlanCustomization = () => {
               
               <button
                 onClick={handleSave}
-                disabled={!hasUnsavedChanges || isSaving}
+                disabled={isSaving}
                 className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ED7600] transition-colors ${
-                  hasUnsavedChanges && !isSaving
-                    ? 'bg-[#ED7600] hover:bg-[#D56900]'
+                  !isSaving
+                    ? hasUnsavedChanges 
+                      ? 'bg-[#ED7600] hover:bg-[#D56900]' 
+                      : 'bg-blue-600 hover:bg-blue-700'
                     : 'bg-gray-600 cursor-not-allowed'
                 }`}
               >
@@ -505,7 +504,7 @@ const FloorPlanCustomization = () => {
                     <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    Save Changes
+                    {hasUnsavedChanges ? 'Save Changes' : 'Save Floorplan'}
                   </>
                 )}
               </button>
