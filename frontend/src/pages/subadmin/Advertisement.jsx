@@ -111,11 +111,16 @@ const Advertisement = () => {
   };
 
   const handlePlanSelect = (plan) => {
+    console.log('Plan selected:', plan);
     setSelectedPlan(plan);
-    setFormData(prev => ({
-      ...prev,
-      plan_id: plan._id
-    }));
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        plan_id: plan._id
+      };
+      console.log('Updated formData:', updated);
+      return updated;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -124,7 +129,19 @@ const Advertisement = () => {
     setSuccess('');
 
     // Validation
+    console.log('Validating form data:', {
+      title: formData.title,
+      featured_image: !!formData.featured_image,
+      plan_id: formData.plan_id,
+      selectedPlan: selectedPlan?._id
+    });
+    
     if (!formData.title || !formData.featured_image || !formData.plan_id) {
+      console.log('Validation failed:', {
+        title_missing: !formData.title,
+        image_missing: !formData.featured_image,
+        plan_missing: !formData.plan_id
+      });
       setError('Title, advertisement image, and plan selection are required');
       return;
     }

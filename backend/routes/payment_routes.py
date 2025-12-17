@@ -35,14 +35,15 @@ def create_checkout_session(current_user):
     Body: {
         "advertisement_id": "ad_id",
         "plan_name": "Weekly Plan",
-        "plan_price": 10.00
+        "plan_price": 150.00  # PKR
     }
+    Returns PKR and USD price for display.
     """
     try:
         data = request.get_json()
         advertisement_id = data.get('advertisement_id')
         plan_name = data.get('plan_name')
-        plan_price = data.get('plan_price')
+        plan_price = data.get('plan_price')  # PKR
         user_email = current_user.get('email')
 
         if not all([advertisement_id, plan_name, plan_price]):
@@ -59,7 +60,11 @@ def create_checkout_session(current_user):
         )
 
         if result['success']:
-            return jsonify(result), 200
+            # Add explicit PKR and USD price to response for frontend display
+            return jsonify({
+                **result,
+                'display_message': f"You will be charged Rs. {result.get('plan_price_pkr')} (converted to ${result.get('plan_price_usd')} USD at rate {result.get('conversion_rate'):.4f})"
+            }), 200
         else:
             return jsonify(result), 400
 

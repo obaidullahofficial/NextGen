@@ -23,6 +23,10 @@ class AdvertisementPlanController:
             except ValueError:
                 return {"success": False, "error": "Invalid duration or price format"}
             
+            # Validate minimum price of 150 rupees
+            if plan_data['price'] < 150:
+                return {"success": False, "error": "Advertisement plan price cannot be less than 150 rupees"}
+            
             plan_model = AdvertisementPlan()
             plan_id = plan_model.create_plan(plan_data)
             
@@ -80,6 +84,10 @@ class AdvertisementPlanController:
                     update_data['price'] = float(update_data['price'])
                 except ValueError:
                     return {"success": False, "error": "Invalid price format"}
+                
+                # Validate minimum price of 150 rupees
+                if update_data['price'] < 150:
+                    return {"success": False, "error": "Advertisement plan price cannot be less than 150 rupees"}
             
             plan_model = AdvertisementPlan()
             success = plan_model.update_plan(plan_id, update_data)

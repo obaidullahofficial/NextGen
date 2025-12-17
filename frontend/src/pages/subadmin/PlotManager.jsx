@@ -32,10 +32,22 @@ const PlotManager = () => {
     try {
       setLoading(true);
       setError(null);
-      const plotsData = await getPlots();
+      const response = await getPlots();
       
       // Debug: Log the raw API response
-      console.log('Raw API response:', plotsData);
+      console.log('Raw API response:', response);
+      
+      // Extract the actual plots data from the response
+      let plotsData = [];
+      if (response.success && Array.isArray(response.data)) {
+        plotsData = response.data;
+      } else if (Array.isArray(response)) {
+        plotsData = response;
+      } else {
+        console.error('Unexpected response format:', response);
+        throw new Error('Invalid response format from server');
+      }
+      
       console.log('Sample plot data:', plotsData[0]);
       
       // Transform API data to match expected format

@@ -14,16 +14,22 @@ class PaymentController:
         self.advertisement_model = Advertisement()
 
     @staticmethod
-    def create_checkout_session(advertisement_id, plan_name, plan_price, user_email):
+    def create_checkout_session(advertisement_id, plan_name, plan_price_pkr, user_email):
         """
         Create a Stripe checkout session for advertisement payment
+        plan_price_pkr: price in PKR (Rupees)
         """
         try:
+            from utils.currency import get_pkr_to_usd_rate
+            # Convert PKR to USD
+            rate = get_pkr_to_usd_rate()
+            plan_price_usd = plan_price_pkr * rate
+            
             # Stripe requires minimum $0.50 USD
-            if plan_price < 0.50:
+            if plan_price_usd < 0.50:
                 return {
                     'success': False,
-                    'error': f'Minimum payment amount is $0.50 USD. Current plan price is ${plan_price:.2f}. Please update the plan price.'
+                    'error': f'Minimum payment amount is $0.50 USD. Current plan price is ${plan_price_usd:.2f}. Please update the plan price.'
                 }
 
             # Create Stripe checkout session
@@ -35,9 +41,9 @@ class PaymentController:
                             'currency': 'usd',
                             'product_data': {
                                 'name': f'Advertisement Plan: {plan_name}',
-                                'description': f'Advertisement subscription for {plan_name}',
+                                'description': f'Advertisement subscription for {plan_name} (Rs. {plan_price_pkr})',
                             },
-                            'unit_amount': int(plan_price * 100),  # Stripe uses cents
+                            'unit_amount': int(plan_price_usd * 100),  # Stripe uses cents
                         },
                         'quantity': 1,
                     },
@@ -48,6 +54,9 @@ class PaymentController:
                 customer_email=user_email,
                 metadata={
                     'advertisement_id': advertisement_id,
+                    'plan_price_pkr': plan_price_pkr,
+                    'plan_price_usd': plan_price_usd,
+                    'conversion_rate': rate,
                     'plan_name': plan_name
                 }
             )
@@ -55,7 +64,10 @@ class PaymentController:
             return {
                 'success': True,
                 'session_id': checkout_session.id,
-                'checkout_url': checkout_session.url
+                'checkout_url': checkout_session.url,
+                'plan_price_pkr': plan_price_pkr,
+                'plan_price_usd': round(plan_price_usd, 2),
+                'conversion_rate': rate
             }
 
         except stripe.error.StripeError as e:

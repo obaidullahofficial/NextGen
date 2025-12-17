@@ -15,6 +15,7 @@ const AdvertisementPlanManagement = () => {
     price: '',
     is_active: true
   });
+  const [priceError, setPriceError] = useState('');
 
   useEffect(() => {
     fetchPlans();
@@ -38,6 +39,17 @@ const AdvertisementPlanManagement = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // Special handling for price validation
+    if (name === 'price') {
+      const numValue = parseFloat(value);
+      if (value && numValue < 150) {
+        setPriceError('Price must be at least 150 rupees');
+      } else {
+        setPriceError('');
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -65,6 +77,7 @@ const AdvertisementPlanManagement = () => {
     setShowModal(true);
     setError('');
     setSuccess('');
+    setPriceError('');
   };
 
   const closeModal = () => {
@@ -77,11 +90,18 @@ const AdvertisementPlanManagement = () => {
     setError('');
     setSuccess('');
 
+    // Validate price before submission
+    const priceValue = parseFloat(formData.price);
+    if (priceValue < 150) {
+      setError('Price must be at least 150 rupees');
+      return;
+    }
+
     try {
       const planData = {
         ...formData,
         duration_days: parseInt(formData.duration_days),
-        price: parseFloat(formData.price)
+        price: priceValue
       };
 
       let result;
@@ -291,6 +311,7 @@ const AdvertisementPlanManagement = () => {
                   <div>
                     <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
                       Price (Rs) <span className="text-red-500">*</span>
+                      <span className="text-sm text-gray-500 font-normal ml-1">(Minimum: 150 Rs)</span>
                     </label>
                     <input
                       type="number"
@@ -298,12 +319,17 @@ const AdvertisementPlanManagement = () => {
                       name="price"
                       value={formData.price}
                       onChange={handleInputChange}
-                      placeholder="10.00"
+                      placeholder="150.00"
                       step="0.01"
-                      min="0"
+                      min="150"
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-blue-500 outline-none ${
+                        priceError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                      }`}
                     />
+                    {priceError && (
+                      <p className="text-red-500 text-sm mt-1">{priceError}</p>
+                    )}
                   </div>
                 </div>
 
