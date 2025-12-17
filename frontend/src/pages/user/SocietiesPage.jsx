@@ -14,7 +14,6 @@ const Societies = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('name');
-  const [minRating, setMinRating] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
@@ -49,15 +48,8 @@ const Societies = () => {
       });
     }
 
-    if (filterType === 'rating' && minRating > 0) {
-      filtered = filtered.filter(society => {
-        const rating = society.rating || 0;
-        return rating >= minRating;
-      });
-    }
-
     setFilteredSocieties(filtered);
-  }, [searchTerm, filterType, minRating, societies]);
+  }, [searchTerm, filterType, societies]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#2F3D57] text-white">
@@ -128,44 +120,13 @@ const Societies = () => {
                           >
                             City/Location
                           </button>
-                          <button
-                            onClick={() => {
-                              setFilterType('rating');
-                              setSearchTerm('');
-                              setMinRating(0);
-                              setShowFilters(false);
-                            }}
-                            className={`w-full px-4 py-3 text-left text-white hover:bg-[#ED7600] transition-colors ${filterType === 'rating' ? 'bg-[#ED7600]' : ''}`}
-                          >
-                            Rating
-                          </button>
+                          {/* Rating filter removed */}
                         </div>
                       )}
                     </div>
                   </div>
                   
-                  {/* Rating Slider (shown when rating filter is active) */}
-                  {filterType === 'rating' && (
-                    <div className="mt-4 flex items-center gap-3 animate-fadeIn">
-                      <span className="text-white text-sm font-medium">Min Rating:</span>
-                      <input
-                        type="range"
-                        min="0"
-                        max="5"
-                        step="0.5"
-                        value={minRating}
-                        onChange={(e) => setMinRating(parseFloat(e.target.value))}
-                        className="flex-1 h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
-                        style={{
-                          background: `linear-gradient(to right, #ED7600 0%, #ED7600 ${(minRating / 5) * 100}%, rgba(255,255,255,0.2) ${(minRating / 5) * 100}%, rgba(255,255,255,0.2) 100%)`
-                        }}
-                      />
-                      <div className="flex items-center gap-1 bg-white/20 px-3 py-2 rounded-xl min-w-[80px] justify-center">
-                        <FaStar className="text-[#ED7600]" />
-                        <span className="text-white font-bold">{minRating.toFixed(1)}</span>
-                      </div>
-                    </div>
-                  )}
+                  {/* Rating slider removed */}
                 </div>
               </div>
               

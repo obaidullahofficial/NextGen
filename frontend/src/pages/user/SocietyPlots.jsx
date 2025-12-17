@@ -18,6 +18,7 @@ const SocietyPlots = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [plots, setPlots] = useState([]);
+    const [plotSearch, setPlotSearch] = useState("");
     const [currentSociety, setCurrentSociety] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -262,13 +263,28 @@ const SocietyPlots = () => {
                     <h2 className="text-3xl font-bold text-[#2F3D57] mb-6">
                         Available Plots
                     </h2>
+                    {/* Search Bar for Plot Number */}
+                    <div className="mb-6 flex items-center gap-3">
+                        <input
+                            type="text"
+                            value={plotSearch}
+                            onChange={e => setPlotSearch(e.target.value)}
+                            placeholder="Search by plot number..."
+                            className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ED7600] focus:border-[#ED7600] outline-none"
+                        />
+                    </div>
                     {plots.length === 0 ? (
                         <div className="col-span-full text-center py-12">
                             <p className="text-gray-600 text-lg">No plots available for this society yet.</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {plots.map((plot) => (
+                            {plots
+                                .filter(plot =>
+                                    plotSearch.trim() === "" ||
+                                    (plot.plot_number && plot.plot_number.toString().toLowerCase().includes(plotSearch.trim().toLowerCase()))
+                                )
+                                .map((plot) => (
                                 <div key={plot.plot_id || plot._id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
                                     <div className="p-6">
                                         <div className="flex justify-between items-start mb-4">
