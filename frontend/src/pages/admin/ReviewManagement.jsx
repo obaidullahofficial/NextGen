@@ -331,11 +331,11 @@ export default function ReviewManagement() {
   };
 
   return (
-    <div className="w-full min-h-screen p-8 bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="w-full min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Review Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Review Management</h1>
           <p className="text-lg text-gray-600">
             Monitor and moderate user reviews about plots and properties.
           </p>

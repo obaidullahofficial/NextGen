@@ -1568,9 +1568,6 @@ const FloorPlanGenerator = () => {
                         <h3 className="text-xl font-semibold text-gray-900">
                           Floor Plan Variation {currentPlanIndex + 1} of {generatedPlans.length}
                         </h3>
-                        <span className="px-3 py-1 bg-[#ED7600]/20 text-[#2F3D57] rounded-full text-sm font-semibold border border-[#ED7600]/40">
-                          Score: {(generatedPlans[currentPlanIndex]?.fitness ?? 0).toFixed(2)}
-                        </span>
                       </div>
                       
                       {/* Navigation and Control Buttons */}

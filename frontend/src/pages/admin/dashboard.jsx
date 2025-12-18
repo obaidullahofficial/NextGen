@@ -145,23 +145,11 @@ const Dashboard = () => {
 
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
-        <div>
-          <h1 style={styles.heading}>Admin Dashboard</h1>
-          <p style={styles.subheading}>Live data from society registrations and system analytics</p>
-        </div>
-        <button onClick={handleRefresh} style={styles.refreshButton}>
-          <Activity size={16} />
-          Refresh Data
-        </button>
-      </div>
-
       {/* Overview Cards */}
       <div style={styles.cardsGrid}>
         <Card 
           title="Total Users" 
           value={stats.users.total.toLocaleString()} 
-          change={`+${stats.users.growthRate.toFixed(1)}%`}
           icon={Users}
           color="#4CAF50"
           subtitle={`${stats.users.active} active users`}
@@ -169,7 +157,6 @@ const Dashboard = () => {
         <Card 
           title="Society Registrations" 
           value={stats.societies.total.toLocaleString()} 
-          change={`${calculateApprovalRate()}% approved`}
           icon={Building}
           color="#2196F3"
           subtitle={`${stats.societies.pending} pending approval`}
@@ -177,7 +164,6 @@ const Dashboard = () => {
         <Card 
           title="Reviews" 
           value={stats.reviews.total.toLocaleString()} 
-          change={`${stats.reviews.averageRating.toFixed(1)}⭐ avg rating`}
           icon={Star}
           color="#FF9800"
           subtitle={`${stats.reviews.positive} positive reviews`}
@@ -185,7 +171,6 @@ const Dashboard = () => {
         <Card 
           title="Advertisements" 
           value={stats.advertisements.total.toLocaleString()} 
-          change={`${stats.advertisements.totalViews} total views`}
           icon={FileText}
           color="#9C27B0"
           subtitle={`${stats.advertisements.active} active listings`}
@@ -282,13 +267,15 @@ const Card = ({ title, value, change, icon: Icon, color, subtitle }) => (
         <Icon size={24} color={color} />
       </div>
     </div>
-    <p style={{ 
-      color: change.startsWith("+") ? "#4CAF50" : change.includes("⭐") ? "#FF9800" : "#666",
-      fontSize: "14px",
-      margin: "8px 0 0 0"
-    }}>
-      {change}
-    </p>
+    {change && (
+      <p style={{ 
+        color: change.startsWith("+") ? "#4CAF50" : change.includes("⭐") ? "#FF9800" : "#666",
+        fontSize: "14px",
+        margin: "8px 0 0 0"
+      }}>
+        {change}
+      </p>
+    )}
   </div>
 );
 
@@ -344,22 +331,22 @@ const getTypeColor = (type) => {
 // Styles
 const styles = {
   container: {
-    padding: "16px",
+    padding: "24px",
     fontFamily: "Segoe UI, sans-serif",
     color: "#333",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#ffffff",
     minHeight: "100vh",
-    maxWidth: "1400px",
+    maxWidth: "1280px",
     margin: "0 auto"
   },
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: "20px"
+    marginBottom: "32px"
   },
   heading: {
-    fontSize: "28px",
+    fontSize: "30px",
     fontWeight: "700",
     color: "#1a1a1a",
     margin: "0 0 6px 0"

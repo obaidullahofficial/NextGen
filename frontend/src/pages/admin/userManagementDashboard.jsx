@@ -890,11 +890,6 @@ function StatsCard({ icon: Icon, title, value, change, color = "blue" }) {
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
-          {change && (
-            <p className="text-sm text-emerald-600 mt-1">
-              +{change}% from last month
-            </p>
-          )}
         </div>
         <div className={`w-12 h-12 rounded-lg ${colorClasses[color]} flex items-center justify-center`}>
           <Icon size={24} className="text-white" />
@@ -1063,13 +1058,13 @@ export default function UserManagementDashboard() {
   const regularCount = users.filter(u => u.role === 'user').length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <div className="p-4 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-white p-6">
+      <div className="max-w-7xl mx-auto">
         {/* 🔹 Header */}
-        <div className="mb-6">
+        <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+              <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
               <p className="text-gray-600 mt-1 text-sm">Manage and monitor all system users</p>
             </div>
             <div className="flex items-center space-x-2">

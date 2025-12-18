@@ -307,8 +307,13 @@ const KonvaFloorPlan = ({
           window.id && window.id.toString().startsWith('new-window-')
         );
         
-        // Combine: keep manual windows + add/update windows from floorPlanData
-        return [...finalWindowsData, ...manualWindows];
+        // Remove any windows from finalWindowsData that have IDs matching manual windows (to avoid duplicates)
+        const floorPlanOnlyWindows = finalWindowsData.filter(window =>
+          !window.id || !window.id.toString().startsWith('new-window-')
+        );
+        
+        // Combine: windows from floorPlanData (excluding manual ones) + manual windows
+        return [...floorPlanOnlyWindows, ...manualWindows];
       });
     }
   }, [floorPlanData, isEditable]);
@@ -486,19 +491,20 @@ const KonvaFloorPlan = ({
     let minDistance = Infinity;
     let snapPosition = null;
     
+    // Check room boundaries
     rooms.forEach(room => {
-      const walls = [
+      const roomWalls = [
         // Top wall
-        { x1: room.x, y1: room.y, x2: room.x + room.width, y2: room.y, edge: 'top' },
+        { x1: room.x, y1: room.y, x2: room.x + room.width, y2: room.y, edge: 'top', type: 'room' },
         // Right wall  
-        { x1: room.x + room.width, y1: room.y, x2: room.x + room.width, y2: room.y + room.height, edge: 'right' },
+        { x1: room.x + room.width, y1: room.y, x2: room.x + room.width, y2: room.y + room.height, edge: 'right', type: 'room' },
         // Bottom wall
-        { x1: room.x, y1: room.y + room.height, x2: room.x + room.width, y2: room.y + room.height, edge: 'bottom' },
+        { x1: room.x, y1: room.y + room.height, x2: room.x + room.width, y2: room.y + room.height, edge: 'bottom', type: 'room' },
         // Left wall
-        { x1: room.x, y1: room.y, x2: room.x, y2: room.y + room.height, edge: 'left' }
+        { x1: room.x, y1: room.y, x2: room.x, y2: room.y + room.height, edge: 'left', type: 'room' }
       ];
       
-      walls.forEach(wall => {
+      roomWalls.forEach(wall => {
         // Calculate distance from point to wall line
         const wallLength = Math.sqrt((wall.x2 - wall.x1) ** 2 + (wall.y2 - wall.y1) ** 2);
         const wallUnitX = (wall.x2 - wall.x1) / wallLength;
@@ -543,8 +549,63 @@ const KonvaFloorPlan = ({
       });
     });
     
+    // Check custom walls
+    walls.forEach(wall => {
+      const customWall = {
+        x1: wall.points[0],
+        y1: wall.points[1],
+        x2: wall.points[2],
+        y2: wall.points[3],
+        edge: 'custom',
+        type: 'custom',
+        id: wall.id
+      };
+      
+      // Calculate distance from point to wall line
+      const wallLength = Math.sqrt((customWall.x2 - customWall.x1) ** 2 + (customWall.y2 - customWall.y1) ** 2);
+      const wallUnitX = (customWall.x2 - customWall.x1) / wallLength;
+      const wallUnitY = (customWall.y2 - customWall.y1) / wallLength;
+      
+      // Project point onto wall line
+      const toPointX = x - customWall.x1;
+      const toPointY = y - customWall.y1;
+      const projectionLength = toPointX * wallUnitX + toPointY * wallUnitY;
+      
+      // Clamp projection to wall bounds
+      const clampedProjection = Math.max(0, Math.min(wallLength, projectionLength));
+      
+      // Calculate closest point on wall
+      const closestX = customWall.x1 + wallUnitX * clampedProjection;
+      const closestY = customWall.y1 + wallUnitY * clampedProjection;
+      
+      // Calculate distance
+      const distance = Math.sqrt((x - closestX) ** 2 + (y - closestY) ** 2);
+      
+      // Check if we can fit the door on this wall segment
+      const availableLength = wallLength;
+      const doorCanFit = doorLength <= availableLength;
+      
+      if (distance < minDistance && doorCanFit && distance < 50) { // 50px snap threshold
+        minDistance = distance;
+        nearestWall = customWall;
+        
+        // Calculate door position centered on the closest point
+        const doorStartX = closestX - (wallUnitX * doorLength / 2);
+        const doorStartY = closestY - (wallUnitY * doorLength / 2);
+        const doorEndX = closestX + (wallUnitX * doorLength / 2);
+        const doorEndY = closestY + (wallUnitY * doorLength / 2);
+        
+        snapPosition = {
+          x1: doorStartX,
+          y1: doorStartY,
+          x2: doorEndX,
+          y2: doorEndY
+        };
+      }
+    });
+    
     return { nearestWall, snapPosition, distance: minDistance };
-  }, [rooms]);
+  }, [rooms, walls]);
 
   // Handle door drag end
   const handleDoorDragEnd = useCallback((e, doorId) => {
@@ -692,7 +753,7 @@ const KonvaFloorPlan = ({
   // Add new door
   const addNewDoor = useCallback(() => {
     const newDoor = {
-      id: `new-door-${Date.now()}`,
+      id: `new-door-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       points: [200, 200, 280, 200], // Default horizontal door
       stroke: '#8B4513',
       strokeWidth: 6,
@@ -707,7 +768,7 @@ const KonvaFloorPlan = ({
   // Add new wall
   const addNewWall = useCallback(() => {
     const newWall = {
-      id: `new-wall-${Date.now()}`,
+      id: `new-wall-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       points: [300, 300, 400, 300], // Default horizontal wall
       stroke: '#000',
       strokeWidth: 4,
@@ -1400,174 +1461,93 @@ const KonvaFloorPlan = ({
 
   return (
     <div className="flex bg-gray-50">
-      {/* Left Sidebar - Creation Tools */}
+      {/* Left Sidebar - Quick Add Tools */}
       {isEditable && (
         <div className="w-64 bg-white border-r border-gray-300 p-4 space-y-4 overflow-y-auto">
-          {/* Creation Tools Section */}
+          {/* Quick Add Section */}
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
             <div className="text-sm font-medium text-gray-900 mb-3">
               🔨 Creation Tools
             </div>
             
             <div className="space-y-2">
-              {/* Add Door Button */}
+              {/* Quick Add Door */}
               <button
-                onClick={() => {
-                  if (creationMode === 'door') {
-                    setCreationMode(null);
-                    setIsCreating(false);
-                    setNewElementStart(null);
-                  } else {
-                    setCreationMode('door');
-                    setIsCreating(false);
-                    setNewElementStart(null);
-                  }
-                }}
-                className={`w-full px-3 py-2 text-xs rounded-lg border transition-colors ${
-                  creationMode === 'door'
-                    ? 'bg-green-100 border-green-300 text-green-800'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
+                onClick={addNewDoor}
+                className="w-full px-3 py-2 text-xs rounded-lg border bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors"
+                title="Add door at center"
               >
-                {creationMode === 'door' ? '✓ Click to Place Door' : '🚪 Add Door'}
+                🚪 Add Door
               </button>
               
-              {/* Add Wall Button */}
+              {/* Quick Add Wall */}
               <button
-                onClick={() => {
-                  if (creationMode === 'wall') {
-                    setCreationMode(null);
-                    setIsCreating(false);
-                    setNewElementStart(null);
-                  } else {
-                    setCreationMode('wall');
-                    setIsCreating(false);
-                    setNewElementStart(null);
-                  }
-                }}
-                className={`w-full px-3 py-2 text-xs rounded-lg border transition-colors ${
-                  creationMode === 'wall'
-                    ? 'bg-blue-100 border-blue-300 text-blue-800'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
+                onClick={addNewWall}
+                className="w-full px-3 py-2 text-xs rounded-lg border bg-slate-50 border-slate-300 text-slate-800 hover:bg-slate-100 transition-colors"
+                title="Add wall at center"
               >
-                {creationMode === 'wall' ? '✓ Click to Place Wall' : '🧱 Add Wall'}
+                🧱 Add Wall
               </button>
               
-              {/* Add Window Button */}
+              {/* Quick Add Window */}
               <button
                 onClick={() => {
-                  if (creationMode === 'window') {
-                    setCreationMode(null);
-                    setIsCreating(false);
-                    setNewElementStart(null);
-                  } else {
-                    setCreationMode('window');
-                    setIsCreating(false);
-                    setNewElementStart(null);
+                  const newWindow = {
+                    id: `new-window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    points: [300, 200, 380, 200],
+                    stroke: windowColor,
+                    strokeWidth: windowWidth,
+                    lineCap: 'round',
+                    type: 'Window'
+                  };
+                  const updatedWindows = [...windows, newWindow];
+                  setWindows(updatedWindows);
+                  setSelectedWindow(newWindow.id);
+                  setSelectedDoor(null);
+                  setSelectedWall(null);
+                  setSelectedRoom(null);
+                  
+                  if (onWindowsChange) {
+                    onWindowsChange(updatedWindows);
                   }
                 }}
-                className={`w-full px-3 py-2 text-xs rounded-lg border transition-colors ${
-                  creationMode === 'window'
-                    ? 'bg-cyan-100 border-cyan-300 text-cyan-800'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
+                className="w-full px-3 py-2 text-xs rounded-lg border bg-cyan-50 border-cyan-300 text-cyan-800 hover:bg-cyan-100 transition-colors"
+                title="Add window at center"
               >
-                {creationMode === 'window' ? '✓ Click to Place Window' : '🪟 Add Window'}
+                🪟 Add Window
               </button>
               
-              {/* Add Room Button */}
+              {/* Quick Add Room */}
               <button
                 onClick={() => {
-                  if (creationMode === 'room') {
-                    setCreationMode(null);
-                    setIsCreating(false);
-                    setNewElementStart(null);
-                  } else {
-                    setCreationMode('room');
-                    setIsCreating(false);
-                    setNewElementStart(null);
+                  const newRoom = {
+                    id: `new-room-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    x: 100,
+                    y: 100,
+                    width: 150,
+                    height: 120,
+                    fill: roomColor,
+                    stroke: '#000',
+                    strokeWidth: 2,
+                    tag: `Room ${rooms.length + 1}`,
+                    type: 'Room'
+                  };
+                  const updatedRooms = [...rooms, newRoom];
+                  setRooms(updatedRooms);
+                  setSelectedRoom(newRoom.id);
+                  setSelectedDoor(null);
+                  setSelectedWall(null);
+                  setSelectedWindow(null);
+                  
+                  if (onRoomsChange) {
+                    onRoomsChange(updatedRooms);
                   }
                 }}
-                className={`w-full px-3 py-2 text-xs rounded-lg border transition-colors ${
-                  creationMode === 'room'
-                    ? 'bg-purple-100 border-purple-300 text-purple-800'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
+                className="w-full px-3 py-2 text-xs rounded-lg border bg-purple-50 border-purple-300 text-purple-800 hover:bg-purple-100 transition-colors"
+                title="Add room at center"
               >
-                {creationMode === 'room' ? '✓ Click to Place Room' : '🏠 Add Room'}
+                🏠 Add Room
               </button>
-
-              {/* Quick Add Buttons */}
-              <div className="border-t pt-2 mt-2">
-                <div className="text-xs text-gray-600 mb-2">Quick Add:</div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={addNewDoor}
-                    className="px-2 py-1 text-xs bg-amber-100 border border-amber-300 text-amber-800 rounded hover:bg-amber-200 transition-colors"
-                    title="Add door at center"
-                  >
-                    + Door
-                  </button>
-                  <button
-                    onClick={addNewWall}
-                    className="px-2 py-1 text-xs bg-slate-100 border border-slate-300 text-slate-800 rounded hover:bg-slate-200 transition-colors"
-                    title="Add wall at center"
-                  >
-                    + Wall
-                  </button>
-                  <button
-                    onClick={() => {
-                      const newWindow = {
-                        id: `new-window-${Date.now()}`,
-                        points: [300, 200, 380, 200],
-                        stroke: windowColor,
-                        strokeWidth: windowWidth,
-                        lineCap: 'round',
-                        type: 'Window'
-                      };
-                      const updatedWindows = [...windows, newWindow];
-                      setWindows(updatedWindows);
-                      setSelectedWindow(newWindow.id);
-                      setSelectedDoor(null);
-                      setSelectedWall(null);
-                      setSelectedRoom(null);
-                      
-                      if (onWindowsChange) {
-                        onWindowsChange(updatedWindows);
-                      }
-                    }}
-                    className="px-2 py-1 text-xs bg-cyan-100 border border-cyan-300 text-cyan-800 rounded hover:bg-cyan-200 transition-colors col-span-2"
-                    title="Add window at center"
-                  >
-                    + Window
-                  </button>
-                </div>
-              </div>
-              
-              {/* Creation Instructions */}
-              {creationMode && (
-                <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded mt-2">
-                  {isCreating 
-                    ? `Click to finish ${creationMode}` 
-                    : `Click to start ${creationMode}, then click again to finish`
-                  }
-                </div>
-              )}
-              
-              {/* Cancel Button */}
-              {(creationMode || isCreating) && (
-                <button
-                  onClick={() => {
-                    setCreationMode(null);
-                    setIsCreating(false);
-                    setNewElementStart(null);
-                  }}
-                  className="w-full px-3 py-1 text-xs bg-red-100 border border-red-300 text-red-800 rounded hover:bg-red-200 transition-colors"
-                >
-                  Cancel
-                </button>
-              )}
             </div>
           </div>
 
@@ -2405,8 +2385,7 @@ const KonvaFloorPlan = ({
                       fill="#87CEEB"
                       stroke="#4682B4"
                       strokeWidth={2}
-                      draggable={true}
-                      style={{ cursor: 'move' }}
+                      draggable={false}
                     />
                     {/* End point handle */}
                     <Circle
@@ -2416,8 +2395,7 @@ const KonvaFloorPlan = ({
                       fill="#87CEEB"
                       stroke="#4682B4"
                       strokeWidth={2}
-                      draggable={true}
-                      style={{ cursor: 'move' }}
+                      draggable={false}
                     />
                   </>
                 )}

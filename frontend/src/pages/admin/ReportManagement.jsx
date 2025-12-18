@@ -595,7 +595,7 @@ const ReportManagement = () => {
   const safePlots = plots || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-100">
+    <div className="min-h-screen bg-white">
       {/* Modern Header Section */}
       <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -673,7 +673,7 @@ const ReportManagement = () => {
                 </div>
                 <div className="flex items-center text-emerald-600 text-sm font-medium bg-emerald-50 px-2 py-1 rounded-full">
                   <ArrowUpRight className="h-3 w-3 mr-1" />
-                  +{overviewStats.userGrowthRate ? overviewStats.userGrowthRate.toFixed(1) : '12'}%
+                  
                 </div>
               </div>
               <h3 className="text-sm font-medium text-blue-800 mb-1">Total Users</h3>
@@ -856,17 +856,6 @@ const ReportManagement = () => {
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-blue-600 rounded-lg mr-3">
-                        <Users className="h-4 w-4 text-white" />
-                      </div>
-                      <span className="font-medium text-gray-700">User Growth Rate</span>
-                    </div>
-                    <span className="text-lg font-bold text-blue-600">
-                      +{overviewStats.userGrowthRate ? overviewStats.userGrowthRate.toFixed(1) : '12.5'}%
-                    </span>
-                  </div>
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-xl">
                     <div className="flex items-center">
                       <div className="p-2 bg-emerald-600 rounded-lg mr-3">
@@ -938,7 +927,7 @@ const ReportManagement = () => {
                 </p>
                 <p className="text-sm text-green-600 mt-2 flex items-center justify-center">
                   <ArrowUpRight className="h-3 w-3 mr-1" />
-                  +{overviewStats.userGrowthRate ? (overviewStats.userGrowthRate * 0.8).toFixed(1) : '8'}% from yesterday
+                  
                 </p>
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <p className="text-xs text-gray-500">
@@ -1071,12 +1060,6 @@ const ReportManagement = () => {
                   <div className="flex justify-between items-center p-4 bg-amber-50 rounded-xl">
                     <span className="font-medium text-gray-700">New This Month</span>
                     <span className="text-xl font-bold text-amber-600">+{overviewStats.newUsersThisMonth}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-4 bg-purple-50 rounded-xl">
-                    <span className="font-medium text-gray-700">Growth Rate</span>
-                    <span className="text-xl font-bold text-purple-600">
-                      +{overviewStats.userGrowthRate ? overviewStats.userGrowthRate.toFixed(1) : '0'}%
-                    </span>
                   </div>
                 </div>
               </div>

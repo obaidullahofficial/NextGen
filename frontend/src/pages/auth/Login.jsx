@@ -18,6 +18,10 @@ const Login = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     
+    // Password visibility states
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    
     // Popup modal state with navigation callback
     const [popup, setPopup] = useState({
         isOpen: false,
@@ -490,18 +494,18 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#2F3D57] via-[#3a4b66] to-[#2F3D57] flex items-center justify-center p-3 sm:p-4 lg:p-6">
-            <div className={`w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl bg-white p-4 sm:p-6 lg:p-8 rounded-2xl shadow-2xl transform hover:scale-[1.01] transition-all duration-300 ${showSignupType ? 'invisible' : ''}`}>
+        <div className="min-h-screen bg-gradient-to-br from-[#2F3D57] via-[#3a4b66] to-[#2F3D57] flex items-center justify-center p-3 sm:p-4">
+            <div className={`w-full max-w-xs sm:max-w-sm lg:max-w-md bg-white p-3 sm:p-5 lg:p-6 rounded-2xl shadow-2xl transform hover:scale-[1.01] transition-all duration-300 ${showSignupType ? 'invisible' : ''}`}>
                 {/* Logo and Company Name */}
-                <div className='flex flex-col items-center mb-4 sm:mb-6 space-y-2 sm:space-y-3'>
-                    <div className='w-20 h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32'>
+                <div className='flex flex-col items-center mb-3 sm:mb-4 space-y-1.5 sm:space-y-2'>
+                    <div className='w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24'>
                         <img 
                             src={Logo} 
                             alt="NextGenArchitect Logo" 
                             className='w-full h-full object-contain drop-shadow-lg'
                         />
                     </div>
-                    <h1 className='text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#2F3D57] tracking-wide text-center'>
+                    <h1 className='text-lg sm:text-xl lg:text-2xl font-extrabold text-[#2F3D57] tracking-wide text-center'>
                         <span className='bg-clip-text text-transparent bg-gradient-to-r from-[#2F3D57] to-[#ED7600]'>
                             NextGenArchitect
                         </span>
@@ -512,7 +516,7 @@ const Login = () => {
                 </div>
 
                 {/* Toggle Buttons */}
-                <div className='relative flex h-10 sm:h-12 mb-4 sm:mb-6 border border-gray-300 rounded-full overflow-hidden shadow-inner'>
+                <div className='relative flex h-9 sm:h-10 mb-3 sm:mb-4 border border-gray-300 rounded-full overflow-hidden shadow-inner'>
                     <button 
                         onClick={()=> {
                             setIsLoginMode(true);
@@ -520,7 +524,7 @@ const Login = () => {
                             setSignupError('');
                         }} 
                         disabled={isLoading || isGoogleLoading}
-                        className={`w-1/2 text-sm sm:text-lg font-medium transition-all z-10 disabled:cursor-not-allowed ${
+                        className={`w-1/2 text-xs sm:text-base font-medium transition-all z-10 disabled:cursor-not-allowed ${
                             isLoginMode ? "text-white" : "text-[#2F3D57] hover:text-[#ED7600]"
                         }`}
                     >
@@ -533,7 +537,7 @@ const Login = () => {
                             setSignupError('');
                         }} 
                         disabled={isLoading || isGoogleLoading}
-                        className={`w-1/2 text-sm sm:text-lg font-medium transition-all z-10 disabled:cursor-not-allowed ${
+                        className={`w-1/2 text-xs sm:text-base font-medium transition-all z-10 disabled:cursor-not-allowed ${
                             !isLoginMode ? "text-white" : "text-[#2F3D57] hover:text-[#ED7600]"
                         }`}
                     >
@@ -547,7 +551,7 @@ const Login = () => {
                 </div>
 
                 {/* Form Section */}
-                <form className='space-y-3 sm:space-y-4' onSubmit={isLoginMode ? handleLoginSubmit : handleSignupSubmit}>
+                <form className='space-y-2 sm:space-y-3' onSubmit={isLoginMode ? handleLoginSubmit : handleSignupSubmit}>
                     {!isLoginMode && (
                         <div className="relative">
                             <input 
@@ -559,7 +563,7 @@ const Login = () => {
                                 placeholder="Full Name" 
                                 required 
                                 disabled={isLoading}
-                                className='w-full p-2.5 sm:p-3 border-2 border-gray-200 rounded-lg outline-none focus:border-[#ED7600] focus:ring-2 focus:ring-[#ED7600]/20 placeholder-gray-400 transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed text-sm sm:text-base' 
+                                className='w-full p-2 sm:p-2.5 border-2 border-gray-200 rounded-lg outline-none focus:border-[#ED7600] focus:ring-2 focus:ring-[#ED7600]/20 placeholder-gray-400 transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed text-xs sm:text-sm' 
                             />
                             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -588,7 +592,7 @@ const Login = () => {
                     </div>
                     <div className="relative">
                         <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             name="password"
                             value={isLoginMode ? loginForm.password : signupForm.password}
                             onChange={isLoginMode ? handleLoginInput : handleSignupInput}
@@ -596,18 +600,29 @@ const Login = () => {
                             placeholder="Password"
                             required
                             disabled={isLoading}
-                            className='w-full p-2.5 sm:p-3 border-2 border-gray-200 rounded-lg outline-none focus:border-[#ED7600] focus:ring-2 focus:ring-[#ED7600]/20 placeholder-gray-400 transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed text-sm sm:text-base'
+                            className='w-full p-2.5 sm:p-3 border-2 border-gray-200 rounded-lg outline-none focus:border-[#ED7600] focus:ring-2 focus:ring-[#ED7600]/20 placeholder-gray-400 transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed text-sm sm:text-base pr-10'
                         />
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                        >
+                            {showPassword ? (
+                                <svg className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                                </svg>
+                            ) : (
+                                <svg className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            )}
+                        </button>
                     </div>
                     {!isLoginMode && (
                         <div className="relative">
                             <input 
-                                type="password" 
+                                type={showConfirmPassword ? "text" : "password"}
                                 name="confirmPassword" 
                                 value={signupForm.confirmPassword} 
                                 onChange={handleSignupInput} 
@@ -615,19 +630,30 @@ const Login = () => {
                                 placeholder="Confirm Password" 
                                 required 
                                 disabled={isLoading}
-                                className='w-full p-2.5 sm:p-3 border-2 border-gray-200 rounded-lg outline-none focus:border-[#ED7600] focus:ring-2 focus:ring-[#ED7600]/20 placeholder-gray-400 transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed text-sm sm:text-base'
+                                className='w-full p-2 sm:p-2.5 border-2 border-gray-200 rounded-lg outline-none focus:border-[#ED7600] focus:ring-2 focus:ring-[#ED7600]/20 placeholder-gray-400 transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed text-xs sm:text-sm pr-10'
                             />
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                            >
+                                {showConfirmPassword ? (
+                                    <svg className="w-4 h-4 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                                    </svg>
+                                ) : (
+                                    <svg className="w-4 h-4 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                )}
+                            </button>
                         </div>
                     )}
                     
                     {/* Error Messages */}
                     {signupError && !isLoginMode && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 animate-pulse">
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-2 animate-pulse">
                             <div className="flex items-start">
                                 <svg className="w-4 h-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -637,7 +663,7 @@ const Login = () => {
                         </div>
                     )}
                     {loginError && isLoginMode && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 animate-pulse">
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-2 animate-pulse">
                             <div className="flex items-start">
                                 <svg className="w-4 h-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -665,7 +691,7 @@ const Login = () => {
                     <button 
                         type="submit"
                         disabled={isLoading || isGoogleLoading}
-                        className='w-full p-2.5 sm:p-3 bg-gradient-to-r from-[#2F3D57] to-[#ED7600] text-white rounded-lg text-sm sm:text-lg font-bold hover:from-[#ED7600] hover:to-[#2F3D57] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-lg flex items-center justify-center'
+                        className='w-full p-2 sm:p-2.5 bg-gradient-to-r from-[#2F3D57] to-[#ED7600] text-white rounded-lg text-sm sm:text-base font-bold hover:from-[#ED7600] hover:to-[#2F3D57] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-lg flex items-center justify-center'
                     >
                         {isLoading ? (
                             <>
@@ -683,7 +709,7 @@ const Login = () => {
                     {/* Google OAuth - Show for both Login and Signup */}
                     <>
                         {/* Divider */}
-                        <div className="flex items-center my-3 sm:my-4">
+                        <div className="flex items-center my-2 sm:my-3">
                             <div className="flex-1 border-t border-gray-300"></div>
                             <span className="px-3 sm:px-4 text-gray-500 text-xs sm:text-sm font-medium">or continue with</span>
                             <div className="flex-1 border-t border-gray-300"></div>
@@ -715,7 +741,7 @@ const Login = () => {
                     </>
 
                     {/* Switch Mode */}
-                    <div className="pt-2 sm:pt-4">
+                    <div className="pt-1 sm:pt-2">
                         <p className='text-center text-gray-600 text-xs sm:text-sm'>
                             {isLoginMode ? "Don't have an account?" : "Already have an account?"}
                             <button 

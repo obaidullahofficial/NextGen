@@ -117,7 +117,7 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 backdrop-blur-md">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
         <div className="p-8">
           {/* Header */}
@@ -210,10 +210,6 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
                       <p className="text-gray-900">N/A</p>
                     )}
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">User ID</label>
-                    <p className="text-gray-900 font-mono text-sm">{society.user_id || 'N/A'}</p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -242,19 +238,63 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
               </div>
             </div>
 
-            {/* Raw Data Section */}
-            <div className="md:col-span-2">
-              <details className="bg-gray-50 rounded-lg">
-                <summary className="p-4 cursor-pointer font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                  Raw Data (for debugging)
-                </summary>
-                <div className="p-4 border-t border-gray-200">
-                  <pre className="text-xs text-gray-600 overflow-auto max-h-64 bg-white p-3 rounded border">
-                    {JSON.stringify(society, null, 2)}
-                  </pre>
+            {/* Project Status Information */}
+            <div className="md:col-span-2 space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <AlertCircle className="mr-2 text-orange-600" size={20} />
+                  Project Status
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <label className="text-sm font-medium text-orange-700">Land Acquisition Status</label>
+                    <p className="text-orange-900 font-medium capitalize">
+                      {society.land_acquisition_status || 'Not Specified'}
+                    </p>
+                  </div>
+                  <div className="bg-teal-50 p-4 rounded-lg">
+                    <label className="text-sm font-medium text-teal-700">Procurement Status</label>
+                    <p className="text-teal-900 font-medium capitalize">
+                      {society.procurement_status || 'Not Specified'}
+                    </p>
+                  </div>
                 </div>
-              </details>
+              </div>
             </div>
+
+            {/* NOC Information */}
+            {society.noc_issued !== undefined && (
+              <div className="md:col-span-2 space-y-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <Shield className="mr-2 text-indigo-600" size={20} />
+                    Compliance Information
+                  </h3>
+                  <div className="bg-indigo-50 p-4 rounded-lg">
+                    <label className="text-sm font-medium text-indigo-700">NOC Status</label>
+                    <p className="text-indigo-900 font-medium">
+                      {society.noc_issued ? '✅ NOC Issued' : '❌ NOC Not Issued'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* City Information */}
+            {society.city && (
+              <div className="md:col-span-2 space-y-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <MapPin className="mr-2 text-red-600" size={20} />
+                    Location Details
+                  </h3>
+                  <div className="bg-red-50 p-4 rounded-lg">
+                    <label className="text-sm font-medium text-red-700">City</label>
+                    <p className="text-red-900 font-medium">{society.city}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
@@ -281,7 +321,11 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
     authority: 'LDA',
     contact: '',
     website: '',
-    plots: ''
+    plots: '',
+    city: '',
+    land_acquisition_status: '',
+    procurement_status: '',
+    noc_issued: false
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -296,7 +340,11 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
         authority: society.authority || 'LDA',
         contact: society.contact || '',
         website: society.website || '',
-        plots: society.plots || ''
+        plots: society.plots || '',
+        city: society.city || '',
+        land_acquisition_status: society.land_acquisition_status || '',
+        procurement_status: society.procurement_status || '',
+        noc_issued: society.noc_issued || false
       });
     }
   }, [society, isOpen]);
@@ -336,7 +384,7 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 backdrop-blur-md">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
         <div className="p-8">
           <div className="flex justify-between items-center mb-8">
@@ -504,6 +552,88 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     placeholder="e.g., 5Marla,10Marla"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                    <MapPin className="mr-2 text-gray-500" size={16} />
+                    City *
+                  </label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter city"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Project Status Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <AlertCircle className="mr-2 text-orange-600" size={20} />
+                Project Status
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                    <Building className="mr-2 text-gray-500" size={16} />
+                    Land Acquisition Status
+                  </label>
+                  <select
+                    name="land_acquisition_status"
+                    value={formData.land_acquisition_status}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  >
+                    <option value="">Select Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="on-hold">On Hold</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                    <DollarSign className="mr-2 text-gray-500" size={16} />
+                    Procurement Status
+                  </label>
+                  <select
+                    name="procurement_status"
+                    value={formData.procurement_status}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  >
+                    <option value="">Select Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="on-hold">On Hold</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                    <Shield className="mr-2 text-gray-500" size={16} />
+                    NOC Status
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="noc_issued"
+                        checked={formData.noc_issued}
+                        onChange={(e) => setFormData(prev => ({ ...prev, noc_issued: e.target.checked }))}
+                        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className="text-gray-700">NOC Issued</span>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -697,6 +827,29 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
           <div className="text-xs text-gray-500">
             Created: {formatDate(society.created_at)}
           </div>
+          
+          {/* Project Status Badges */}
+          {(society.land_acquisition_status || society.procurement_status) && (
+            <div className="space-y-1 pt-2 border-t border-gray-200">
+              {society.land_acquisition_status && (
+                <div className="flex items-center text-xs">
+                  <span className="text-gray-500 mr-1">Land:</span>
+                  <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded font-medium capitalize">
+                    {society.land_acquisition_status}
+                  </span>
+                </div>
+              )}
+              {society.procurement_status && (
+                <div className="flex items-center text-xs">
+                  <span className="text-gray-500 mr-1">Proc:</span>
+                  <span className="px-2 py-0.5 bg-teal-100 text-teal-700 rounded font-medium capitalize">
+                    {society.procurement_status}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+          
           {/* Status Update Buttons */}
           <div className="flex space-x-1">
             {society.status !== 'approved' && (
@@ -1034,11 +1187,11 @@ export default function SocietyVerificationDashboard() {
   }, [search, filter]);
 
   return (
-    <div className="w-full min-h-full bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-full mx-auto">
+    <div className="w-full min-h-full bg-white p-6">
+      <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Society Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Society Management</h1>
           <p className="text-lg text-gray-600">
             Manage and verify registered housing societies with comprehensive tools.
           </p>
@@ -1102,11 +1255,7 @@ export default function SocietyVerificationDashboard() {
         </div>
 
         {/* Actions Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 space-y-4 sm:space-y-0">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Society Registrations</h2>
-            <p className="text-gray-600 mt-1">Manage all society registration requests and their approval status</p>
-          </div>
+        <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center mb-8 space-y-4 sm:space-y-0">
           <div className="flex space-x-3">
             <button
               onClick={() => fetchSocieties()}
