@@ -50,9 +50,9 @@ import PaymentCancel from './pages/payment/PaymentCancel';
 // Wrapper for Admin Layout with Sidebar + Topbar + Data Context
 const AdminLayout = ({ children }) => (
   <AdminDataProvider>
-    <div className="flex">
+    <div className="flex flex-col lg:flex-row min-h-screen">
       <Sidebar />
-      <div className="flex-1">
+      <div className="flex-1 w-full lg:w-auto overflow-x-hidden">
         <Layout>{children}</Layout>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { FiMenu, FiX } from 'react-icons/fi';
 import logo from '../../assets/logo2.png';
 
 const Navbar = () => {
@@ -8,6 +9,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -39,13 +41,32 @@ const Navbar = () => {
     }
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   return (
-    <nav className="flex items-center justify-between p-6 px-8 bg-[#2F3D57] shadow-sm">
+    <nav className="flex items-center justify-between p-4 md:p-6 md:px-8 bg-[#2F3D57] shadow-sm relative">
       <div className="flex items-center space-x-3">
-        <img src={logo} alt="Logo" className="h-10 w-10" />
-        <div className="text-2xl font-bold text-white">NextGenArchitect</div>
+        <img src={logo} alt="Logo" className="h-8 w-8 md:h-10 md:w-10" />
+        <div className="text-xl md:text-2xl font-bold text-white">NextGenArchitect</div>
       </div>
-      <div className="flex items-center space-x-8">
+
+      {/* Mobile Menu Button */}
+      <button
+        onClick={toggleMobileMenu}
+        className="md:hidden text-white p-2"
+        aria-label="Toggle mobile menu"
+      >
+        {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+      </button>
+
+      {/* Desktop Navigation */}
+      <div className="hidden md:flex items-center space-x-8">
         <Link 
           to="/" 
           className={`font-medium transition-colors ${
@@ -190,6 +211,89 @@ const Navbar = () => {
           </Link>
         )}
       </div>
+
+      {/* Mobile Navigation Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden absolute top-full left-0 right-0 bg-[#2F3D57] shadow-lg z-50 border-t border-gray-600">
+          <div className="flex flex-col p-4 space-y-2">
+            <Link 
+              to="/" 
+              onClick={closeMobileMenu}
+              className={`px-4 py-3 rounded-md font-medium transition-colors ${
+                isActive('/') ? 'bg-[#ED7600] text-white' : 'text-gray-300 hover:bg-[#ED7600] hover:text-white'
+              }`}
+            >
+              Home
+            </Link>
+            <Link 
+              to="/society" 
+              onClick={closeMobileMenu}
+              className={`px-4 py-3 rounded-md font-medium transition-colors ${
+                isActive('/society') ? 'bg-[#ED7600] text-white' : 'text-gray-300 hover:bg-[#ED7600] hover:text-white'
+              }`}
+            >
+              Societies
+            </Link>
+            <Link 
+              to="/offers" 
+              onClick={closeMobileMenu}
+              className={`px-4 py-3 rounded-md font-medium transition-colors ${
+                isActive('/offers') ? 'bg-[#ED7600] text-white' : 'text-gray-300 hover:bg-[#ED7600] hover:text-white'
+              }`}
+            >
+              Offers
+            </Link>
+            
+            {user ? (
+              <>
+                <div className="border-t border-gray-600 my-2"></div>
+                <Link 
+                  to="/userprofile?tab=personalInfo" 
+                  onClick={closeMobileMenu}
+                  className="px-4 py-3 rounded-md text-gray-300 hover:bg-[#ED7600] hover:text-white transition-colors"
+                >
+                  Personal Information
+                </Link>
+                <Link 
+                  to="/userprofile?tab=approvalRequests" 
+                  onClick={closeMobileMenu}
+                  className="px-4 py-3 rounded-md text-gray-300 hover:bg-[#ED7600] hover:text-white transition-colors"
+                >
+                  Activity
+                </Link>
+                <Link 
+                  to="/userprofile?tab=progress" 
+                  onClick={closeMobileMenu}
+                  className="px-4 py-3 rounded-md text-gray-300 hover:bg-[#ED7600] hover:text-white transition-colors"
+                >
+                  My Progress
+                </Link>
+                <Link 
+                  to="/userprofile?tab=approvalRequest" 
+                  onClick={closeMobileMenu}
+                  className="px-4 py-3 rounded-md text-gray-300 hover:bg-[#ED7600] hover:text-white transition-colors"
+                >
+                  Approval Request
+                </Link>
+                <button
+                  onClick={() => { handleLogout(); closeMobileMenu(); }}
+                  className="px-4 py-3 rounded-md text-left text-red-400 hover:bg-red-600 hover:text-white transition-colors"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link 
+                to="/login" 
+                onClick={closeMobileMenu}
+                className="px-4 py-3 bg-[#ED7600] text-white text-center rounded-md hover:bg-[#D56900] transition-colors font-medium"
+              >
+                Log in
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

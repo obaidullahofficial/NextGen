@@ -11,12 +11,15 @@ import {
   MessageSquare,
   BarChart3,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
 
 const Sidebar = () => {
   const location = useLocation();
   const { logout } = useContext(AuthContext);
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -61,88 +64,112 @@ const Sidebar = () => {
     },
   ];
 
-  return (
-    <div style={styles.sidebar}>
-      <div style={styles.header}>
-        <div style={styles.logoContainer}>
-          <div style={styles.logoWrapper}>
-            <img src={logo} alt="Logo" style={styles.logo} />
-          </div>
-          <p style={styles.architectTitle}>NextGenArchitect</p>
-        </div>
-      </div>
-      <nav style={styles.navContainer}>
-        <div>
-          {menuItems.map((item) => {
-            const isActive =
-              location.pathname === item.path ||
-              (item.name === "Dashboard" && location.pathname === "/");
-            const isHovered = hoveredItem === item.name;
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
-            return (
-              <Link
-                key={item.name}
-                to={item.path}
-                onMouseEnter={() => setHoveredItem(item.name)}
-                onMouseLeave={() => setHoveredItem(null)}
-                style={{
-                  ...styles.menuItem,
-                  backgroundColor: isActive
-                    ? "#ed7600"
-                    : isHovered
-                    ? "#ffc100"
-                    : "transparent",
-                  color: isActive || isHovered ? "#fff" : "#eee",
-                  textDecoration: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                }}
-              >
-                {item.icon}
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  return (
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={toggleMobileMenu}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-[#2f3d57] text-white"
+        aria-label="Toggle menu"
+      >
+        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Overlay for mobile */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={closeMobileMenu}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div 
+        className={`
+          fixed lg:sticky top-0 left-0 h-screen bg-[#2f3d57] text-white
+          w-[280px] lg:w-[310px] z-40
+          transition-transform duration-300 ease-in-out
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          overflow-y-auto flex flex-col
+        `}
+        style={{ padding: "20px", boxSizing: "border-box" }}
+      >
+        <div style={styles.header}>
+          <div style={styles.logoContainer}>
+            <div style={styles.logoWrapper}>
+              <img src={logo} alt="Logo" style={styles.logo} />
+            </div>
+            <p style={styles.architectTitle}>NextGenArchitect</p>
+          </div>
         </div>
-        
-        {/* Bottom-aligned Logout Button */}
-        <div style={styles.bottomSection}>
-          <div style={styles.divider}></div>
-          <button
-            onClick={handleLogout}
-            style={styles.logoutButton}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#dc2626';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            <LogOut size={18} />
-            <span>Logout</span>
-          </button>
-        </div>
-      </nav>
-    </div>
+        <nav style={styles.navContainer}>
+          <div>
+            {menuItems.map((item) => {
+              const isActive =
+                location.pathname === item.path ||
+                (item.name === "Dashboard" && location.pathname === "/");
+              const isHovered = hoveredItem === item.name;
+
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  onClick={closeMobileMenu}
+                  onMouseEnter={() => setHoveredItem(item.name)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  style={{
+                    ...styles.menuItem,
+                    backgroundColor: isActive
+                      ? "#ed7600"
+                      : isHovered
+                      ? "#ffc100"
+                      : "transparent",
+                    color: isActive || isHovered ? "#fff" : "#eee",
+                    textDecoration: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                  }}
+                >
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+          
+          {/* Bottom-aligned Logout Button */}
+          <div style={styles.bottomSection}>
+            <div style={styles.divider}></div>
+            <button
+              onClick={handleLogout}
+              style={styles.logoutButton}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#dc2626';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <LogOut size={18} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </nav>
+      </div>
+    </>
   );
 };
 
 const styles = {
-  sidebar: {
-    width: "310px",
-    height: "100vh",
-    backgroundColor: "#2f3d57",
-    padding: "20px",
-    boxSizing: "border-box",
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    position: 'sticky',
-    top: 0,
-    color: 'white',
-    overflowY: 'auto',
-    display: 'flex',
-    flexDirection: 'column',
-  },
   header: {
     marginBottom: "30px",
     borderBottom: "1px solid #455a75",

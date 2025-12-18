@@ -22,11 +22,11 @@ const UserProfileLayout = () => {
   const history = { generated: 0, purchased: 0 };
 
   return (
-    <div className="flex w-full h-screen overflow-hidden bg-gray-50">
-      <div className="w-64 h-full">
+    <div className="flex flex-col lg:flex-row w-full h-screen overflow-hidden bg-gray-50">
+      <div className="lg:w-64 h-full">
         <UserProfile activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
-      <main className="flex-1 h-full flex flex-col overflow-hidden bg-white">
+      <main className="flex-1 h-full flex flex-col overflow-hidden bg-white w-full lg:w-auto">
         <div className="flex-1 overflow-auto">
           <UserPanel
             activeTab={activeTab}

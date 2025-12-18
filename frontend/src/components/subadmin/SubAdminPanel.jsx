@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   FiHome,
   FiLayers,
@@ -5,7 +6,9 @@ import {
   FiShield,
   FiUsers,
   FiLogOut,
-  FiFlag
+  FiFlag,
+  FiMenu,
+  FiX
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -14,6 +17,7 @@ import logo from '../../assets/logo2.png';
 const SubAdminPanel = ({ activeTab, setActiveTab }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const handleTabClick = (tab) => {
     if (tab === 'floorPlan') {
@@ -22,6 +26,11 @@ const SubAdminPanel = ({ activeTab, setActiveTab }) => {
     } else {
       setActiveTab(tab);
     }
+    setIsMobileMenuOpen(false); // Close mobile menu after selection
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   const handleLogout = async () => {
@@ -38,14 +47,39 @@ const SubAdminPanel = ({ activeTab, setActiveTab }) => {
   };
 
   return (
-    <aside className="fixed top-0 left-0 h-full w-64 bg-[#2F3D57] text-white flex flex-col z-10">
-      <div className="p-6 border-b border-gray-700">
-        <div className="flex items-center space-x-3">
-          <img src={logo} alt="Logo" className="h-8 w-8" />
-          <div className="text-xl font-bold text-white">NextGenArchitect</div>
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={toggleMobileMenu}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-[#2F3D57] text-white"
+        aria-label="Toggle menu"
+      >
+        {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+      </button>
+
+      {/* Overlay for mobile */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed top-0 left-0 h-screen w-64 bg-[#2F3D57] text-white flex flex-col z-40
+        transition-transform duration-300 ease-in-out
+        lg:sticky lg:translate-x-0
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        overflow-y-auto
+      `}>
+        <div className="p-6 border-b border-gray-700">
+          <div className="flex items-center space-x-3">
+            <img src={logo} alt="Logo" className="h-8 w-8" />
+            <div className="text-xl font-bold text-white">NextGenArchitect</div>
+          </div>
         </div>
-      </div>
-  <nav className="flex flex-col mt-6 space-y-1 flex-grow">
+        <nav className="flex flex-col mt-6 space-y-1 flex-1">
         <button
           onClick={() => handleTabClick('society-profile')}
           className={`flex items-center px-6 py-3 text-left w-full hover:bg-[#ED7600] hover:text-white transition-colors ${
@@ -114,6 +148,7 @@ const SubAdminPanel = ({ activeTab, setActiveTab }) => {
         </div>
       </nav>
     </aside>
+    </>
   );
 };
 
