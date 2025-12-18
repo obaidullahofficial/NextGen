@@ -34,6 +34,13 @@ const Approvals = () => {
   const [viewingDocument, setViewingDocument] = useState(null);
   // viewMode: 'current' shows pending requests; 'history' shows approved/rejected
   const [viewMode, setViewMode] = useState('current');
+  const [loadingActions, setLoadingActions] = useState({}); // Track loading state for each approval
+  const [rejectionComment, setRejectionComment] = useState('');
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [showProcessingModal, setShowProcessingModal] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState(''); // 'processing', 'success', 'error'
+  const [processingMessage, setProcessingMessage] = useState('');
+  const [processingAction, setProcessingAction] = useState(''); // 'approve' or 'reject'
 
   // Load approval requests from backend for subadmin/admin
   useEffect(() => {
@@ -142,10 +149,14 @@ const Approvals = () => {
         }],
       };
 
-  const updateStatus = async (id, newStatus) => {
+  const updateStatus = async (id, newStatus, comments = '') => {
     try {
-      console.log("Updating approval status", { id, newStatus });
-      const response = await userProfileAPI.updateApprovalRequestStatus(id, newStatus);
+      setShowProcessingModal(true);
+      setProcessingStatus('processing');
+      setProcessingMessage(newStatus === 'Approved' ? 'Approving request...' : 'Rejecting request...');
+      
+      console.log("Updating approval status", { id, newStatus, comments });
+      const response = await userProfileAPI.updateApprovalRequestStatus(id, newStatus, comments);
       console.log("Update status response", response);
 
       // In our API wrapper, the response shape is { success, data, message }
@@ -174,10 +185,20 @@ const Approvals = () => {
             : a
         )
       );
+
+      // Auto-close modal after brief delay
+      setTimeout(() => {
+        setShowProcessingModal(false);
+      }, 1500);
+      
     } catch (err) {
       console.error("Failed to update approval request status", err);
       setError(err.message || "Failed to update status");
-      alert(err.message || "Failed to update status. Please check the browser console/network tab for details.");
+      
+      // Auto-close modal after error
+      setTimeout(() => {
+        setShowProcessingModal(false);
+      }, 2000);
     }
   };
 
@@ -189,19 +210,34 @@ const Approvals = () => {
 
   const handleReject = (id) => {
     setConfirmTargetId(id);
-    setConfirmAction('Rejected');
-    setShowConfirmDialog(true);
+    setRejectionComment('');
+    setShowRejectionModal(true);
   };
 
   const confirmActionHandler = () => {
     if (confirmAction === 'Approved') {
       updateStatus(confirmTargetId, "Approved");
-    } else if (confirmAction === 'Rejected') {
-      updateStatus(confirmTargetId, "Rejected");
     }
     setShowConfirmDialog(false);
     setConfirmTargetId(null);
     setConfirmAction(null);
+  };
+
+  const handleConfirmRejection = () => {
+    if (!rejectionComment.trim()) {
+      alert('Please provide a reason for rejection.');
+      return;
+    }
+    setShowRejectionModal(false);
+    updateStatus(confirmTargetId, "Rejected", rejectionComment);
+    setConfirmTargetId(null);
+    setRejectionComment('');
+  };
+
+  const handleCancelRejection = () => {
+    setShowRejectionModal(false);
+    setConfirmTargetId(null);
+    setRejectionComment('');
   };
 
   const cancelConfirmation = () => {
@@ -521,13 +557,15 @@ const Approvals = () => {
                               onClick={() => handleApprove(approval.id)}
                               className="bg-green-500 text-white px-4 py-1 rounded-lg hover:bg-green-600 flex items-center gap-1"
                             >
-                              <FaCheck size={14} /> Approve
+                              <FaCheck size={14} />
+                              Approve
                             </button>
                             <button
                               onClick={() => handleReject(approval.id)}
                               className="bg-red-500 text-white px-4 py-1 rounded-lg hover:bg-red-600 flex items-center gap-1"
                             >
-                              <FaTimes size={14} /> Reject
+                              <FaTimes size={14} />
+                              Reject
                             </button>
                           </>
                         )}
@@ -581,15 +619,81 @@ const Approvals = () => {
               </button>
               <button
                 onClick={confirmActionHandler}
-                className={`flex-1 px-4 py-3 rounded-lg font-medium text-white transition-colors ${
+                disabled={loadingActions[confirmTargetId]}
+                className={`flex-1 px-4 py-3 rounded-lg font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                   confirmAction === 'Approved'
                     ? 'bg-green-500 hover:bg-green-600'
                     : 'bg-red-500 hover:bg-red-600'
-                }`}
+                } flex items-center justify-center gap-2`}
               >
-                {confirmAction === 'Approved' ? 'Yes, Approve' : 'Yes, Reject'}
+                {loadingActions[confirmTargetId] && (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                )}
+                {loadingActions[confirmTargetId]
+                  ? (confirmAction === 'Approved' ? 'Approving...' : 'Rejecting...')
+                  : (confirmAction === 'Approved' ? 'Yes, Approve' : 'Yes, Reject')
+                }
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Comment Modal */}
+      {showRejectionModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-red-100">
+              <FaTimes className="text-red-600 text-2xl" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+              Reject Floor Plan Request
+            </h3>
+            
+            <p className="text-gray-600 text-center mb-4">
+              Please provide a reason for rejection. This will be sent to the user via email and saved in their activity log.
+            </p>
+            
+            <textarea
+              value={rejectionComment}
+              onChange={(e) => setRejectionComment(e.target.value)}
+              placeholder="Enter reason for rejection..."
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none"
+              rows={4}
+              maxLength={500}
+            />
+            
+            <div className="text-right text-sm text-gray-500 mb-4">
+              {rejectionComment.length}/500 characters
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelRejection}
+                className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRejection}
+                disabled={!rejectionComment.trim()}
+                className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                Reject Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Processing Modal */}
+      {showProcessingModal && (
+        <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 text-center border border-gray-100">
+            <div className="w-12 h-12 border-4 border-[#ED7600] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Processing...</h3>
+            <p className="text-gray-600 text-sm">{processingMessage}</p>
           </div>
         </div>
       )}

@@ -9,6 +9,7 @@ from models.society_profile import society_profile_collection
 from models.user import user_collection
 from models.plot import plot_collection
 from utils.db import get_db
+from utils.email_service import EmailService
 
 approval_request_bp = Blueprint('approval_request', __name__)
 
@@ -466,10 +467,54 @@ def update_approval_request_status(request_id):
             updated_request = ApprovalRequestController.get_approval_request(
                 request_id
             )
+            
+            # Send email notification to the user
+            try:
+                from utils.email_service import EmailService
+                
+                # Get the user who made the request
+                user_id = updated_request.get('user_id')
+                if user_id:
+                    user = users.find_one({'_id': ObjectId(user_id)})
+                    if user and user.get('email'):
+                        user_email = user.get('email')
+                        design_type = updated_request.get('design_type', 'Floor Plan')
+                        
+                        # Get plot number from plots collection
+                        plot_info = 'N/A'
+                        plot_id = updated_request.get('plot_id')
+                        if plot_id:
+                            try:
+                                plots_collection = plot_collection(db)
+                                plot = plots_collection.find_one({'_id': ObjectId(plot_id)})
+                                if plot:
+                                    plot_info = plot.get('plot_number', plot_id)
+                                else:
+                                    plot_info = plot_id
+                            except:
+                                plot_info = plot_id or 'N/A'
+                        
+                        if status == 'Approved':
+                            EmailService.send_approval_request_approval_email(
+                                user_email,
+                                design_type,
+                                plot_info
+                            )
+                        elif status == 'Rejected':
+                            EmailService.send_approval_request_rejection_email(
+                                user_email,
+                                design_type,
+                                plot_info,
+                                admin_comments or 'No reason provided'
+                            )
+            except Exception as email_error:
+                print(f"Failed to send approval request email: {str(email_error)}")
+                # Don't fail the update if email fails
+            
             return jsonify({
                 'success': True,
                 'data': updated_request,
-                'message': message,
+                'message': message + ' and notification sent',
             }), 200
         else:
             return jsonify({

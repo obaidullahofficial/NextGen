@@ -644,6 +644,314 @@ NextGenArchitect Team
             return False, f"SMTP error: {str(e)}"
         except Exception as e:
             return False, f"Failed to send approval email: {str(e)}"
+
+    @staticmethod
+    def send_approval_request_approval_email(email, design_type, plot_info):
+        """
+        Send approval request approval notification email to user
+        
+        Args:
+            email: User's email address
+            design_type: Type of design that was approved
+            plot_info: Information about the plot
+            
+        Returns:
+            tuple: (success: bool, message: str)
+        """
+        try:
+            # Get SMTP configuration from environment
+            smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
+            smtp_port = int(os.getenv('SMTP_PORT', 587))
+            sender_email = os.getenv('SENDER_EMAIL')
+            sender_password = os.getenv('SENDER_PASSWORD')
+            
+            # Validate configuration
+            if not sender_email or not sender_password:
+                return False, "Email configuration is incomplete"
+            
+            # Create email message
+            message = MIMEMultipart('alternative')
+            message['Subject'] = 'Floor Plan Request Approved - NextGenArchitect'
+            message['From'] = f"NextGenArchitect <{sender_email}>"
+            message['To'] = email
+            
+            # Plain text version
+            text_content = f"""
+Hello,
+
+Great news! Your floor plan approval request has been approved.
+
+Design Type: {design_type}
+Plot: {plot_info}
+
+Your request has been reviewed and approved. You can now proceed with your construction plans according to the approved design.
+
+You can view your request details in your dashboard.
+
+Best regards,
+NextGenArchitect Team
+"""
+            
+            # HTML version
+            html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }}
+        .header {{
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }}
+        .content {{
+            background-color: white;
+            padding: 30px;
+            border-radius: 0 0 5px 5px;
+        }}
+        .request-info {{
+            font-size: 18px;
+            font-weight: bold;
+            color: #2F3D57;
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            border-radius: 4px;
+        }}
+        .info-box {{
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }}
+        .footer {{
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #666;
+        }}
+        .success-icon {{
+            font-size: 48px;
+            color: #4CAF50;
+            text-align: center;
+            margin: 20px 0;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2 style="margin: 0;">Floor Plan Request Approved!</h2>
+        </div>
+        <div class="content">
+            <div class="success-icon">✓</div>
+            <p>Hello,</p>
+            <p>Great news! Your floor plan approval request has been <strong>approved</strong>.</p>
+            
+            <div class="request-info">
+                Design Type: {design_type}<br>
+                Plot: {plot_info}
+            </div>
+            
+    
+            
+            <p>Best regards,<br>
+            <strong>NextGenArchitect Team</strong></p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+            
+            # Attach both versions
+            text_part = MIMEText(text_content, 'plain')
+            html_part = MIMEText(html_content, 'html')
+            message.attach(text_part)
+            message.attach(html_part)
+            
+            # Send email
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                server.login(sender_email, sender_password)
+                server.send_message(message)
+            
+            return True, "Approval notification sent successfully"
+            
+        except smtplib.SMTPAuthenticationError:
+            return False, "SMTP authentication failed"
+        except smtplib.SMTPException as e:
+            return False, f"SMTP error: {str(e)}"
+        except Exception as e:
+            return False, f"Failed to send approval email: {str(e)}"
+
+    @staticmethod
+    def send_approval_request_rejection_email(email, design_type, plot_info, rejection_reason):
+        """
+        Send approval request rejection notification email to user
+        
+        Args:
+            email: User's email address
+            design_type: Type of design that was rejected
+            plot_info: Information about the plot
+            rejection_reason: Admin's reason for rejection
+            
+        Returns:
+            tuple: (success: bool, message: str)
+        """
+        try:
+            # Get SMTP configuration from environment
+            smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
+            smtp_port = int(os.getenv('SMTP_PORT', 587))
+            sender_email = os.getenv('SENDER_EMAIL')
+            sender_password = os.getenv('SENDER_PASSWORD')
+            
+            # Validate configuration
+            if not sender_email or not sender_password:
+                return False, "Email configuration is incomplete"
+            
+            # Create email message
+            message = MIMEMultipart('alternative')
+            message['Subject'] = 'Floor Plan Request Rejected - NextGenArchitect'
+            message['From'] = f"NextGenArchitect <{sender_email}>"
+            message['To'] = email
+            
+            # Plain text version
+            text_content = f"""
+Hello,
+
+We regret to inform you that your floor plan approval request has been rejected.
+
+Design Type: {design_type}
+Plot: {plot_info}
+
+Reason for Rejection:
+{rejection_reason}
+
+If you have any questions or would like to submit a revised request, please contact our support team or submit a new request through your dashboard.
+
+Best regards,
+NextGenArchitect Team
+"""
+            
+            # HTML version
+            html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }}
+        .header {{
+            background-color: #f44336;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }}
+        .content {{
+            background-color: white;
+            padding: 30px;
+            border-radius: 0 0 5px 5px;
+        }}
+        .request-info {{
+            font-size: 18px;
+            font-weight: bold;
+            color: #2F3D57;
+            margin: 15px 0;
+        }}
+        .reason-box {{
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }}
+        .footer {{
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #666;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2 style="margin: 0;">Floor Plan Request Rejected</h2>
+        </div>
+        <div class="content">
+            <p>Hello,</p>
+            <p>We regret to inform you that your floor plan approval request has been rejected.</p>
+            
+            <div class="request-info">
+                Design Type: {design_type}<br>
+                Plot: {plot_info}
+            </div>
+            
+            <div class="reason-box">
+                <strong>Reason for Rejection:</strong>
+                <p style="margin: 10px 0 0 0;">{rejection_reason}</p>
+            </div>
+            
+            <p>If you have any questions or would like to submit a revised request, please contact our support team or submit a new request through your dashboard.</p>
+            
+            <p>Best regards,<br>
+            <strong>NextGenArchitect Team</strong></p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+            
+            # Attach both versions
+            text_part = MIMEText(text_content, 'plain')
+            html_part = MIMEText(html_content, 'html')
+            message.attach(text_part)
+            message.attach(html_part)
+            
+            # Send email
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                server.login(sender_email, sender_password)
+                server.send_message(message)
+            
+            return True, "Rejection notification sent successfully"
+            
+        except smtplib.SMTPAuthenticationError:
+            return False, "SMTP authentication failed"
+        except smtplib.SMTPException as e:
+            return False, f"SMTP error: {str(e)}"
+        except Exception as e:
+            return False, f"Failed to send rejection email: {str(e)}"
     
     @staticmethod
     def send_password_reset_otp(email, otp):

@@ -125,6 +125,30 @@ class ApprovalRequestController:
             )
 
             if result.modified_count > 0:
+                # Get the updated request to log activity
+                updated_request = requests.find_one({'_id': ObjectId(request_id)})
+                if updated_request:
+                    user_id = str(updated_request['user_id'])
+                    status = update_data.get('status')
+                    admin_comments = update_data.get('admin_comments', '')
+                    
+                    # Log activity with admin comments
+                    activity_desc = f"Approval request {status.lower()}"
+                    if admin_comments:
+                        activity_desc += f" - {admin_comments}"
+                        
+                    UserProfileController._log_activity(
+                        user_id,
+                        f'approval_request_{status.lower()}',
+                        activity_desc,
+                        {
+                            'request_id': request_id,
+                            'status': status,
+                            'admin_comments': admin_comments,
+                            'reviewed_at': update_data.get('reviewed_at')
+                        }
+                    )
+                
                 return True, "Approval request updated successfully"
             else:
                 return False, "Approval request not found"
