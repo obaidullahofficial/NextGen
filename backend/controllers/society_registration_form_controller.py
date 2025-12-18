@@ -42,6 +42,11 @@ class SocietyRegistrationFormController:
             society_data['status'] = "pending"
             society_data['user_id'] = user_data['user_id']  # Link society to user ID only
             
+            # Debug: Log what fields are being saved
+            print(f"[SIGNUP SOCIETY DEBUG] Saving society data: {society_data.keys()}")
+            print(f"[SIGNUP SOCIETY DEBUG] land_acquisition_status: {society_data.get('land_acquisition_status')}")
+            print(f"[SIGNUP SOCIETY DEBUG] procurement_status: {society_data.get('procurement_status')}")
+            
             db = get_db()
             reg_forms = society_registration_form_collection(db)
             reg_id = reg_forms.insert_one(society_data).inserted_id

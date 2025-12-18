@@ -73,7 +73,9 @@ def signup_society():
         'contact': data.get('contact'),
         'website': data.get('website'),
         'city': data.get('city'),
-        'noc_issued': data.get('noc_issued', False)
+        'noc_issued': data.get('noc_issued', False),
+        'land_acquisition_status': data.get('land_acquisition_status'),
+        'procurement_status': data.get('procurement_status')
     }
     
     # Validate required fields

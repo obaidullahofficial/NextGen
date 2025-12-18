@@ -79,19 +79,19 @@ function App() {
           <Route path="/signup" element={<Login />} />
           <Route path="/verify-email" element={<EmailVerification />} />
           <Route path="/registration-form" element={
-            <RoleBasedRoute allowedRoles={['user']}>
+            <RoleBasedRoute allowedRoles={['society']}>
               <RegistrationForm />
             </RoleBasedRoute>
           } />
 
           {/* Payment Routes - Protected */}
           <Route path="/payment-success" element={
-            <RoleBasedRoute allowedRoles={['user']}>
+            <RoleBasedRoute allowedRoles={['society']}>
               <PaymentSuccess />
             </RoleBasedRoute>
           } />
           <Route path="/payment-cancelled" element={
-            <RoleBasedRoute allowedRoles={['user']}>
+            <RoleBasedRoute allowedRoles={['society']}>
               <PaymentCancel />
             </RoleBasedRoute>
           } />
@@ -110,12 +110,12 @@ function App() {
 
           {/* Floor Plan Generation - User Only */}
           <Route path="/floor-plan/generate" element={
-            <RoleBasedRoute allowedRoles={['user']}>
+            <RoleBasedRoute allowedRoles={['user','society']}>
               <FloorPlanGen />
             </RoleBasedRoute>
           } />
           <Route path="/floor-plan/customize" element={
-            <RoleBasedRoute allowedRoles={['user']}>
+            <RoleBasedRoute allowedRoles={['user','society']}>
               <FloorPlanCustomization />
             </RoleBasedRoute>
           } />
