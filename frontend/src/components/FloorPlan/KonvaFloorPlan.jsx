@@ -638,12 +638,19 @@ const KonvaFloorPlan = ({
     if (nearestWall && snapPosition) {
       // Snap to wall
       finalDoorPoints = [snapPosition.x1, snapPosition.y1, snapPosition.x2, snapPosition.y2];
-      console.log('Door snapped to wall:', nearestWall.edge, 'of room:', nearestWall.room.id);
+      if (nearestWall.type === 'custom') {
+        console.log('Door snapped to custom wall:', nearestWall.id);
+      } else {
+        console.log('Door snapped to wall:', nearestWall.edge, 'of room:', nearestWall.room?.id);
+      }
     } else {
       // Return to original position if no valid wall found
       finalDoorPoints = door.points;
       console.log('Door returned to original position - no valid wall nearby');
     }
+    
+    // Reset target position FIRST to prevent visual jumping
+    e.target.position({ x: 0, y: 0 });
     
     // Update door position
     const updatedDoors = doors.map(d => 
@@ -660,9 +667,6 @@ const KonvaFloorPlan = ({
     if (onDoorsChange) {
       onDoorsChange(updatedDoors);
     }
-    
-    // Reset target position to prevent visual jumping
-    e.target.position({ x: 0, y: 0 });
     
     console.log('Door drag completed:', {
       doorId,
@@ -1093,14 +1097,7 @@ const KonvaFloorPlan = ({
     } else {
       targetLine.stroke('#FF5722'); // Red when not near a valid wall
     }
-    
-    // Apply snap to grid during drag for visual feedback
-    const currentX = snapToGridCoordinate(e.target.x());
-    const currentY = snapToGridCoordinate(e.target.y());
-    
-    // Update target position to snapped coordinates
-    e.target.position({ x: currentX, y: currentY });
-  }, [isEditable, isDragging, snapToGridCoordinate, doors, dragStart, findNearestWallEdge]);
+  }, [isEditable, isDragging, doors, dragStart, findNearestWallEdge]);
 
   // Handle wall drag end
   const handleWallDragEnd = useCallback((e, wallId) => {
@@ -1526,8 +1523,8 @@ const KonvaFloorPlan = ({
                     y: 100,
                     width: 150,
                     height: 120,
-                    fill: roomColor,
-                    stroke: '#000',
+                    fill: getRoomColor('Room'),
+                    stroke: '#000000',
                     strokeWidth: 2,
                     tag: `Room ${rooms.length + 1}`,
                     type: 'Room'
@@ -2329,8 +2326,7 @@ const KonvaFloorPlan = ({
                       fill="#2196F3"
                       stroke="#1976D2"
                       strokeWidth={2}
-                      draggable={true}
-                      style={{ cursor: 'move' }}
+                      draggable={false}
                     />
                     {/* End point handle */}
                     <Circle
@@ -2340,8 +2336,7 @@ const KonvaFloorPlan = ({
                       fill="#2196F3"
                       stroke="#1976D2"
                       strokeWidth={2}
-                      draggable={true}
-                      style={{ cursor: 'move' }}
+                      draggable={false}
                     />
                   </>
                 )}
