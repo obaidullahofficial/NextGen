@@ -2,7 +2,11 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const ProtectedAdminRoute = ({ children }) => {
+/**
+ * Protects routes that should only be accessible to regular users
+ * Redirects admin and subadmin to their respective dashboards
+ */
+const UserOnlyRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   // Show loading while checking authentication
@@ -17,24 +21,18 @@ const ProtectedAdminRoute = ({ children }) => {
     );
   }
 
-  // No user - redirect to login
-  if (!user) {
-    return <Navigate to="/login" replace />;
+  // If user is admin, redirect to admin dashboard
+  if (user && user.role === 'admin') {
+    return <Navigate to="/dashboard" replace />;
   }
 
-  // User is not admin - redirect to their appropriate dashboard
-  if (user.role !== 'admin') {
-    if (user.role === 'subadmin' || user.role === 'society') {
-      return <Navigate to="/subadmin" replace />;
-    }
-    if (user.role === 'user') {
-      return <Navigate to="/" replace />;
-    }
-    return <Navigate to="/login" replace />;
+  // If user is subadmin/society, redirect to subadmin dashboard
+  if (user && (user.role === 'subadmin' || user.role === 'society')) {
+    return <Navigate to="/subadmin" replace />;
   }
 
-  // User is admin - render protected content
+  // Allow access for regular users or non-logged-in users
   return children;
 };
 
-export default ProtectedAdminRoute;
+export default UserOnlyRoute;

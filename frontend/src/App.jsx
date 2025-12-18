@@ -2,6 +2,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import GoogleOAuthProvider from './components/auth/GoogleOAuthProvider';
 import { AdminDataProvider } from './context/AdminDataContext';
+import RoleBasedRoute from './components/common/RoleBasedRoute';
+import UserOnlyRoute from './components/common/UserOnlyRoute';
 
 // Subadmin imports 
 import SubadminDashboard from './pages/subadmin/SubAdminDashboard';
@@ -19,6 +21,7 @@ import ProtectedAdminRoute from './components/common/ProtectedAdminRoute';
 // User imports 
 import Login from './pages/auth/Login';
 import EmailVerification from './pages/auth/EmailVerification';
+import Unauthorized from './pages/auth/Unauthorized';
 import UserLayout from './layouts/UserLayout';
 import HomePage from './pages/user/HomePage';
 import PlotDetail from './pages/user/PlotDetail';
@@ -64,29 +67,65 @@ function App() {
     <GoogleOAuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* User Profile */}
-          <Route path="/userprofile" element={<UserProfileLayout />} />
+          {/* User Profile - User Only */}
+          <Route path="/userprofile" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <UserProfileLayout />
+            </RoleBasedRoute>
+          } />
 
           {/* Auth */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Login />} />
           <Route path="/verify-email" element={<EmailVerification />} />
-          <Route path="/registration-form" element={<RegistrationForm />} />
+          <Route path="/registration-form" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <RegistrationForm />
+            </RoleBasedRoute>
+          } />
 
-          {/* Payment Routes */}
-          <Route path="/payment-success" element={<PaymentSuccess />} />
-          <Route path="/payment-cancelled" element={<PaymentCancel />} />
+          {/* Payment Routes - Protected */}
+          <Route path="/payment-success" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <PaymentSuccess />
+            </RoleBasedRoute>
+          } />
+          <Route path="/payment-cancelled" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <PaymentCancel />
+            </RoleBasedRoute>
+          } />
 
-          {/* Society Profile Standalone */}
-          <Route path="/society-profile-setup" element={<SocietyProfileSetup />} />
-          <Route path="/society-profile-edit" element={<SocietyProfileEdit />} />
+          {/* Society Profile Standalone - SubAdmin Only */}
+          <Route path="/society-profile-setup" element={
+            <RoleBasedRoute allowedRoles={['society', 'subadmin']}>
+              <SocietyProfileSetup />
+            </RoleBasedRoute>
+          } />
+          <Route path="/society-profile-edit" element={
+            <RoleBasedRoute allowedRoles={['society', 'subadmin']}>
+              <SocietyProfileEdit />
+            </RoleBasedRoute>
+          } />
 
-          {/* Floor Plan Generation */}
-          <Route path="/floor-plan/generate" element={<FloorPlanGen />} />
-          <Route path="/floor-plan/customize" element={<FloorPlanCustomization />} />
+          {/* Floor Plan Generation - User Only */}
+          <Route path="/floor-plan/generate" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <FloorPlanGen />
+            </RoleBasedRoute>
+          } />
+          <Route path="/floor-plan/customize" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <FloorPlanCustomization />
+            </RoleBasedRoute>
+          } />
 
-          {/* User Routes */}
-          <Route path="/" element={<UserLayout />}>
+          {/* User Routes - Restricted to regular users only */}
+          <Route path="/" element={
+            <UserOnlyRoute>
+              <UserLayout />
+            </UserOnlyRoute>
+          }>
             <Route index element={<HomePage />} />
             <Route path="societies/:societyId/plots/:plotId" element={<PlotDetail />} />
             <Route path="society" element={<SocietiesPage />} />
@@ -149,7 +188,10 @@ function App() {
             </ProtectedAdminRoute>
           } />
 
-          {/* Catch-all */}
+          {/* Unauthorized Access */}
+          <Route path="/unauthorized" element={<Unauthorized />} />
+
+          {/* Catch-all - redirect to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

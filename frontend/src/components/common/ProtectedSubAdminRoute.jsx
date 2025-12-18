@@ -1,31 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { checkProfileCompleteness } from '../../services/apiService';
 import { Box, Typography, CircularProgress } from '@mui/material';
 
 const ProtectedSubAdminRoute = ({ children }) => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [profileComplete, setProfileComplete] = useState(false);
 
   useEffect(() => {
-    checkProfile();
-  }, []);
+    if (!authLoading) {
+      checkProfile();
+    }
+  }, [authLoading]);
 
   const checkProfile = async () => {
     try {
       const token = localStorage.getItem('token');
       
-      if (!token) {
-        console.log('[PROTECTED ROUTE] No token, redirecting to login');
+      if (!token || !user) {
+        console.log('[PROTECTED ROUTE] No token or user, redirecting to login');
         navigate('/login');
+        return;
+      }
+
+      // Check if user is subadmin (role can be 'subadmin' or 'society')
+      if (user.role !== 'subadmin' && user.role !== 'society') {
+        console.log('[PROTECTED ROUTE] User is not subadmin, redirecting based on role');
+        if (user.role === 'admin') {
+          navigate('/dashboard');
+        } else {
+          navigate('/');
+        }
         return;
       }
 
       console.log('[PROTECTED ROUTE] Token exists, checking profile completeness...');
       console.log('[PROTECTED ROUTE] Current location:', window.location.pathname);
       
-      // TEMPORARY: Bypass profile completeness check for testing
+      // Check profile completeness
       try {
         console.log('[PROTECTED ROUTE] Making profile completeness API call...');
         const result = await checkProfileCompleteness();
@@ -33,8 +48,7 @@ const ProtectedSubAdminRoute = ({ children }) => {
           success: result.success,
           is_complete: result.is_complete,
           missing_fields: result.missing_fields,
-          message: result.message,
-          fullResult: result
+          message: result.message
         });
         
         if (result.success) {
@@ -52,52 +66,61 @@ const ProtectedSubAdminRoute = ({ children }) => {
           return;
         }
       } catch (apiError) {
-        console.error('[PROTECTED ROUTE] API Error:', apiError);
-        
-        // If it's an auth error, go to login. Otherwise, try profile setup
-        if (apiError.message.includes('Authentication') || apiError.message.includes('log in')) {
-          console.log('[PROTECTED ROUTE] Auth error, redirecting to login');
-          navigate('/login');
-        } else {
-          console.log('[PROTECTED ROUTE] Other error, redirecting to profile setup');
-          navigate('/society-profile-setup');
-        }
-        return;
+        console.error('[PROTECTED ROUTE] API error:', apiError);
+        // On API error, allow access but log the error
+        setProfileComplete(true);
       }
-      
     } catch (error) {
-      console.error('[PROTECTED ROUTE] Unexpected error:', error);
-      navigate('/login');
-      return;
+      console.error('[PROTECTED ROUTE] Error in checkProfile:', error);
+      setProfileComplete(true);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isLoading) {
+  // Show loading while checking auth
+  if (authLoading) {
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '100vh',
-        background: '#f5f5f5'
-      }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <CircularProgress size={40} sx={{ color: '#ED7600', mb: 2 }} />
-          <Typography variant="h6" color="textSecondary">
-            Checking profile status...
-          </Typography>
-        </Box>
-      </Box>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#ED7600] mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-medium">Loading...</p>
+        </div>
+      </div>
     );
   }
 
+  // No user - redirect to login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // User is not subadmin - redirect to their dashboard
+  if (user.role !== 'subadmin' && user.role !== 'society') {
+    if (user.role === 'admin') {
+      return <Navigate to="/dashboard" replace />;
+    }
+    return <Navigate to="/" replace />;
+  }
+
+  // Show loading while checking profile
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#ED7600] mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-medium">Checking profile status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Profile complete - render children
   if (profileComplete) {
     return children;
   }
 
-  // This should not be reached due to redirects above, but just in case
+  // Fallback - should not reach here due to redirects above
   return null;
 };
 
