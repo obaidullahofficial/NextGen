@@ -233,6 +233,39 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Login with Google OAuth (directly set token and user without calling login API)
+  const loginWithGoogle = (token, userData) => {
+    try {
+      console.log('[AUTH CONTEXT] Google login - Setting user data:', userData);
+      
+      // Store token
+      localStorage.setItem('token', token);
+      
+      // Prepare user data
+      const googleUserData = {
+        id: userData.id,
+        email: userData.email,
+        role: userData.role,
+        username: userData.username,
+        is_admin: userData.is_admin,
+        auth_method: 'google'
+      };
+      
+      // Save to localStorage with login timestamp
+      localStorage.setItem('user', JSON.stringify(googleUserData));
+      localStorage.setItem('loginTime', Date.now().toString());
+      
+      // Update context
+      setUser(googleUserData);
+      
+      console.log('[AUTH CONTEXT] Google login successful');
+      return googleUserData;
+    } catch (error) {
+      console.error('[AUTH CONTEXT] Google login error:', error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       // Call logout endpoint using service (for server-side logout)
@@ -300,6 +333,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     login,
+    loginWithGoogle,
     logout,
     updateUserProfile,
     checkAuth,

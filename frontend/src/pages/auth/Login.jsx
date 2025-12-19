@@ -33,7 +33,7 @@ const Login = () => {
     
     const navigate = useNavigate();
     const location = useLocation();
-    const { login } = useAuth();
+    const { login, loginWithGoogle } = useAuth();
 
     // Set initial mode based on the URL path
     useEffect(() => {
@@ -63,8 +63,8 @@ const Login = () => {
             if (result.success) {
                 console.log(`[GOOGLE ${mode}] Authentication successful:`, result.user);
                 
-                // Store token in localStorage
-                localStorage.setItem('token', result.access_token);
+                // Store token and user in AuthContext (use Google-specific login)
+                loginWithGoogle(result.access_token, result.user);
                 
                 // Show success popup
                 const handleGoogleAuthSuccess = () => {
