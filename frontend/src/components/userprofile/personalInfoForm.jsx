@@ -8,8 +8,6 @@ const PersonalInfoForm = () => {
   const { updateUserProfile, user } = useAuth();
   const [form, setForm] = useState({
     cnic: '',
-    cnicFront: null,
-    cnicBack: null,
     firstName: '',
     lastName: '',
     phone: '',
@@ -82,8 +80,6 @@ const PersonalInfoForm = () => {
 
       const files = {
         profileImage: form.profileImage,
-        cnicFront: form.cnicFront,
-        cnicBack: form.cnicBack,
       };
 
       const formData = createProfileFormData(profileData, files);
@@ -143,9 +139,7 @@ const PersonalInfoForm = () => {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="font-semibold text-blue-800 mb-2">Current Profile Status</h3>
             <div className="text-sm text-blue-700">
-              <p>Profile Image: {existingProfile.profile_image_url ? '✓ Uploaded' : '✗ Not uploaded'}</p>
-              <p>CNIC Documents: {existingProfile.cnic_front_url ? '✓ Uploaded' : '✗ Not uploaded'}</p>
-              <p>Verification Status: {existingProfile.is_verified ? '✓ Verified' : '⏳ Pending'}</p>
+              <p>Verification Status: {existingProfile.is_verified ? '✓ Verified' : '✓ Pending'}</p>
             </div>
           </div>
         )}
@@ -160,7 +154,7 @@ const PersonalInfoForm = () => {
             value={form.firstName}
             onChange={handleChange}
             className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#ED7600]"
-            placeholder="Aliya"
+            placeholder="Name"
             required
           />
         </div>
