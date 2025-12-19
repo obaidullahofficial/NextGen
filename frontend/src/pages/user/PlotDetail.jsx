@@ -131,7 +131,7 @@ const PlotDetail = () => {
   };
 
   const handleGenerateFloorPlan = () => {
-    navigate(`/user/society/${societyId}/plot/${plotId}/templates`);
+    navigate('/floor-plan/generate');
   };
 
   // Use fetched data or fallback to sample data
