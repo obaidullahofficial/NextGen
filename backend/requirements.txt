@@ -1,0 +1,27 @@
+cd backend
+pip install flask flask-cors pymongo
+pip install flask-jwt-extended
+python -m pip install "pymongo[srv]"
+npm install jspdf html2canvas
+pip install google-auth google-auth-oauthlib google-auth-httplib2
+pip install python-dotenv
+pip install numpy
+pip install stripe
+pip install requests
+python app.py
+
+{
+  "username": "admin",
+  "email": "admin@example.com",
+  "password": "Admin#123",
+  "role": "admin"
+}
+  "username": "testuser5",
+  "email": "abcf@example.com",
+  "password": "abcf@example.com",
+  "role": "society"
+
+  "username": "testuser",
+  "email": "usertesting@gmail.com",
+  "password": "usertesting@gmail.com",
+  "role": "user"
