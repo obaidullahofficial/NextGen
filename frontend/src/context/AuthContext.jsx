@@ -69,10 +69,18 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (!user) return;
 
+    let lastReset = 0;
+    const THROTTLE_MS = 60000; // Only log once per minute
+
     const resetSessionTimer = () => {
-      const currentTime = Date.now().toString();
-      localStorage.setItem('loginTime', currentTime);
-      console.log('Session timer reset due to user activity');
+      const currentTime = Date.now();
+      localStorage.setItem('loginTime', currentTime.toString());
+      
+      // Throttle logging to avoid console spam
+      if (currentTime - lastReset > THROTTLE_MS) {
+        lastReset = currentTime;
+        // Removed excessive logging - session timer resets silently
+      }
     };
 
     // Listen for user activity events

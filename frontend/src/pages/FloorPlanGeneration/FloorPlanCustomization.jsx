@@ -546,7 +546,8 @@ const FloorPlanCustomization = () => {
 
             {/* Floor Plan Canvas */}
             <div className="flex justify-center">
-              {viewMode === '2d' ? (
+              {/* 2D View */}
+              <div style={{ display: viewMode === '2d' ? 'block' : 'none' }}>
                 <KonvaFloorPlan
                   floorPlanData={floorPlanData}
                   width={800}
@@ -558,25 +559,29 @@ const FloorPlanCustomization = () => {
                   onDoorsChange={handleDoorsChange}
                   onWindowsChange={handleWindowsChange}
                 />
-              ) : (
-                <div className="w-full h-150 rounded-xl overflow-hidden border border-gray-200">
-                  <React.Suspense 
-                    fallback={
-                      <div className="flex items-center justify-center h-full bg-slate-50">
-                        <div className="text-center">
-                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                          <p className="text-slate-600">Loading 3D Viewer...</p>
-                        </div>
+              </div>
+              {/* 3D View - kept mounted to avoid WebGL shader recompilation errors */}
+              <div 
+                className="w-full h-150 rounded-xl overflow-hidden border border-gray-200"
+                style={{ display: viewMode === '3d' ? 'block' : 'none' }}
+              >
+                <React.Suspense 
+                  fallback={
+                    <div className="flex items-center justify-center h-full bg-slate-50">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-slate-600">Loading 3D Viewer...</p>
                       </div>
-                    }
-                  >
-                    <FloorPlan3D 
-                      floorPlanData={floorPlanData}
-                      className="w-full h-full"
-                    />
-                  </React.Suspense>
-                </div>
-              )}
+                    </div>
+                  }
+                >
+                  <FloorPlan3D 
+                    floorPlanData={floorPlanData}
+                    className="w-full h-full"
+                    isVisible={viewMode === '3d'}
+                  />
+                </React.Suspense>
+              </div>
             </div>
           </div>
         </div>

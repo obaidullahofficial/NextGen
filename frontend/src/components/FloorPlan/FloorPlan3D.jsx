@@ -715,12 +715,16 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
   // Process detected doors from the 2D floor plan with enhanced boundary detection
   detectedDoors.forEach((detectedDoor, index) => {
     const world = convertToWorld3D(detectedDoor.x, detectedDoor.y, detectedDoor.width, detectedDoor.height, bounds);
+    // Use door's edge position (x, y) for wall boundary detection, not center
+    // The door's y position is where it sits on the wall
     const doorCenterX = world.x + world.width / 2;
-    const doorCenterZ = world.z + world.height / 2;
+    const doorEdgeZ = world.z; // Use edge, not center - doors are placed AT wall boundary
+    const doorCenterZ = doorEdgeZ; // Alias for compatibility
     
     // Find ALL rooms this door connects with enhanced detection
     const connectedRooms = [];
-    const tolerance = 0.8;
+    // Increased tolerance to account for coordinate conversion precision
+    const tolerance = 1.5;
     
     rooms.forEach(room => {
       const roomWorld = convertToWorld3D(room.x, room.y, room.width, room.height, bounds);
@@ -2822,7 +2826,7 @@ const LoadingSpinner3D = () => (
 );
 
 // Main component export with enhanced UI
-const FloorPlan3D = ({ floorPlanData, className = "" }) => {
+const FloorPlan3D = ({ floorPlanData, className = "", isVisible = true }) => {
   // Generate unique save key based on floor plan data
   const saveKey = useMemo(() => {
     if (floorPlanData?.id) return `floorplan-3d-${floorPlanData.id}`;
@@ -3197,7 +3201,8 @@ const FloorPlan3D = ({ floorPlanData, className = "" }) => {
       <Canvas
         shadows
         dpr={[1, 2]}
-        gl={{ antialias: true, powerPreference: 'high-performance' }}
+        frameloop={isVisible ? 'always' : 'demand'}
+        gl={{ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true }}
         camera={{ 
           position: [25, 18, 25], // Better initial positioning for architectural overview
           fov: 55, // Slightly tighter field of view for better perspective
