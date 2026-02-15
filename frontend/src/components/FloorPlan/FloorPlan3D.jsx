@@ -16,6 +16,10 @@ import ColorCustomizer from './ColorCustomizer';
 
 const ENABLE_POSTPROCESSING = true;
 
+// Foundation height - building sits on top of this
+const FOUNDATION_HEIGHT = 0.25;
+const FOUNDATION_PADDING = 1.5; // How much foundation extends beyond building
+
 const DEFAULT_SUN_SETTINGS = {
   enabled: true,
   showPath: true,
@@ -2176,7 +2180,7 @@ const FirstPersonController = ({ bounds, rooms, onPlayerPositionChange }) => {
   // Movement settings
   const walkSpeed = 3.0;
   const sprintSpeed = 6.0;
-  const playerHeight = 1.7;
+  const playerHeight = 1.7 + FOUNDATION_HEIGHT; // Account for foundation
   const collisionDistance = 0.3;
   const mouseSensitivity = 0.002;
   
@@ -2503,19 +2507,19 @@ const CameraController3D = ({ mode, bounds, rooms, onPlayerPositionChange }) => 
         angle: angle * (180 / Math.PI) + '°'
       });
     } else if (mode === 'walk') {
-      // Position camera inside the first room at human height
+      // Position camera inside the first room at human height (on foundation)
       if (rooms && rooms.length > 0) {
         const firstRoom = rooms[0];
         const worldScale = 25 / Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY, 1);
         const roomCenterX = (firstRoom.x + firstRoom.width / 2) * worldScale;
         const roomCenterZ = (firstRoom.y + firstRoom.height / 2) * worldScale;
         
-        camera.position.set(roomCenterX, 1.7, roomCenterZ);
-        camera.lookAt(roomCenterX + 1, 1.7, roomCenterZ);
+        camera.position.set(roomCenterX, 1.7 + FOUNDATION_HEIGHT, roomCenterZ);
+        camera.lookAt(roomCenterX + 1, 1.7 + FOUNDATION_HEIGHT, roomCenterZ);
       } else {
         // Fallback position
-        camera.position.set(0, 1.7, 0);
-        camera.lookAt(1, 1.7, 0);
+        camera.position.set(0, 1.7 + FOUNDATION_HEIGHT, 0);
+        camera.lookAt(1, 1.7 + FOUNDATION_HEIGHT, 0);
       }
       camera.updateMatrixWorld();
     }
@@ -2681,10 +2685,14 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
     bounds
   });
   
+  // Foundation height - building sits on top of this
+  const foundationHeight = FOUNDATION_HEIGHT;
+  const foundationPadding = FOUNDATION_PADDING;
+  
   return (
     <group>
       {/* Enhanced ground plane positioned correctly */}
-      <mesh position={[0, -0.15, 0]} rotation={[-Math.PI/2, 0, 0]} receiveShadow>
+      <mesh position={[0, -0.01, 0]} rotation={[-Math.PI/2, 0, 0]} receiveShadow>
         <planeGeometry args={[80, 80]} />
         <meshStandardMaterial 
           color={colors.ground} 
@@ -2693,42 +2701,57 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
         />
       </mesh>
       
-      {/* Building foundation - positioned under the actual building */}
-      <mesh 
-        position={[
-          buildingData.worldCenter.x + buildingData.worldSize.width/2, 
-          -0.08, 
-          buildingData.worldCenter.z + buildingData.worldSize.height/2
-        ]} 
-        rotation={[-Math.PI/2, 0, 0]} 
-        receiveShadow
-      >
-        <planeGeometry args={[
-          buildingData.worldSize.width + 2,
-          buildingData.worldSize.height + 2
-        ]} />
-        <meshStandardMaterial 
-          color={colors.foundation} 
-          roughness={0.9}
-          metalness={0.0}
-        />
-      </mesh>
-      
-      {/* Render ONLY manually added walls from 2D editor (IDs starting with 'new-wall-') */}
-      {/* Room boundary walls are rendered by Room3D, so we only render user-created custom walls */}
-      {walls && walls.length > 0 && walls
-        .filter(wall => wall.id && wall.id.toString().startsWith('new-wall-'))
-        .map((wall, index) => {
-          return (
-            <Wall3D 
-              key={`custom-wall-${wall.id || index}`}
-              wall={wall}
-              bounds={bounds}
-              customColors={colors}
+      {/* Building foundation - 3D box that building sits on top of */}
+      {(() => {
+        // Calculate the actual center of the building based on rooms
+        // Using same logic as Room3D to ensure alignment
+        const worldScale = 25 / Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY, 1);
+        const buildingCenterX = ((bounds.minX + bounds.maxX) / 2) * worldScale;
+        const buildingCenterZ = ((bounds.minY + bounds.maxY) / 2) * worldScale;
+        const buildingWorldWidth = (bounds.maxX - bounds.minX) * worldScale;
+        const buildingWorldHeight = (bounds.maxY - bounds.minY) * worldScale;
+        
+        return (
+          <mesh 
+            position={[
+              buildingCenterX, 
+              foundationHeight / 2, 
+              buildingCenterZ
+            ]} 
+            castShadow
+            receiveShadow
+          >
+            <boxGeometry args={[
+              buildingWorldWidth + foundationPadding * 2,
+              foundationHeight,
+              buildingWorldHeight + foundationPadding * 2
+            ]} />
+            <meshStandardMaterial 
+              color={colors.foundation} 
+              roughness={0.9}
+              metalness={0.0}
             />
-          );
-        })
-      }
+          </mesh>
+        );
+      })()}
+      
+      {/* Render ONLY manually added walls from 2D editor (IDs starting with 'new-wall-') - elevated on foundation */}
+      {/* Room boundary walls are rendered by Room3D, so we only render user-created custom walls */}
+      <group position={[0, foundationHeight, 0]}>
+        {walls && walls.length > 0 && walls
+          .filter(wall => wall.id && wall.id.toString().startsWith('new-wall-'))
+          .map((wall, index) => {
+            return (
+              <Wall3D 
+                key={`custom-wall-${wall.id || index}`}
+                wall={wall}
+                bounds={bounds}
+                customColors={colors}
+              />
+            );
+          })
+        }
+      </group>
       
       {/* Render doors from 2D editor - DISABLED, using smart doors instead */}
       {/* SimpleDoor3D is only for user-placed doors in customization mode */}
@@ -2744,67 +2767,73 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
         );
       })}
       
-      {/* Render rooms with doors and windows */}
-      {rooms.map((room, index) => {
-        const roomIdString = String(room.id || index);
-        return (
-          <Room3D 
-            key={`room-${roomIdString}-${roomColors[roomIdString] || 'default'}`} 
-            room={room} 
-            bounds={bounds}
-            showLabels={mode === 'overview'}
-            doors={smartDoors}
-            windows={smartWindows}
-            walls={walls}
+      {/* Render rooms with doors and windows - elevated on foundation */}
+      <group position={[0, foundationHeight, 0]}>
+        {rooms.map((room, index) => {
+          const roomIdString = String(room.id || index);
+          return (
+            <Room3D 
+              key={`room-${roomIdString}-${roomColors[roomIdString] || 'default'}`} 
+              room={room} 
+              bounds={bounds}
+              showLabels={mode === 'overview'}
+              doors={smartDoors}
+              windows={smartWindows}
+              walls={walls}
+              customColors={colors}
+              roomColors={roomColors}
+            />
+          );
+        })}
+      </group>
+      
+      {/* Render smart doors globally - visible from both connected rooms - elevated on foundation */}
+      <group position={[0, foundationHeight, 0]}>
+        {smartDoors.map((door) => {
+          // Use global position for doors to ensure they're visible from both sides
+          const position = door.globalPosition || door.position || [0, 0, 0];
+          const doorIdString = String(door.id);
+          const doorColor = doorColors[doorIdString] || colors.doors;
+          
+          // For doors connecting multiple rooms, use the first room's rotation or calculate average
+          let rotation = [0, 0, 0];
+          if (door.roomPositions && door.roomPositions.length > 0) {
+            rotation = door.roomPositions[0].rotation;
+          } else if (door.rotation) {
+            rotation = door.rotation;
+          }
+          
+          return (
+            <Door3D
+              key={`${door.id}-${doorColor}`}
+              position={position}
+              rotation={rotation}
+              width={door.width}
+              height={door.height}
+              isOpen={doorStates[door.id] || door.isOpen}
+              onToggle={(isOpen) => handleDoorToggle(door.id, isOpen)}
+              playerPosition={playerPosition}
+              autoOpen={mode === 'walk'} // Only auto-open in walk mode
+              customColor={doorColor}
+            />
+          );
+        })}
+      </group>
+      
+      {/* Render detected windows with realistic 3D windows - elevated on foundation */}
+      <group position={[0, foundationHeight, 0]}>
+        {smartWindows.filter(w => w.isDetected).map((window) => (
+          <Window3D
+            key={window.id}
+            position={window.position}
+            rotation={window.rotation}
+            width={window.width}
+            height={window.height}
+            roomType={window.roomType || 'default'}
             customColors={colors}
-            roomColors={roomColors}
           />
-        );
-      })}
-      
-      {/* Render smart doors globally - visible from both connected rooms */}
-      {smartDoors.map((door) => {
-        // Use global position for doors to ensure they're visible from both sides
-        const position = door.globalPosition || door.position || [0, 0, 0];
-        const doorIdString = String(door.id);
-        const doorColor = doorColors[doorIdString] || colors.doors;
-        
-        // For doors connecting multiple rooms, use the first room's rotation or calculate average
-        let rotation = [0, 0, 0];
-        if (door.roomPositions && door.roomPositions.length > 0) {
-          rotation = door.roomPositions[0].rotation;
-        } else if (door.rotation) {
-          rotation = door.rotation;
-        }
-        
-        return (
-          <Door3D
-            key={`${door.id}-${doorColor}`}
-            position={position}
-            rotation={rotation}
-            width={door.width}
-            height={door.height}
-            isOpen={doorStates[door.id] || door.isOpen}
-            onToggle={(isOpen) => handleDoorToggle(door.id, isOpen)}
-            playerPosition={playerPosition}
-            autoOpen={mode === 'walk'} // Only auto-open in walk mode
-            customColor={doorColor}
-          />
-        );
-      })}
-      
-      {/* Render detected windows with realistic 3D windows */}
-      {smartWindows.filter(w => w.isDetected).map((window) => (
-        <Window3D
-          key={window.id}
-          position={window.position}
-          rotation={window.rotation}
-          width={window.width}
-          height={window.height}
-          roomType={window.roomType || 'default'}
-          customColors={colors}
-        />
-      ))}
+        ))}
+      </group>
       
       <Lighting3D sunSettings={sunSettings} />
       <CameraController3D 
