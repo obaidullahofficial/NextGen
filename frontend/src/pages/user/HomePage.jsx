@@ -907,10 +907,7 @@ const HomePage = () => {
                   whileInView={{ opacity: 1, y: 0, rotateX: 1 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                   viewport={{ once: true, margin: "-5%" }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
                   whileHover={{ y: -2, scale: 1.005 }}
-                  transition={{ duration: 0.2 }}
                   style={{ transformStyle: 'preserve-3d', boxShadow: '0 25px 60px -15px rgba(0,0,0,0.15)' }}
                 >
                   {/* Shadow Layer */}
