@@ -1,0 +1,2529 @@
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { Stage, Layer, Rect, Text, Line, Group, Arc, Circle } from 'react-konva';
+
+const KonvaFloorPlan = ({ 
+  floorPlanData, 
+  width = 800, 
+  height = 600, 
+  onRoomUpdate,
+  onRoomsChange,
+  onWallsChange,
+  onDoorsChange,
+  onWindowsChange,
+  isEditable = false 
+}) => {
+  const [rooms, setRooms] = useState([]);
+  const [walls, setWalls] = useState([]);
+  const [doors, setDoors] = useState([]);
+  const [windows, setWindows] = useState([]);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedDoor, setSelectedDoor] = useState(null);
+  const [selectedWall, setSelectedWall] = useState(null);
+  const [selectedWindow, setSelectedWindow] = useState(null);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragType, setDragType] = useState(null); // 'room', 'door', 'wall'
+  const [snapToGrid, setSnapToGrid] = useState(true);
+  const [gridSize] = useState(25);
+  const [creationMode, setCreationMode] = useState(null); // 'door', 'wall', 'window', null
+  const [isCreating, setIsCreating] = useState(false);
+  const [newElementStart, setNewElementStart] = useState(null);
+  const [showCustomizationPanel, setShowCustomizationPanel] = useState(false);
+  const [doorColor, setDoorColor] = useState('#8B4513');
+  const [wallColor, setWallColor] = useState('#000000');
+  const [windowColor, setWindowColor] = useState('#87CEEB');
+  const [doorWidth, setDoorWidth] = useState(6);
+  const [wallWidth, setWallWidth] = useState(4);
+  const [windowWidth, setWindowWidth] = useState(5);
+  const [totalFloorArea, setTotalFloorArea] = useState(10000); // Total area in square units
+  const [roomPercentages, setRoomPercentages] = useState({}); // Room ID -> percentage mapping
+  const [availablePercentage, setAvailablePercentage] = useState(100);
+  const [roomTypeDistribution, setRoomTypeDistribution] = useState({}); // Room type -> total percentage
+  const stageRef = useRef();
+  const [resizingRoom, setResizingRoom] = useState(null); // Track which room is being resized
+  const [resizeHandle, setResizeHandle] = useState(null); // Track which handle is being used
+  const resizeThrottleRef = useRef(null); // Throttle resize updates
+  const isUserInteracting = useRef(false); // Flag to prevent updates during user interaction
+
+  // Snap to grid helper function
+  const snapToGridCoordinate = useCallback((value) => {
+    if (!snapToGrid) return value;
+    return Math.round(value / gridSize) * gridSize;
+  }, [snapToGrid, gridSize]);
+
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isEditable) return;
+      
+      // Delete selected item
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedRoom) {
+          removeRoomAndRebalance(selectedRoom);
+          setSelectedRoom(null);
+        } else if (selectedDoor) {
+          const updatedDoors = doors.filter(d => d.id !== selectedDoor);
+          setDoors(updatedDoors);
+          // Notify parent about door deletion
+          if (onDoorsChange) {
+            onDoorsChange(updatedDoors);
+          }
+          setSelectedDoor(null);
+        } else if (selectedWall) {
+          const updatedWalls = walls.filter(w => w.id !== selectedWall);
+          setWalls(updatedWalls);
+          setSelectedWall(null);
+        } else if (selectedWindow) {
+          const updatedWindows = windows.filter(w => w.id !== selectedWindow);
+          setWindows(updatedWindows);
+          // Notify parent about window deletion
+          if (onWindowsChange) {
+            onWindowsChange(updatedWindows);
+          }
+          setSelectedWindow(null);
+        }
+      }
+      
+      // Deselect all with Escape
+      if (e.key === 'Escape') {
+        setSelectedRoom(null);
+        setSelectedDoor(null);
+        setSelectedWall(null);
+        setSelectedWindow(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isEditable, selectedRoom, selectedDoor, selectedWall, selectedWindow, rooms, doors, walls, windows]);
+
+  // Convert backend data to Konva-friendly format
+  useEffect(() => {
+    // Don't update rooms while user is actively interacting
+    if (isUserInteracting.current) {
+      return;
+    }
+    
+    if (floorPlanData) {
+      // Calculate scaling factors to fit the floor plan within canvas boundaries
+      const plotWidth = floorPlanData.plotWidth || 1000; // Use actual plot width from data
+      const plotHeight = floorPlanData.plotHeight || 1000; // Use actual plot height from data
+      const boundaryMargin = 15; // Same as boundary wall margin from canvas edge
+      const innerPadding = 25; // Padding from boundary wall to rooms
+      const margin = boundaryMargin + innerPadding; // Total margin from canvas edge
+      
+      const scaleX = (width - margin * 2) / plotWidth;
+      const scaleY = (height - margin * 2) / plotHeight;
+      const scale = Math.min(scaleX, scaleY); // Use uniform scaling to maintain aspect ratio
+      
+      // Calculate actual content bounds and center offset
+      const rawRooms = floorPlanData.rooms || [];
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      rawRooms.forEach(room => {
+        minX = Math.min(minX, room.x || 0);
+        minY = Math.min(minY, room.y || 0);
+        maxX = Math.max(maxX, (room.x || 0) + (room.width || 100));
+        maxY = Math.max(maxY, (room.y || 0) + (room.height || 100));
+      });
+      
+      // Content dimensions scaled
+      const contentWidth = (maxX - minX) * scale;
+      const contentHeight = (maxY - minY) * scale;
+      
+      // Available space inside boundary
+      const availableWidth = width - margin * 2;
+      const availableHeight = height - margin * 2;
+      
+      // Center offset to center rooms within available space
+      const offsetX = margin + (availableWidth - contentWidth) / 2 - minX * scale;
+      const offsetY = margin + (availableHeight - contentHeight) / 2 - minY * scale;
+      
+      // Convert rooms data with proper scaling and centering
+      const roomsData = rawRooms.map((room, index) => ({
+        id: room.id || `room-${index}`,
+        x: (room.x || 0) * scale + offsetX,
+        y: (room.y || 0) * scale + offsetY,
+        width: (room.width || 100) * scale,
+        height: (room.height || 100) * scale,
+        fill: getRoomColor(room.type || room.tag),
+        stroke: '#333',
+        strokeWidth: 2,
+        draggable: isEditable,
+        type: room.type || room.tag || 'Room',
+        tag: room.tag || `room-${index}`,
+        name: getRoomName(room.type || room.tag),
+        originalX: room.x || 0,
+        originalY: room.y || 0,
+        originalWidth: room.width || 100,
+        originalHeight: room.height || 100,
+        scale: scale,
+        offsetX: offsetX,
+        offsetY: offsetY
+      }));
+
+      // Convert walls data with proper scaling and centering
+      const wallsData = (floorPlanData.mapData || [])
+        .filter(item => item.type === 'Wall')
+        .map((wall, index) => ({
+          id: wall.id || `wall-${index}`,
+          points: [
+            (wall.x1 || 0) * scale + offsetX, 
+            (wall.y1 || 0) * scale + offsetY, 
+            (wall.x2 || 0) * scale + offsetX, 
+            (wall.y2 || 0) * scale + offsetY
+          ],
+          stroke: '#000000',
+          strokeWidth: Math.max(1, 4 * scale),
+          lineCap: 'round'
+        }));
+
+      // Convert doors data with proper scaling - check multiple possible data sources
+      let doorsData = [];
+      
+      // Method 1: Check mapData for doors
+      if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData)) {
+        const mapDoors = floorPlanData.mapData
+          .filter(item => item.type === 'Door')
+          .map((door, index) => ({
+            id: door.id || `door-${index}`,
+            points: [
+              (door.x1 || 0) * scale + offsetX, 
+              (door.y1 || 0) * scale + offsetY, 
+              (door.x2 || 0) * scale + offsetX, 
+              (door.y2 || 0) * scale + offsetY
+            ],
+            stroke: '#8B4513',
+            strokeWidth: Math.max(6, 4 * scale),
+            lineCap: 'round',
+            type: 'Door'
+          }));
+        doorsData = [...doorsData, ...mapDoors];
+      }
+      
+      // Method 2: Check direct doors array
+      if (floorPlanData.doors && Array.isArray(floorPlanData.doors)) {
+        const directDoors = floorPlanData.doors.map((door, index) => ({
+          id: door.id || `direct-door-${index}`,
+          points: [
+            (door.x1 || 0) * scale + offsetX, 
+            (door.y1 || 0) * scale + offsetY, 
+            (door.x2 || 0) * scale + offsetX, 
+            (door.y2 || 0) * scale + offsetY
+          ],
+          stroke: '#8B4513',
+          strokeWidth: Math.max(6, 4 * scale),
+          lineCap: 'round',
+          type: 'Door'
+        }));
+        doorsData = [...doorsData, ...directDoors];
+      }
+      
+      // Method 3: Auto-generate doors on room walls if no doors found
+      if (doorsData.length === 0 && roomsData.length > 0) {
+        const generatedDoors = [];
+        
+        roomsData.forEach((room, roomIndex) => {
+          // Add door to the front wall (bottom edge) of each room
+          const doorWidth = Math.min(80 * scale, room.width * 0.3); // Door width is 30% of room width or 80 scaled units
+          const doorX = room.x + (room.width - doorWidth) / 2; // Center the door on the wall
+          const doorY = room.y + room.height; // Bottom edge of room
+          
+          generatedDoors.push({
+            id: `generated-door-${roomIndex}`,
+            points: [
+              doorX, 
+              doorY, 
+              doorX + doorWidth, 
+              doorY
+            ],
+            stroke: '#8B4513',
+            strokeWidth: Math.max(6, 4 * scale),
+            lineCap: 'round',
+            roomId: room.id
+          });
+        });
+        
+        doorsData = [...doorsData, ...generatedDoors];
+      }
+
+      const finalDoorsData = doorsData;
+      
+      // Convert windows data with proper scaling
+      let windowsData = [];
+      
+      // Check mapData for windows
+      if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData)) {
+        const mapWindows = floorPlanData.mapData
+          .filter(item => item.type === 'Window')
+          .map((window, index) => ({
+            id: window.id || `window-${index}`,
+            points: [
+              (window.x1 || 0) * scale + offsetX, 
+              (window.y1 || 0) * scale + offsetY, 
+              (window.x2 || 0) * scale + offsetX, 
+              (window.y2 || 0) * scale + offsetY
+            ],
+            stroke: '#87CEEB',
+            strokeWidth: Math.max(5, 3 * scale),
+            lineCap: 'round'
+          }));
+        windowsData = [...windowsData, ...mapWindows];
+      }
+      
+      // Check direct windows array
+      if (floorPlanData.windows && Array.isArray(floorPlanData.windows)) {
+        const directWindows = floorPlanData.windows.map((window, index) => ({
+          id: window.id || `direct-window-${index}`,
+          points: [
+            (window.x1 || 0) * scale + offsetX, 
+            (window.y1 || 0) * scale + offsetY, 
+            (window.x2 || 0) * scale + offsetX, 
+            (window.y2 || 0) * scale + offsetY
+          ],
+          stroke: '#87CEEB',
+          strokeWidth: Math.max(5, 3 * scale),
+          lineCap: 'round'
+        }));
+        windowsData = [...windowsData, ...directWindows];
+      }
+
+      const finalWindowsData = windowsData;
+      
+      // Merge with existing manually created rooms (those not from floorPlanData)
+      setRooms(prevRooms => {
+        // Find manually created rooms (IDs starting with 'new-room-' or 'created-room-')
+        const manualRooms = prevRooms.filter(room => 
+          room.id && (room.id.toString().startsWith('new-room-') || room.id.toString().startsWith('created-room-'))
+        );
+        
+        // Create a set of manual room IDs to avoid duplicates
+        const manualRoomIds = new Set(manualRooms.map(r => r.id));
+        
+        // Remove any rooms from roomsData that have IDs matching manual rooms (to avoid duplicates)
+        const floorPlanOnlyRooms = roomsData.filter(room =>
+          !room.id || !manualRoomIds.has(room.id)
+        );
+        
+        // Combine: rooms from floorPlanData (excluding manual ones) + manual rooms
+        return [...floorPlanOnlyRooms, ...manualRooms];
+      });
+      
+      // Merge with existing manually created walls (those not from floorPlanData)
+      setWalls(prevWalls => {
+        // Find manually created walls (IDs starting with 'new-wall-')
+        const manualWalls = prevWalls.filter(wall => 
+          wall.id && wall.id.toString().startsWith('new-wall-')
+        );
+        
+        // Get manual wall IDs for deduplication
+        const manualWallIds = new Set(manualWalls.map(w => w.id));
+        
+        // Filter out walls from wallsData that are already in manual walls
+        const nonManualWallsData = wallsData.filter(wall => !manualWallIds.has(wall.id));
+        
+        // Combine: add/update walls from floorPlanData (excluding duplicates) + keep manual walls
+        return [...nonManualWallsData, ...manualWalls];
+      });
+      
+      // Merge with existing manually created doors (those not from floorPlanData)
+      setDoors(prevDoors => {
+        // Find manually created doors (IDs starting with 'new-door-' or 'created-door-')
+        const manualDoors = prevDoors.filter(door => 
+          door.id && (door.id.toString().startsWith('new-door-') || door.id.toString().startsWith('created-door-'))
+        );
+        
+        // Create a set of manual door IDs to avoid duplicates
+        const manualDoorIds = new Set(manualDoors.map(d => d.id));
+        
+        // Remove any doors from finalDoorsData that have IDs matching manual doors (to avoid duplicates)
+        const floorPlanOnlyDoors = finalDoorsData.filter(door =>
+          !door.id || !manualDoorIds.has(door.id)
+        );
+        
+        // Combine: doors from floorPlanData (excluding manual ones) + manual doors
+        return [...floorPlanOnlyDoors, ...manualDoors];
+      });
+      
+      // Merge with existing manually created windows (those not from floorPlanData)
+      setWindows(prevWindows => {
+        // Find manually created windows (IDs starting with 'new-window-')
+        const manualWindows = prevWindows.filter(window => 
+          window.id && window.id.toString().startsWith('new-window-')
+        );
+        
+        // Remove any windows from finalWindowsData that have IDs matching manual windows (to avoid duplicates)
+        const floorPlanOnlyWindows = finalWindowsData.filter(window =>
+          !window.id || !window.id.toString().startsWith('new-window-')
+        );
+        
+        // Combine: windows from floorPlanData (excluding manual ones) + manual windows
+        return [...floorPlanOnlyWindows, ...manualWindows];
+      });
+    }
+  }, [floorPlanData, isEditable]);
+
+  // Get room color based on type - matching the Room Color Guide
+  const getRoomColor = (roomType) => {
+    const colors = {
+      'livingroom': '#FFE4E9',    // Lighter Pink - Living
+      'bedroom': '#E8F8E8',       // Lighter Green - Bedroom
+      'kitchen': '#FFF9C4',       // Lighter Yellow - Kitchen
+      'bathroom': '#E3F2FD',      // Lighter Blue - Bathroom
+      'drawingroom': '#FFF0E0',   // Lighter Peach - Drawing
+      'carporch': '#F3F0FF',      // Lighter Lavender - Car Porch
+      'garden': '#E8F0F8'         // Lighter Steel Blue - Garden
+    };
+    
+    if (!roomType) return '#F0F0F0';
+    const type = roomType.split('-')[0].toLowerCase();
+    return colors[type] || '#F0F0F0';
+  };
+
+  // Get room display name
+  const getRoomName = (roomType) => {
+    if (!roomType) return 'Room';
+    const type = roomType.split('-')[0];
+    const number = roomType.split('-')[1] || '1';
+    return `${type.toUpperCase()} ${number}`;
+  };
+
+  // Calculate door swing properties
+  const calculateDoorSwing = (x1, y1, x2, y2) => {
+    const doorLength = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    const doorAngle = Math.atan2(y2 - y1, x2 - x1);
+    
+    // Determine swing direction (perpendicular to door)
+    const swingAngle = doorAngle + Math.PI / 2;
+    
+    // Calculate swing end point (90-degree opening)
+    const swingEndX = x1 + Math.cos(swingAngle) * doorLength * 0.9;
+    const swingEndY = y1 + Math.sin(swingAngle) * doorLength * 0.9;
+    
+    // Calculate arc points for door swing
+    const arcPoints = [];
+    const steps = 8;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const currentAngle = doorAngle + (swingAngle - doorAngle) * t;
+      const arcX = x1 + Math.cos(currentAngle) * doorLength * 0.8;
+      const arcY = y1 + Math.sin(currentAngle) * doorLength * 0.8;
+      arcPoints.push(arcX, arcY);
+    }
+    
+    return {
+      doorLength,
+      doorAngle: doorAngle * 180 / Math.PI,
+      swingAngle: swingAngle * 180 / Math.PI,
+      swingEndX,
+      swingEndY,
+      arcPoints
+    };
+  };
+
+  // Handle room drag start
+  const handleRoomDragStart = useCallback((e, roomId) => {
+    if (!isEditable) return;
+    
+    isUserInteracting.current = true; // Set flag to prevent updates
+    
+    const room = rooms.find(r => r.id === roomId);
+    setDragStart({ x: room.x, y: room.y });
+    setSelectedRoom(roomId);
+    setSelectedDoor(null);
+    setSelectedWall(null);
+    setIsDragging(true);
+    setDragType('room');
+  }, [rooms, isEditable]);
+
+  // Handle door drag start
+  const handleDoorDragStart = useCallback((e, doorId) => {
+    if (!isEditable) return;
+    
+    const door = doors.find(d => d.id === doorId);
+    if (!door) return;
+    
+    // Store the initial drag position for calculating offset later
+    setDragStart({ x: e.target.x(), y: e.target.y() });
+    setSelectedDoor(doorId);
+    setSelectedRoom(null);
+    setSelectedWall(null);
+    setIsDragging(true);
+    setDragType('door');
+    
+    console.log('Door drag started:', {
+      doorId,
+      points: door.points,
+      startPos: { x: e.target.x(), y: e.target.y() }
+    });
+  }, [doors, isEditable]);
+
+  // Handle wall drag start
+  const handleWallDragStart = useCallback((e, wallId) => {
+    if (!isEditable) return;
+    
+    const wall = walls.find(w => w.id === wallId);
+    setDragStart({ x: wall.points[0], y: wall.points[1] });
+    setSelectedWall(wallId);
+    setSelectedRoom(null);
+    setSelectedDoor(null);
+    setIsDragging(true);
+    setDragType('wall');
+  }, [walls, isEditable]);
+
+  // Handle room drag end - with free movement and overlapping allowed
+  const handleRoomDragEnd = useCallback((e, roomId) => {
+    if (!isEditable) return;
+
+    const newX = e.target.x();
+    const newY = e.target.y();
+    
+    setRooms(prevRooms => {
+      const room = prevRooms.find(r => r.id === roomId);
+      
+      if (!room) return prevRooms;
+      
+      const margin = 40;
+      const scale = room.scale || 1; // Fallback for newly created rooms
+      
+      // Apply snap to grid but allow free movement (no boundary constraints for overlapping)
+      const snappedX = snapToGridCoordinate(newX);
+      const snappedY = snapToGridCoordinate(newY);
+
+      // Convert back to original coordinates for backend
+      const originalX = (snappedX - margin) / scale;
+      const originalY = (snappedY - margin) / scale;
+
+      // Send update to parent component with original coordinates (in setTimeout to avoid render issues)
+      if (onRoomUpdate) {
+        setTimeout(() => {
+          onRoomUpdate(roomId, {
+            x: originalX,
+            y: originalY,
+            width: room.originalWidth || room.width / scale,
+            height: room.originalHeight || room.height / scale
+          });
+        }, 0);
+      }
+
+      // Update room position with free movement - no constraints
+      return prevRooms.map(r => 
+        r.id === roomId 
+          ? { ...r, x: snappedX, y: snappedY, originalX, originalY, scale }
+          : r
+      );
+    });
+    
+    setIsDragging(false);
+    setDragType(null);
+    isUserInteracting.current = false; // Clear flag after drag ends
+  }, [isEditable, onRoomUpdate, snapToGridCoordinate]);
+
+  // Handle room drag move for visual feedback
+  const handleRoomDragMove = useCallback((e, roomId) => {
+    if (!isEditable || !isDragging) return;
+    
+    // Apply snap to grid during drag for visual feedback
+    const currentX = snapToGridCoordinate(e.target.x());
+    const currentY = snapToGridCoordinate(e.target.y());
+    
+    // Update target position to snapped coordinates
+    e.target.position({ x: currentX, y: currentY });
+  }, [isEditable, isDragging, snapToGridCoordinate]);
+
+  // Helper function to find the nearest wall edge for door placement
+  const findNearestWallEdge = useCallback((x, y, doorLength) => {
+    let nearestWall = null;
+    let minDistance = Infinity;
+    let snapPosition = null;
+    
+    // Check room boundaries
+    rooms.forEach(room => {
+      const roomWalls = [
+        // Top wall
+        { x1: room.x, y1: room.y, x2: room.x + room.width, y2: room.y, edge: 'top', type: 'room' },
+        // Right wall  
+        { x1: room.x + room.width, y1: room.y, x2: room.x + room.width, y2: room.y + room.height, edge: 'right', type: 'room' },
+        // Bottom wall
+        { x1: room.x, y1: room.y + room.height, x2: room.x + room.width, y2: room.y + room.height, edge: 'bottom', type: 'room' },
+        // Left wall
+        { x1: room.x, y1: room.y, x2: room.x, y2: room.y + room.height, edge: 'left', type: 'room' }
+      ];
+      
+      roomWalls.forEach(wall => {
+        // Calculate distance from point to wall line
+        const wallLength = Math.sqrt((wall.x2 - wall.x1) ** 2 + (wall.y2 - wall.y1) ** 2);
+        const wallUnitX = (wall.x2 - wall.x1) / wallLength;
+        const wallUnitY = (wall.y2 - wall.y1) / wallLength;
+        
+        // Project point onto wall line
+        const toPointX = x - wall.x1;
+        const toPointY = y - wall.y1;
+        const projectionLength = toPointX * wallUnitX + toPointY * wallUnitY;
+        
+        // Clamp projection to wall bounds
+        const clampedProjection = Math.max(0, Math.min(wallLength, projectionLength));
+        
+        // Calculate closest point on wall
+        const closestX = wall.x1 + wallUnitX * clampedProjection;
+        const closestY = wall.y1 + wallUnitY * clampedProjection;
+        
+        // Calculate distance
+        const distance = Math.sqrt((x - closestX) ** 2 + (y - closestY) ** 2);
+        
+        // Check if we can fit the door on this wall segment
+        const availableLength = wallLength;
+        const doorCanFit = doorLength <= availableLength;
+        
+        if (distance < minDistance && doorCanFit && distance < 50) { // 50px snap threshold
+          minDistance = distance;
+          nearestWall = { ...wall, room };
+          
+          // Calculate door position centered on the closest point
+          const doorStartX = closestX - (wallUnitX * doorLength / 2);
+          const doorStartY = closestY - (wallUnitY * doorLength / 2);
+          const doorEndX = closestX + (wallUnitX * doorLength / 2);
+          const doorEndY = closestY + (wallUnitY * doorLength / 2);
+          
+          snapPosition = {
+            x1: doorStartX,
+            y1: doorStartY,
+            x2: doorEndX,
+            y2: doorEndY
+          };
+        }
+      });
+    });
+    
+    // Check custom walls
+    walls.forEach(wall => {
+      const customWall = {
+        x1: wall.points[0],
+        y1: wall.points[1],
+        x2: wall.points[2],
+        y2: wall.points[3],
+        edge: 'custom',
+        type: 'custom',
+        id: wall.id
+      };
+      
+      // Calculate distance from point to wall line
+      const wallLength = Math.sqrt((customWall.x2 - customWall.x1) ** 2 + (customWall.y2 - customWall.y1) ** 2);
+      const wallUnitX = (customWall.x2 - customWall.x1) / wallLength;
+      const wallUnitY = (customWall.y2 - customWall.y1) / wallLength;
+      
+      // Project point onto wall line
+      const toPointX = x - customWall.x1;
+      const toPointY = y - customWall.y1;
+      const projectionLength = toPointX * wallUnitX + toPointY * wallUnitY;
+      
+      // Clamp projection to wall bounds
+      const clampedProjection = Math.max(0, Math.min(wallLength, projectionLength));
+      
+      // Calculate closest point on wall
+      const closestX = customWall.x1 + wallUnitX * clampedProjection;
+      const closestY = customWall.y1 + wallUnitY * clampedProjection;
+      
+      // Calculate distance
+      const distance = Math.sqrt((x - closestX) ** 2 + (y - closestY) ** 2);
+      
+      // Check if we can fit the door on this wall segment
+      const availableLength = wallLength;
+      const doorCanFit = doorLength <= availableLength;
+      
+      if (distance < minDistance && doorCanFit && distance < 50) { // 50px snap threshold
+        minDistance = distance;
+        nearestWall = customWall;
+        
+        // Calculate door position centered on the closest point
+        const doorStartX = closestX - (wallUnitX * doorLength / 2);
+        const doorStartY = closestY - (wallUnitY * doorLength / 2);
+        const doorEndX = closestX + (wallUnitX * doorLength / 2);
+        const doorEndY = closestY + (wallUnitY * doorLength / 2);
+        
+        snapPosition = {
+          x1: doorStartX,
+          y1: doorStartY,
+          x2: doorEndX,
+          y2: doorEndY
+        };
+      }
+    });
+    
+    return { nearestWall, snapPosition, distance: minDistance };
+  }, [rooms, walls]);
+
+  // Handle door drag end
+  const handleDoorDragEnd = useCallback((e, doorId) => {
+    if (!isEditable) return;
+
+    const door = doors.find(d => d.id === doorId);
+    if (!door) return;
+    
+    const margin = 40;
+    
+    // Get the drag offset from the drag start position
+    const dragOffsetX = e.target.x() - dragStart.x;
+    const dragOffsetY = e.target.y() - dragStart.y;
+    
+    // Calculate new door center position
+    const doorCenterX = (door.points[0] + door.points[2]) / 2 + dragOffsetX;
+    const doorCenterY = (door.points[1] + door.points[3]) / 2 + dragOffsetY;
+    
+    // Calculate door length
+    const doorLength = Math.sqrt(
+      (door.points[2] - door.points[0]) ** 2 + 
+      (door.points[3] - door.points[1]) ** 2
+    );
+    
+    // Find nearest wall edge
+    const { nearestWall, snapPosition, distance } = findNearestWallEdge(doorCenterX, doorCenterY, doorLength);
+    
+    let finalDoorPoints;
+    
+    if (nearestWall && snapPosition) {
+      // Snap to wall
+      finalDoorPoints = [snapPosition.x1, snapPosition.y1, snapPosition.x2, snapPosition.y2];
+      if (nearestWall.type === 'custom') {
+        console.log('Door snapped to custom wall:', nearestWall.id);
+      } else {
+        console.log('Door snapped to wall:', nearestWall.edge, 'of room:', nearestWall.room?.id);
+      }
+    } else {
+      // Return to original position if no valid wall found
+      finalDoorPoints = door.points;
+      console.log('Door returned to original position - no valid wall nearby');
+    }
+    
+    // Update door position
+    const updatedDoors = doors.map(d => 
+      d.id === doorId 
+        ? { ...d, points: finalDoorPoints }
+        : d
+    );
+
+    setDoors(updatedDoors);
+    setIsDragging(false);
+    setDragType(null);
+    
+    // Notify parent component about door position change
+    if (onDoorsChange) {
+      onDoorsChange(updatedDoors);
+    }
+    
+    // Reset Konva element position to prevent ghost copies (like windows)
+    e.target.position({ x: 0, y: 0 });
+  }, [doors, width, height, isEditable, dragStart, findNearestWallEdge, onDoorsChange]);
+
+  // Handle window drag start
+  const handleWindowDragStart = useCallback((e, windowId) => {
+    if (!isEditable) return;
+    
+    const window = windows.find(w => w.id === windowId);
+    if (!window) return;
+    
+    setDragStart({ x: e.target.x(), y: e.target.y() });
+    setSelectedWindow(windowId);
+    setSelectedRoom(null);
+    setSelectedDoor(null);
+    setSelectedWall(null);
+    setIsDragging(true);
+    setDragType('window');
+  }, [windows, isEditable]);
+
+  // Handle window drag move
+  const handleWindowDragMove = useCallback((e, windowId) => {
+    if (!isEditable) return;
+    // Allow free movement
+  }, [isEditable]);
+
+  // Handle window drag end
+  const handleWindowDragEnd = useCallback((e, windowId) => {
+    if (!isEditable) return;
+
+    const window = windows.find(w => w.id === windowId);
+    if (!window) return;
+    
+    const dragOffsetX = e.target.x() - dragStart.x;
+    const dragOffsetY = e.target.y() - dragStart.y;
+    
+    const windowCenterX = (window.points[0] + window.points[2]) / 2 + dragOffsetX;
+    const windowCenterY = (window.points[1] + window.points[3]) / 2 + dragOffsetY;
+    
+    const windowLength = Math.sqrt(
+      (window.points[2] - window.points[0]) ** 2 + 
+      (window.points[3] - window.points[1]) ** 2
+    );
+    
+    const { nearestWall, snapPosition } = findNearestWallEdge(windowCenterX, windowCenterY, windowLength);
+    
+    let finalWindowPoints;
+    
+    if (nearestWall && snapPosition) {
+      finalWindowPoints = [snapPosition.x1, snapPosition.y1, snapPosition.x2, snapPosition.y2];
+    } else {
+      finalWindowPoints = window.points;
+    }
+    
+    const updatedWindows = windows.map(w => 
+      w.id === windowId 
+        ? { ...w, points: finalWindowPoints }
+        : w
+    );
+
+    setWindows(updatedWindows);
+    setIsDragging(false);
+    setDragType(null);
+    
+    if (onWindowsChange) {
+      onWindowsChange(updatedWindows);
+    }
+    
+    e.target.position({ x: 0, y: 0 });
+  }, [windows, isEditable, dragStart, findNearestWallEdge, onWindowsChange]);
+
+  // Handle window click
+  const handleWindowClick = useCallback((e, windowId) => {
+    if (!isEditable) return;
+    e.cancelBubble = true;
+    setSelectedWindow(windowId);
+    setSelectedRoom(null);
+    setSelectedDoor(null);
+    setSelectedWall(null);
+  }, [isEditable]);
+
+  // Add new door
+  const addNewDoor = useCallback(() => {
+    const newDoor = {
+      id: `new-door-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      points: [200, 200, 280, 200], // Default horizontal door
+      stroke: doorColor,
+      strokeWidth: doorWidth,
+      lineCap: 'round',
+      type: 'Door'
+    };
+    const updatedDoors = [...doors, newDoor];
+    setDoors(updatedDoors);
+    setSelectedDoor(newDoor.id);
+    setSelectedRoom(null);
+    setSelectedWall(null);
+    setSelectedWindow(null);
+    
+    // Notify parent component about new door
+    if (onDoorsChange) {
+      onDoorsChange(updatedDoors);
+    }
+  }, [doors, doorColor, doorWidth, onDoorsChange]);
+
+  // Add new wall
+  const addNewWall = useCallback(() => {
+    const newWall = {
+      id: `new-wall-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      points: [300, 300, 400, 300], // Default horizontal wall
+      stroke: '#000000',
+      strokeWidth: 4,
+      lineCap: 'round'
+    };
+    setWalls(prev => [...prev, newWall]);
+    setSelectedWall(newWall.id);
+    setSelectedRoom(null);
+    setSelectedDoor(null);
+  }, []);
+
+  // Calculate area from room dimensions
+  const calculateRoomArea = useCallback((width, height, scale = 1) => {
+    const actualWidth = width / scale;
+    const actualHeight = height / scale;
+    return actualWidth * actualHeight;
+  }, []);
+
+  // Calculate percentage of total area
+  const calculateAreaPercentage = useCallback((area) => {
+    return (area / totalFloorArea) * 100;
+  }, [totalFloorArea]);
+
+  // Get room area from percentage
+  const getAreaFromPercentage = useCallback((percentage) => {
+    return (percentage / 100) * totalFloorArea;
+  }, [totalFloorArea]);
+
+  // Rebalance all room percentages to maintain 100% total
+  const rebalanceRoomPercentages = useCallback((updatedRooms, excludeRoomId = null) => {
+    const totalCurrentPercentage = Object.values(roomPercentages).reduce((sum, percent) => sum + percent, 0);
+    
+    if (totalCurrentPercentage === 0) return roomPercentages;
+
+    const newPercentages = { ...roomPercentages };
+    
+    // If we're updating a specific room, adjust others proportionally
+    if (excludeRoomId && newPercentages[excludeRoomId]) {
+      const excludedPercentage = newPercentages[excludeRoomId];
+      const remainingPercentage = 100 - excludedPercentage;
+      const otherRoomsTotal = totalCurrentPercentage - excludedPercentage;
+      
+      if (otherRoomsTotal > 0) {
+        // Proportionally adjust other rooms
+        updatedRooms.forEach(room => {
+          if (room.id !== excludeRoomId && newPercentages[room.id]) {
+            const currentPercent = newPercentages[room.id];
+            newPercentages[room.id] = (currentPercent / otherRoomsTotal) * remainingPercentage;
+          }
+        });
+      }
+    } else {
+      // Proportionally adjust all rooms to sum to 100%
+      const scaleFactor = 100 / totalCurrentPercentage;
+      updatedRooms.forEach(room => {
+        if (newPercentages[room.id]) {
+          newPercentages[room.id] *= scaleFactor;
+        }
+      });
+    }
+
+    return newPercentages;
+  }, [roomPercentages]);
+
+  // Add new room with area allocation
+  const addRoomWithAreaAllocation = useCallback((roomData, requestedPercentage = null) => {
+    const defaultPercentage = requestedPercentage || 20; // Default 20% for new rooms
+    const currentTotal = Object.values(roomPercentages).reduce((sum, percent) => sum + percent, 0);
+    
+    let newPercentage = defaultPercentage;
+    
+    // If adding this room would exceed 100%, take from available or rebalance
+    if (currentTotal + newPercentage > 100) {
+      if (currentTotal < 100) {
+        newPercentage = 100 - currentTotal; // Take remaining available
+      } else {
+        newPercentage = defaultPercentage;
+        // Rebalance existing rooms to make space
+        const rebalanceFactor = (100 - newPercentage) / currentTotal;
+        const updatedPercentages = {};
+        Object.keys(roomPercentages).forEach(roomId => {
+          updatedPercentages[roomId] = roomPercentages[roomId] * rebalanceFactor;
+        });
+        setRoomPercentages(updatedPercentages);
+      }
+    }
+
+    // Calculate room dimensions based on percentage
+    const targetArea = getAreaFromPercentage(newPercentage);
+    const aspectRatio = (roomData.width || 150) / (roomData.height || 100);
+    const newHeight = Math.sqrt(targetArea / aspectRatio);
+    const newWidth = newHeight * aspectRatio;
+
+    const updatedRoom = {
+      ...roomData,
+      width: newWidth,
+      height: newHeight,
+      originalWidth: newWidth,
+      originalHeight: newHeight
+    };
+
+    // Update room percentages
+    setRoomPercentages(prev => ({
+      ...prev,
+      [roomData.id]: newPercentage
+    }));
+
+    return updatedRoom;
+  }, [roomPercentages, getAreaFromPercentage]);
+
+  // Update room percentage and adjust dimensions
+  const updateRoomPercentage = useCallback((roomId, newPercentage) => {
+    const room = rooms.find(r => r.id === roomId);
+    if (!room) return;
+
+    // Update percentages with rebalancing
+    const updatedPercentages = { ...roomPercentages, [roomId]: newPercentage };
+    const rebalanced = rebalanceRoomPercentages(rooms, roomId);
+    rebalanced[roomId] = newPercentage;
+    
+    setRoomPercentages(rebalanced);
+
+    // Calculate new dimensions based on percentage
+    const targetArea = getAreaFromPercentage(newPercentage);
+    const aspectRatio = room.width / room.height;
+    const newHeight = Math.sqrt(targetArea / aspectRatio);
+    const newWidth = newHeight * aspectRatio;
+
+    // Update room dimensions
+    const updatedRooms = rooms.map(r => 
+      r.id === roomId 
+        ? { 
+            ...r, 
+            width: newWidth * (r.scale || 1), 
+            height: newHeight * (r.scale || 1),
+            originalWidth: newWidth,
+            originalHeight: newHeight
+          }
+        : r
+    );
+
+    setRooms(updatedRooms);
+
+    if (onRoomUpdate) {
+      onRoomUpdate(roomId, {
+        x: room.originalX,
+        y: room.originalY,
+        width: newWidth,
+        height: newHeight
+      });
+    }
+  }, [rooms, roomPercentages, rebalanceRoomPercentages, getAreaFromPercentage, onRoomUpdate]);
+
+  // Remove room and rebalance percentages
+  const removeRoomAndRebalance = useCallback((roomId) => {
+    const updatedRooms = rooms.filter(r => r.id !== roomId);
+    const updatedPercentages = { ...roomPercentages };
+    delete updatedPercentages[roomId];
+    
+    // Rebalance remaining rooms to 100%
+    if (Object.keys(updatedPercentages).length > 0) {
+      const rebalanced = rebalanceRoomPercentages(updatedRooms);
+      setRoomPercentages(rebalanced);
+    } else {
+      setRoomPercentages({});
+    }
+    
+    setRooms(updatedRooms);
+    
+    // Notify parent component about room deletion
+    if (onRoomsChange) {
+      onRoomsChange(updatedRooms);
+    }
+  }, [rooms, roomPercentages, rebalanceRoomPercentages]);
+
+  // Initialize room percentages when rooms change
+  useEffect(() => {
+    const newPercentages = { ...roomPercentages };
+    let hasChanges = false;
+
+    rooms.forEach(room => {
+      if (!newPercentages[room.id]) {
+        const roomArea = calculateRoomArea(room.width, room.height, room.scale || 1);
+        const percentage = calculateAreaPercentage(roomArea);
+        newPercentages[room.id] = percentage;
+        hasChanges = true;
+      }
+    });
+
+    // Remove percentages for deleted rooms
+    Object.keys(newPercentages).forEach(roomId => {
+      if (!rooms.find(r => r.id === roomId)) {
+        delete newPercentages[roomId];
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      // Rebalance to ensure 100% total
+      const totalCurrentPercentage = Object.values(newPercentages).reduce((sum, percent) => sum + percent, 0);
+      
+      if (totalCurrentPercentage > 0 && totalCurrentPercentage !== 100) {
+        const scaleFactor = 100 / totalCurrentPercentage;
+        const rebalanced = {};
+        Object.keys(newPercentages).forEach(roomId => {
+          rebalanced[roomId] = newPercentages[roomId] * scaleFactor;
+        });
+        setRoomPercentages(rebalanced);
+      } else if (hasChanges) {
+        setRoomPercentages(newPercentages);
+      }
+    }
+  }, [rooms, totalFloorArea]);
+
+  // Calculate available percentage
+  useEffect(() => {
+    const used = Object.values(roomPercentages).reduce((sum, percent) => sum + percent, 0);
+    setAvailablePercentage(Math.max(0, 100 - used));
+  }, [roomPercentages]);
+
+  // Update room type distribution when rooms change
+  useEffect(() => {
+    const typeDistribution = {};
+    
+    rooms.forEach(room => {
+      const roomType = room.type || room.tag || 'Room';
+      const percentage = roomPercentages[room.id] || 0;
+      
+      if (!typeDistribution[roomType]) {
+        typeDistribution[roomType] = 0;
+      }
+      typeDistribution[roomType] += percentage;
+    });
+    
+    setRoomTypeDistribution(typeDistribution);
+  }, [rooms, roomPercentages]);
+
+  // Get rooms of same type
+  const getRoomsOfType = useCallback((roomType) => {
+    return rooms.filter(room => (room.type || room.tag || 'Room') === roomType);
+  }, [rooms]);
+
+  // Distribute percentage equally among rooms of same type
+  const distributeTypePercentage = useCallback((roomType, totalPercentage) => {
+    const roomsOfType = getRoomsOfType(roomType);
+    if (roomsOfType.length === 0) return;
+    
+    const percentagePerRoom = totalPercentage / roomsOfType.length;
+    
+    roomsOfType.forEach(room => {
+      updateRoomPercentage(room.id, percentagePerRoom);
+    });
+  }, [getRoomsOfType, updateRoomPercentage]);
+
+  // Customize selected door
+  const customizeDoor = useCallback((property, value) => {
+    if (!selectedDoor) return;
+    
+    const updatedDoors = doors.map(door => {
+      if (door.id === selectedDoor) {
+        return { ...door, [property]: value };
+      }
+      return door;
+    });
+    
+    setDoors(updatedDoors);
+  }, [selectedDoor, doors]);
+
+  // Customize selected wall
+  const customizeWall = useCallback((property, value) => {
+    if (!selectedWall) return;
+    
+    const updatedWalls = walls.map(wall => {
+      if (wall.id === selectedWall) {
+        return { ...wall, [property]: value };
+      }
+      return wall;
+    });
+    
+    setWalls(updatedWalls);
+  }, [selectedWall, walls]);
+
+  // Handle mouse move for creation preview
+  const handleStageMouseMovePreview = useCallback((e) => {
+    if (!isEditable || !isCreating || !newElementStart) return;
+    
+    // Force re-render to update preview line
+    const stage = e.target.getStage();
+    if (stage) {
+      stage.batchDraw();
+    }
+  }, [isEditable, isCreating, newElementStart]);
+
+  // Handle door drag move (for visual feedback)
+  const handleDoorDragMove = useCallback((e, doorId) => {
+    if (!isEditable || !isDragging) return;
+    
+    const door = doors.find(d => d.id === doorId);
+    if (!door) return;
+    
+    // Get current drag position
+    const dragOffsetX = e.target.x() - dragStart.x;
+    const dragOffsetY = e.target.y() - dragStart.y;
+    
+    // Calculate new door center position
+    const doorCenterX = (door.points[0] + door.points[2]) / 2 + dragOffsetX;
+    const doorCenterY = (door.points[1] + door.points[3]) / 2 + dragOffsetY;
+    
+    // Calculate door length
+    const doorLength = Math.sqrt(
+      (door.points[2] - door.points[0]) ** 2 + 
+      (door.points[3] - door.points[1]) ** 2
+    );
+    
+    // Find nearest wall for preview
+    const { nearestWall, snapPosition } = findNearestWallEdge(doorCenterX, doorCenterY, doorLength);
+    
+    // Change door color based on whether it can snap to a wall
+    const targetLine = e.target;
+    if (nearestWall && snapPosition) {
+      targetLine.stroke('#4CAF50'); // Green when near a valid wall
+    } else {
+      targetLine.stroke('#FF5722'); // Red when not near a valid wall
+    }
+  }, [isEditable, isDragging, doors, dragStart, findNearestWallEdge]);
+
+  // Handle wall drag end
+  const handleWallDragEnd = useCallback((e, wallId) => {
+    if (!isEditable) return;
+
+    const dragX = e.target.x();
+    const dragY = e.target.y();
+    const wall = walls.find(w => w.id === wallId);
+    
+    if (!wall) return;
+    
+    const margin = 40;
+    
+    // The Line has been dragged, so we need to add the drag offset to all points
+    const newX1 = wall.points[0] + dragX;
+    const newY1 = wall.points[1] + dragY;
+    const newX2 = wall.points[2] + dragX;
+    const newY2 = wall.points[3] + dragY;
+    
+    // Constrain to stage bounds
+    const constrainedX1 = Math.max(margin, Math.min(width - margin, newX1));
+    const constrainedY1 = Math.max(margin, Math.min(height - margin, newY1));
+    const constrainedX2 = Math.max(margin, Math.min(width - margin, newX2));
+    const constrainedY2 = Math.max(margin, Math.min(height - margin, newY2));
+
+    // Update wall position and reset the Line's x/y to 0
+    const updatedWalls = walls.map(w => 
+      w.id === wallId 
+        ? { ...w, points: [constrainedX1, constrainedY1, constrainedX2, constrainedY2] }
+        : w
+    );
+
+    setWalls(updatedWalls);
+    
+    // Notify parent component about the wall update
+    if (onWallsChange) {
+      onWallsChange(updatedWalls);
+    }
+    
+    // Reset the Line position to 0,0 after updating points
+    e.target.position({ x: 0, y: 0 });
+    
+    setIsDragging(false);
+    setDragType(null);
+  }, [walls, width, height, isEditable, onWallsChange]);
+
+  // Handle room resize (for corners)
+  const handleResize = useCallback((roomId, newWidth, newHeight) => {
+    if (!isEditable) return;
+    
+    // Validate inputs - prevent NaN or invalid values
+    if (!roomId || typeof newWidth !== 'number' || typeof newHeight !== 'number') {
+      console.warn('Invalid resize inputs:', { roomId, newWidth, newHeight });
+      return;
+    }
+    if (isNaN(newWidth) || isNaN(newHeight) || !isFinite(newWidth) || !isFinite(newHeight)) {
+      console.warn('NaN or infinite values detected:', { newWidth, newHeight });
+      return;
+    }
+    
+    // Ensure minimum and maximum constraints
+    const constrainedWidth = Math.max(50, Math.min(newWidth, 2000));
+    const constrainedHeight = Math.max(50, Math.min(newHeight, 2000));
+
+    console.log('Resizing room:', roomId, 'to', constrainedWidth, 'x', constrainedHeight);
+
+    // Use functional setState to avoid stale closure issues
+    setRooms(prevRooms => {
+      const updatedRooms = prevRooms.map(r => 
+        r.id === roomId 
+          ? { 
+              ...r, 
+              width: constrainedWidth, 
+              height: constrainedHeight
+            }
+          : r
+      );
+      
+      // Verify the room still exists
+      const updatedRoom = updatedRooms.find(r => r.id === roomId);
+      console.log('Room after update:', updatedRoom);
+      
+      return updatedRooms;
+    });
+  }, [isEditable]);
+
+  // Handle room resize with position adjustment (for left/top edge resizing)
+  const handleResizeWithPosition = useCallback((roomId, newX, newY, newWidth, newHeight) => {
+    if (!isEditable) return;
+    
+    // Validate inputs
+    if (!roomId || isNaN(newWidth) || isNaN(newHeight) || isNaN(newX) || isNaN(newY)) {
+      console.warn('Invalid resize inputs:', { roomId, newX, newY, newWidth, newHeight });
+      return;
+    }
+    
+    // Ensure minimum constraints
+    const constrainedWidth = Math.max(50, Math.min(newWidth, 2000));
+    const constrainedHeight = Math.max(50, Math.min(newHeight, 2000));
+    const constrainedX = Math.max(10, newX);
+    const constrainedY = Math.max(10, newY);
+
+    setRooms(prevRooms => {
+      return prevRooms.map(r => 
+        r.id === roomId 
+          ? { 
+              ...r, 
+              x: constrainedX,
+              y: constrainedY,
+              width: constrainedWidth, 
+              height: constrainedHeight
+            }
+          : r
+      );
+    });
+  }, [isEditable]);
+
+  // Handle mouse move for resizing and creation preview
+  const handleStageMouseMove = useCallback((e) => {
+    // Handle creation preview
+    if (isEditable && isCreating && newElementStart) {
+      const stage = e.target.getStage();
+      if (stage) {
+        stage.batchDraw();
+      }
+    }
+    
+    // Handle resizing with throttling
+    if (!resizingRoom || !resizeHandle) return;
+    
+    // Throttle to only update every 16ms (60fps)
+    if (resizeThrottleRef.current) {
+      return;
+    }
+    
+    resizeThrottleRef.current = setTimeout(() => {
+      resizeThrottleRef.current = null;
+    }, 16);
+    
+    const stage = e.target.getStage();
+    const pointerPos = stage.getPointerPosition();
+    if (!pointerPos) return;
+
+    const room = rooms.find(r => r.id === resizingRoom);
+    if (!room) return;
+
+    let newX = room.x;
+    let newY = room.y;
+    let newWidth = room.width;
+    let newHeight = room.height;
+
+    // Handle all resize directions
+    switch (resizeHandle) {
+      case 'br': // Bottom-right
+        newWidth = pointerPos.x - room.x;
+        newHeight = pointerPos.y - room.y;
+        break;
+      case 'r': // Right
+        newWidth = pointerPos.x - room.x;
+        break;
+      case 'b': // Bottom
+        newHeight = pointerPos.y - room.y;
+        break;
+      case 't': // Top
+        newHeight = room.height + (room.y - pointerPos.y);
+        newY = pointerPos.y;
+        break;
+      case 'l': // Left
+        newWidth = room.width + (room.x - pointerPos.x);
+        newX = pointerPos.x;
+        break;
+      case 'tl': // Top-left
+        newWidth = room.width + (room.x - pointerPos.x);
+        newHeight = room.height + (room.y - pointerPos.y);
+        newX = pointerPos.x;
+        newY = pointerPos.y;
+        break;
+      case 'tr': // Top-right
+        newWidth = pointerPos.x - room.x;
+        newHeight = room.height + (room.y - pointerPos.y);
+        newY = pointerPos.y;
+        break;
+      case 'bl': // Bottom-left
+        newWidth = room.width + (room.x - pointerPos.x);
+        newHeight = pointerPos.y - room.y;
+        newX = pointerPos.x;
+        break;
+      default:
+        break;
+    }
+
+    // Use the position-aware resize function for edges that change position
+    if (['t', 'l', 'tl', 'tr', 'bl'].includes(resizeHandle)) {
+      handleResizeWithPosition(resizingRoom, newX, newY, newWidth, newHeight);
+    } else {
+      handleResize(resizingRoom, newWidth, newHeight);
+    }
+  }, [isEditable, isCreating, newElementStart, resizingRoom, resizeHandle, rooms, handleResize, handleResizeWithPosition]);
+
+  // Handle room resize end - notify parent after resize is complete
+  const handleResizeEnd = useCallback((roomId) => {
+    if (!isEditable) return;
+    
+    setRooms(prevRooms => {
+      const room = prevRooms.find(r => r.id === roomId);
+      if (!room) return prevRooms;
+
+      // Use scale fallback for newly created rooms
+      const scale = room.scale || 1;
+      const margin = 40;
+
+      // Convert back to original coordinates for backend
+      const originalWidth = room.width / scale;
+      const originalHeight = room.height / scale;
+      const originalX = (room.x - margin) / scale;
+      const originalY = (room.y - margin) / scale;
+
+      // Notify parent component with original coordinates (in setTimeout to avoid render issues)
+      if (onRoomUpdate) {
+        setTimeout(() => {
+          onRoomUpdate(roomId, {
+            x: originalX,
+            y: originalY,
+            width: originalWidth,
+            height: originalHeight
+          });
+        }, 0);
+      }
+
+      return prevRooms.map(r => 
+        r.id === roomId 
+          ? { 
+              ...r, 
+              originalWidth,
+              originalHeight,
+              originalX,
+              originalY
+            }
+          : r
+      );
+    });
+  }, [isEditable, onRoomUpdate]);
+
+  // Handle mouse up for resizing
+  const handleStageMouseUp = useCallback(() => {
+    if (resizingRoom) {
+      handleResizeEnd(resizingRoom);
+      setResizingRoom(null);
+      setResizeHandle(null);
+      isUserInteracting.current = false; // Clear flag after resize ends
+    }
+  }, [resizingRoom, handleResizeEnd]);
+
+  // Handle room selection
+  const handleRoomClick = useCallback((e, roomId) => {
+    e.cancelBubble = true;
+    setSelectedRoom(selectedRoom === roomId ? null : roomId);
+    setSelectedDoor(null);
+    setSelectedWall(null);
+  }, [selectedRoom]);
+
+  // Handle door selection
+  const handleDoorClick = useCallback((e, doorId) => {
+    e.cancelBubble = true;
+    setSelectedDoor(selectedDoor === doorId ? null : doorId);
+    setSelectedRoom(null);
+    setSelectedWall(null);
+  }, [selectedDoor]);
+
+  // Handle wall selection
+  const handleWallClick = useCallback((e, wallId) => {
+    e.cancelBubble = true;
+    setSelectedWall(selectedWall === wallId ? null : wallId);
+    setSelectedRoom(null);
+    setSelectedDoor(null);
+  }, [selectedWall]);
+
+  // Handle stage click (deselect)
+  const handleStageClick = useCallback((e) => {
+    if (!isEditable) return;
+    
+    // Check if clicked on empty area
+    if (e.target === e.target.getStage()) {
+      const pos = e.target.getPointerPosition();
+      const snappedX = snapToGridCoordinate(pos.x);
+      const snappedY = snapToGridCoordinate(pos.y);
+      
+      if (creationMode === 'room') {
+        if (!isCreating) {
+          // Start creating room
+          setNewElementStart({ x: snappedX, y: snappedY });
+          setIsCreating(true);
+        } else {
+          // Complete room creation
+          const width = Math.abs(snappedX - newElementStart.x);
+          const height = Math.abs(snappedY - newElementStart.y);
+          const x = Math.min(snappedX, newElementStart.x);
+          const y = Math.min(snappedY, newElementStart.y);
+          
+          const baseRoom = {
+            id: `created-room-${Date.now()}`,
+            x: x,
+            y: y,
+            width: width,
+            height: height,
+            fill: '#e3f2fd',
+            stroke: '#333',
+            strokeWidth: 2,
+            draggable: isEditable,
+            type: 'Room',
+            tag: 'room',
+            name: 'New Room',
+            originalX: (x - 40) / 1, // Assuming scale 1 for new rooms
+            originalY: (y - 40) / 1,
+            originalWidth: width,
+            originalHeight: height,
+            scale: 1
+          };
+          
+          // Calculate percentage based on drawn area
+          const drawnArea = width * height;
+          const requestedPercentage = calculateAreaPercentage(drawnArea);
+          
+          // Use area allocation system
+          const roomWithArea = addRoomWithAreaAllocation(baseRoom, requestedPercentage);
+          setRooms(prev => [...prev, roomWithArea]);
+          setSelectedRoom(baseRoom.id);
+          setIsCreating(false);
+          setNewElementStart(null);
+          setCreationMode(null);
+        }
+      } else if (creationMode === 'door') {
+        if (!isCreating) {
+          // Start creating door
+          setNewElementStart({ x: snappedX, y: snappedY });
+          setIsCreating(true);
+        } else {
+          // Complete door creation
+          const newDoor = {
+            id: `created-door-${Date.now()}`,
+            points: [newElementStart.x, newElementStart.y, snappedX, snappedY],
+            stroke: '#8B4513',
+            strokeWidth: 6,
+            lineCap: 'round'
+          };
+          setDoors(prev => [...prev, newDoor]);
+          setSelectedDoor(newDoor.id);
+          setIsCreating(false);
+          setNewElementStart(null);
+          setCreationMode(null);
+        }
+      } else if (creationMode === 'wall') {
+        if (!isCreating) {
+          // Start creating wall
+          setNewElementStart({ x: snappedX, y: snappedY });
+          setIsCreating(true);
+        } else {
+          // Complete wall creation
+          const newWall = {
+            id: `created-wall-${Date.now()}`,
+            points: [newElementStart.x, newElementStart.y, snappedX, snappedY],
+            stroke: wallColor,
+            strokeWidth: wallWidth,
+            lineCap: 'round',
+            type: 'Wall'
+          };
+          const updatedWalls = [...walls, newWall];
+          setWalls(updatedWalls);
+          setSelectedWall(newWall.id);
+          
+          // Notify parent component
+          if (onWallsChange) {
+            onWallsChange(updatedWalls);
+          }
+          
+          setIsCreating(false);
+          setNewElementStart(null);
+          setCreationMode(null);
+        }
+      } else if (creationMode === 'window') {
+        if (!isCreating) {
+          // Start creating window
+          setNewElementStart({ x: snappedX, y: snappedY });
+          setIsCreating(true);
+        } else {
+          // Complete window creation
+          const newWindow = {
+            id: `new-window-${Date.now()}`,
+            points: [newElementStart.x, newElementStart.y, snappedX, snappedY],
+            stroke: windowColor,
+            strokeWidth: windowWidth,
+            lineCap: 'round',
+            type: 'Window'
+          };
+          const updatedWindows = [...windows, newWindow];
+          setWindows(updatedWindows);
+          setSelectedWindow(newWindow.id);
+          
+          // Notify parent component
+          if (onWindowsChange) {
+            onWindowsChange(updatedWindows);
+          }
+          
+          setIsCreating(false);
+          setNewElementStart(null);
+          setCreationMode(null);
+        }
+      }
+    } else {
+      // Normal click - deselect all
+      setSelectedRoom(null);
+      setSelectedDoor(null);
+      setSelectedWall(null);
+      setSelectedWindow(null);
+    }
+  }, [isEditable, creationMode, isCreating, newElementStart, snapToGridCoordinate]);
+
+  // Resize handle component
+  const ResizeHandle = ({ x, y, onDrag, cursor = 'nw-resize' }) => (
+    <Rect
+      x={x - 4}
+      y={y - 4}
+      width={8}
+      height={8}
+      fill="#2196F3"
+      stroke="#1976D2"
+      strokeWidth={1}
+      draggable={isEditable}
+      onDragMove={onDrag}
+      style={{ cursor }}
+    />
+  );
+
+  return (
+    <div className="flex bg-gray-50">
+      {/* Left Sidebar - Quick Add Tools */}
+      {isEditable && (
+        <div className="w-64 bg-white border-r border-gray-300 p-4 space-y-4 overflow-y-auto">
+          {/* Quick Add Section */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="text-sm font-medium text-gray-900 mb-3">
+              🔨 Creation Tools
+            </div>
+            
+            <div className="space-y-2">
+              {/* Quick Add Door */}
+              <button
+                onClick={addNewDoor}
+                className="w-full px-3 py-2 text-xs rounded-lg border bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors"
+                title="Add door at center"
+              >
+                🚪 Add Door
+              </button>
+              
+              {/* Quick Add Wall */}
+              <button
+                onClick={addNewWall}
+                className="w-full px-3 py-2 text-xs rounded-lg border bg-slate-50 border-slate-300 text-slate-800 hover:bg-slate-100 transition-colors"
+                title="Add wall at center"
+              >
+                🧱 Add Wall
+              </button>
+              
+              {/* Quick Add Window */}
+              <button
+                onClick={() => {
+                  const newWindow = {
+                    id: `new-window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    points: [300, 200, 380, 200],
+                    stroke: windowColor,
+                    strokeWidth: windowWidth,
+                    lineCap: 'round',
+                    type: 'Window'
+                  };
+                  const updatedWindows = [...windows, newWindow];
+                  setWindows(updatedWindows);
+                  setSelectedWindow(newWindow.id);
+                  setSelectedDoor(null);
+                  setSelectedWall(null);
+                  setSelectedRoom(null);
+                  
+                  if (onWindowsChange) {
+                    onWindowsChange(updatedWindows);
+                  }
+                }}
+                className="w-full px-3 py-2 text-xs rounded-lg border bg-cyan-50 border-cyan-300 text-cyan-800 hover:bg-cyan-100 transition-colors"
+                title="Add window at center"
+              >
+                🪟 Add Window
+              </button>
+              
+              {/* Quick Add Room */}
+              <button
+                onClick={() => {
+                  const roomId = `new-room-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                  const newRoom = {
+                    id: roomId,
+                    x: 100,
+                    y: 100,
+                    width: 150,
+                    height: 120,
+                    fill: getRoomColor('Room'),
+                    stroke: '#333',
+                    strokeWidth: 2,
+                    draggable: isEditable,
+                    tag: `Room ${rooms.length + 1}`,
+                    type: 'Room',
+                    name: `New Room ${rooms.length + 1}`,
+                    originalX: 60, // (100 - 40) / 1 = 60, margin = 40, scale = 1
+                    originalY: 60,
+                    originalWidth: 150,
+                    originalHeight: 120,
+                    scale: 1
+                  };
+                  const updatedRooms = [...rooms, newRoom];
+                  setRooms(updatedRooms);
+                  setSelectedRoom(roomId);
+                  setSelectedDoor(null);
+                  setSelectedWall(null);
+                  setSelectedWindow(null);
+                  
+                  // Initialize percentage for new room
+                  const roomArea = 150 * 120; // width * height
+                  const percentage = calculateAreaPercentage(roomArea);
+                  setRoomPercentages(prev => ({
+                    ...prev,
+                    [roomId]: percentage
+                  }));
+                  
+                  if (onRoomsChange) {
+                    onRoomsChange(updatedRooms);
+                  }
+                }}
+                className="w-full px-3 py-2 text-xs rounded-lg border bg-purple-50 border-purple-300 text-purple-800 hover:bg-purple-100 transition-colors"
+                title="Add room at center"
+              >
+                🏠 Add Room
+              </button>
+            </div>
+          </div>
+
+          {/* Grid Settings */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="text-sm font-medium text-gray-900 mb-3">
+              📐 Grid Settings
+            </div>
+            
+            <div className="space-y-2">
+              {/* Grid Snap Toggle */}
+              <button
+                onClick={() => setSnapToGrid(!snapToGrid)}
+                className={`w-full px-3 py-2 text-xs rounded-lg border transition-colors ${
+                  snapToGrid 
+                    ? 'bg-green-50 border-green-300 text-green-800 hover:bg-green-100' 
+                    : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100'
+                }`}
+                title={snapToGrid ? 'Grid snap enabled (25px)' : 'Grid snap disabled'}
+              >
+                {snapToGrid ? '✓ 25px Grid: ON' : '✗ 25px Grid: OFF'}
+              </button>
+              
+              <div className="text-xs text-gray-500 text-center">
+                {snapToGrid 
+                  ? 'Elements snap to 25px grid' 
+                  : 'Free positioning enabled'}
+              </div>
+            </div>
+          </div>
+
+          {/* Door/Wall Customization Panel */}
+          {(selectedDoor || selectedWall) && !selectedRoom && (
+            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div className="text-sm font-medium text-gray-900 mb-3">
+                🎨 Customize {selectedDoor ? 'Door' : 'Wall'}
+              </div>
+              
+              {selectedDoor && (
+                <div className="space-y-3">
+                  {/* Door Color */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Door Color
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="color"
+                        value={doors.find(d => d.id === selectedDoor)?.stroke || doorColor}
+                        onChange={(e) => customizeDoor('stroke', e.target.value)}
+                        className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={doors.find(d => d.id === selectedDoor)?.stroke || doorColor}
+                        onChange={(e) => customizeDoor('stroke', e.target.value)}
+                        className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
+                        placeholder="#8B4513"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Door Width */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Door Width: {doors.find(d => d.id === selectedDoor)?.strokeWidth || doorWidth}px
+                    </label>
+                    <input
+                      type="range"
+                      min="2"
+                      max="15"
+                      value={doors.find(d => d.id === selectedDoor)?.strokeWidth || doorWidth}
+                      onChange={(e) => customizeDoor('strokeWidth', parseInt(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {selectedWall && (
+                <div className="space-y-3">
+                  {/* Wall Color */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Wall Color
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="color"
+                        value={walls.find(w => w.id === selectedWall)?.stroke || wallColor}
+                        onChange={(e) => customizeWall('stroke', e.target.value)}
+                        className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={walls.find(w => w.id === selectedWall)?.stroke || wallColor}
+                        onChange={(e) => customizeWall('stroke', e.target.value)}
+                        className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
+                        placeholder="#000000"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Wall Width */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Wall Width: {walls.find(w => w.id === selectedWall)?.strokeWidth || wallWidth}px
+                    </label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="20"
+                      value={walls.find(w => w.id === selectedWall)?.strokeWidth || wallWidth}
+                      onChange={(e) => customizeWall('strokeWidth', parseInt(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Room Type Distribution Panel */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="text-sm font-medium text-gray-900 mb-2">
+              🏠 Room Types
+            </div>
+            <div className="space-y-2">
+              {Object.entries(roomTypeDistribution).map(([roomType, percentage]) => (
+                <div key={roomType} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-700 font-medium">{roomType}:</span>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {getRoomsOfType(roomType).length} room{getRoomsOfType(roomType).length !== 1 ? 's' : ''}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* Main Floor Plan Area */}
+      <div className="flex-1 relative border border-gray-300 rounded-lg overflow-hidden bg-white">
+        {/* Canvas */}
+        <Stage
+          width={width}
+          height={height}
+          ref={stageRef}
+          onClick={handleStageClick}
+          onMouseMove={handleStageMouseMove}
+          onMouseUp={handleStageMouseUp}
+          className={`cursor-${creationMode ? 'crosshair' : 'default'}`}
+        >
+        <Layer>
+          {/* Grid background */}
+          {isEditable && (
+            <>
+              {/* Vertical grid lines */}
+              {Array.from({ length: Math.floor(width / 25) + 1 }, (_, i) => (
+                <Line
+                  key={`v-grid-${i}`}
+                  points={[i * 25, 0, i * 25, height]}
+                  stroke="#e0e0e0"
+                  strokeWidth={0.5}
+                  opacity={0.5}
+                />
+              ))}
+              {/* Horizontal grid lines */}
+              {Array.from({ length: Math.floor(height / 25) + 1 }, (_, i) => (
+                <Line
+                  key={`h-grid-${i}`}
+                  points={[0, i * 25, width, i * 25]}
+                  stroke="#e0e0e0"
+                  strokeWidth={0.5}
+                  opacity={0.5}
+                />
+              ))}
+            </>
+          )}
+
+          {/* Outer Boundary Wall - dynamically wraps around rooms */}
+          {/* Calculate boundary based on actual room positions */}
+          {(() => {
+            // Find the bounding box of all rooms
+            let minRoomX = Infinity, minRoomY = Infinity, maxRoomX = -Infinity, maxRoomY = -Infinity;
+            rooms.forEach(room => {
+              minRoomX = Math.min(minRoomX, room.x);
+              minRoomY = Math.min(minRoomY, room.y);
+              maxRoomX = Math.max(maxRoomX, room.x + room.width);
+              maxRoomY = Math.max(maxRoomY, room.y + room.height);
+            });
+            
+            // If no rooms, use canvas dimensions
+            if (!isFinite(minRoomX)) {
+              minRoomX = 40;
+              minRoomY = 40;
+              maxRoomX = width - 40;
+              maxRoomY = height - 40;
+            }
+            
+            const wallPadding = 15; // Padding from rooms to boundary wall
+            const boundaryX = minRoomX - wallPadding;
+            const boundaryY = minRoomY - wallPadding;
+            const boundaryWidth = (maxRoomX - minRoomX) + wallPadding * 2;
+            const boundaryHeight = (maxRoomY - minRoomY) + wallPadding * 2;
+            
+            return (
+              <>
+                {/* Outer boundary line */}
+                <Rect
+                  x={boundaryX}
+                  y={boundaryY}
+                  width={boundaryWidth}
+                  height={boundaryHeight}
+                  fill="transparent"
+                  stroke="#5D4037"
+                  strokeWidth={6}
+                />
+                
+                {/* Inner boundary line - creates double wall effect */}
+                <Rect
+                  x={boundaryX + 8}
+                  y={boundaryY + 8}
+                  width={boundaryWidth - 16}
+                  height={boundaryHeight - 16}
+                  fill="transparent"
+                  stroke="#8D6E63"
+                  strokeWidth={2}
+                />
+              </>
+            );
+          })()}
+
+          {/* Rooms */}
+          {rooms.map((room, index) => {
+            // Always render the room being resized or dragged, or if it's the selected room
+            const isBeingResized = resizingRoom === room.id;
+            const isBeingDragged = isDragging && selectedRoom === room.id;
+            const isSelected = selectedRoom === room.id;
+            
+            // Validate room has all required properties
+            const isValid = room && 
+              typeof room.x === 'number' && 
+              typeof room.y === 'number' && 
+              typeof room.width === 'number' && 
+              typeof room.height === 'number' &&
+              !isNaN(room.x) && 
+              !isNaN(room.y) && 
+              !isNaN(room.width) && 
+              !isNaN(room.height) &&
+              room.width > 0 && 
+              room.height > 0;
+            
+            // Always show the room if it's being interacted with
+            if (!isValid && !isBeingResized && !isBeingDragged && !isSelected) {
+              console.error('Invalid room detected:', room);
+              return null;
+            }
+            
+            // Ensure minimum dimensions for rendering
+            const renderWidth = Math.max(1, room.width || 50);
+            const renderHeight = Math.max(1, room.height || 50);
+            
+            return (
+            <Group key={room.id}>
+              {/* Room rectangle */}
+              <Rect
+                x={room.x}
+                y={room.y}
+                width={renderWidth}
+                height={renderHeight}
+                fill={room.fill}
+                stroke={selectedRoom === room.id ? '#2196F3' : room.stroke}
+                strokeWidth={selectedRoom === room.id ? 3 : room.strokeWidth}
+                draggable={room.draggable}
+                onDragStart={(e) => handleRoomDragStart(e, room.id)}
+                onDragMove={(e) => handleRoomDragMove(e, room.id)}
+                onDragEnd={(e) => handleRoomDragEnd(e, room.id)}
+                onClick={(e) => handleRoomClick(e, room.id)}
+                style={{ cursor: isEditable ? 'move' : 'default' }}
+                shadowBlur={selectedRoom === room.id ? 10 : 0}
+                shadowColor="rgba(33, 150, 243, 0.5)"
+              />
+
+              {/* Room label - centered */}
+              <Text
+                x={room.x}
+                y={room.y + renderHeight / 2}
+                text={room.name || 'Room'}
+                fontSize={Math.min(16, Math.max(10, Math.min(renderWidth, renderHeight) / 8))}
+                fontFamily="Arial"
+                fontStyle="bold"
+                fill="#000000"
+                align="center"
+                verticalAlign="middle"
+                width={renderWidth}
+                offsetY={8}
+                listening={false}
+              />
+
+              {/* Room dimensions - below label */}
+              <Text
+                x={room.x}
+                y={room.y + renderHeight / 2}
+                text={`${Math.round(renderWidth)}×${Math.round(renderHeight)}`}
+                fontSize={Math.min(12, Math.max(8, Math.min(renderWidth, renderHeight) / 12))}
+                fontFamily="Arial"
+                fill="#333333"
+                align="center"
+                verticalAlign="middle"
+                width={renderWidth}
+                offsetY={-8}
+                listening={false}
+              />
+
+              {/* Resize handles for selected room */}
+              {selectedRoom === room.id && isEditable && (
+                <>
+                  {/* Bottom-right corner handle */}
+                  <Rect
+                    x={room.x + renderWidth - 4}
+                    y={room.y + renderHeight - 4}
+                    width={8}
+                    height={8}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={1}
+                    onMouseDown={(e) => {
+                      e.cancelBubble = true;
+                      isUserInteracting.current = true;
+                      setResizingRoom(room.id);
+                      setResizeHandle('br');
+                    }}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = 'nwse-resize';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!resizingRoom) {
+                        const container = e.target.getStage().container();
+                        container.style.cursor = 'default';
+                      }
+                    }}
+                  />
+                  
+                  {/* Right edge handle */}
+                  <Rect
+                    x={room.x + renderWidth - 4}
+                    y={room.y + renderHeight / 2 - 4}
+                    width={8}
+                    height={8}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={1}
+                    onMouseDown={(e) => {
+                      e.cancelBubble = true;
+                      isUserInteracting.current = true;
+                      setResizingRoom(room.id);
+                      setResizeHandle('r');
+                    }}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = 'ew-resize';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!resizingRoom) {
+                        const container = e.target.getStage().container();
+                        container.style.cursor = 'default';
+                      }
+                    }}
+                  />
+                  
+                  {/* Bottom edge handle */}
+                  <Rect
+                    x={room.x + renderWidth / 2 - 4}
+                    y={room.y + renderHeight - 4}
+                    width={8}
+                    height={8}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={1}
+                    onMouseDown={(e) => {
+                      e.cancelBubble = true;
+                      isUserInteracting.current = true;
+                      setResizingRoom(room.id);
+                      setResizeHandle('b');
+                    }}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = 'ns-resize';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!resizingRoom) {
+                        const container = e.target.getStage().container();
+                        container.style.cursor = 'default';
+                      }
+                    }}
+                  />
+                  
+                  {/* Top edge handle */}
+                  <Rect
+                    x={room.x + renderWidth / 2 - 4}
+                    y={room.y - 4}
+                    width={8}
+                    height={8}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={1}
+                    onMouseDown={(e) => {
+                      e.cancelBubble = true;
+                      isUserInteracting.current = true;
+                      setResizingRoom(room.id);
+                      setResizeHandle('t');
+                    }}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = 'ns-resize';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!resizingRoom) {
+                        const container = e.target.getStage().container();
+                        container.style.cursor = 'default';
+                      }
+                    }}
+                  />
+                  
+                  {/* Left edge handle */}
+                  <Rect
+                    x={room.x - 4}
+                    y={room.y + renderHeight / 2 - 4}
+                    width={8}
+                    height={8}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={1}
+                    onMouseDown={(e) => {
+                      e.cancelBubble = true;
+                      isUserInteracting.current = true;
+                      setResizingRoom(room.id);
+                      setResizeHandle('l');
+                    }}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = 'ew-resize';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!resizingRoom) {
+                        const container = e.target.getStage().container();
+                        container.style.cursor = 'default';
+                      }
+                    }}
+                  />
+                  
+                  {/* Top-left corner handle */}
+                  <Rect
+                    x={room.x - 4}
+                    y={room.y - 4}
+                    width={8}
+                    height={8}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={1}
+                    onMouseDown={(e) => {
+                      e.cancelBubble = true;
+                      isUserInteracting.current = true;
+                      setResizingRoom(room.id);
+                      setResizeHandle('tl');
+                    }}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = 'nwse-resize';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!resizingRoom) {
+                        const container = e.target.getStage().container();
+                        container.style.cursor = 'default';
+                      }
+                    }}
+                  />
+                  
+                  {/* Top-right corner handle */}
+                  <Rect
+                    x={room.x + renderWidth - 4}
+                    y={room.y - 4}
+                    width={8}
+                    height={8}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={1}
+                    onMouseDown={(e) => {
+                      e.cancelBubble = true;
+                      isUserInteracting.current = true;
+                      setResizingRoom(room.id);
+                      setResizeHandle('tr');
+                    }}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = 'nesw-resize';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!resizingRoom) {
+                        const container = e.target.getStage().container();
+                        container.style.cursor = 'default';
+                      }
+                    }}
+                  />
+                  
+                  {/* Bottom-left corner handle */}
+                  <Rect
+                    x={room.x - 4}
+                    y={room.y + renderHeight - 4}
+                    width={8}
+                    height={8}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={1}
+                    onMouseDown={(e) => {
+                      e.cancelBubble = true;
+                      isUserInteracting.current = true;
+                      setResizingRoom(room.id);
+                      setResizeHandle('bl');
+                    }}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = 'nesw-resize';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!resizingRoom) {
+                        const container = e.target.getStage().container();
+                        container.style.cursor = 'default';
+                      }
+                    }}
+                  />
+                </>
+              )}
+            </Group>
+            );
+          })}
+
+          {/* Walls - render on top of rooms */}
+          {walls.map(wall => (
+            <Group key={wall.id}>
+              <Line
+                x={0}
+                y={0}
+                points={wall.points}
+                stroke={selectedWall === wall.id ? '#2196F3' : wall.stroke}
+                strokeWidth={selectedWall === wall.id ? wall.strokeWidth + 2 : wall.strokeWidth}
+                lineCap={wall.lineCap}
+                draggable={isEditable}
+                onDragStart={(e) => handleWallDragStart(e, wall.id)}
+                onDragEnd={(e) => handleWallDragEnd(e, wall.id)}
+                onClick={(e) => handleWallClick(e, wall.id)}
+                style={{ cursor: isEditable ? 'move' : 'default' }}
+              />
+              {/* Wall selection indicator */}
+              {selectedWall === wall.id && isEditable && (
+                <>
+                  {/* Start point handle */}
+                  <Circle
+                    x={wall.points[0]}
+                    y={wall.points[1]}
+                    radius={6}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={2}
+                    draggable={true}
+                    onDragMove={(e) => {
+                      const newX = e.target.x();
+                      const newY = e.target.y();
+                      const updatedWalls = walls.map(w => 
+                        w.id === wall.id 
+                          ? { ...w, points: [newX, newY, w.points[2], w.points[3]] }
+                          : w
+                      );
+                      setWalls(updatedWalls);
+                    }}
+                    onDragEnd={(e) => {
+                      const newX = e.target.x();
+                      const newY = e.target.y();
+                      const updatedWalls = walls.map(w => 
+                        w.id === wall.id 
+                          ? { ...w, points: [newX, newY, w.points[2], w.points[3]] }
+                          : w
+                      );
+                      // Notify parent component
+                      if (onWallsChange) {
+                        onWallsChange(updatedWalls);
+                      }
+                      e.target.position({ x: wall.points[0], y: wall.points[1] });
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  {/* End point handle */}
+                  <Circle
+                    x={wall.points[2]}
+                    y={wall.points[3]}
+                    radius={6}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={2}
+                    draggable={true}
+                    onDragMove={(e) => {
+                      const newX = e.target.x();
+                      const newY = e.target.y();
+                      const updatedWalls = walls.map(w => 
+                        w.id === wall.id 
+                          ? { ...w, points: [w.points[0], w.points[1], newX, newY] }
+                          : w
+                      );
+                      setWalls(updatedWalls);
+                    }}
+                    onDragEnd={(e) => {
+                      const newX = e.target.x();
+                      const newY = e.target.y();
+                      const updatedWalls = walls.map(w => 
+                        w.id === wall.id 
+                          ? { ...w, points: [w.points[0], w.points[1], newX, newY] }
+                          : w
+                      );
+                      // Notify parent component
+                      if (onWallsChange) {
+                        onWallsChange(updatedWalls);
+                      }
+                      e.target.position({ x: wall.points[2], y: wall.points[3] });
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </>
+              )}
+            </Group>
+          ))}
+
+          {/* Doors - render on top */}
+          {doors.map(door => {
+            const x1 = door.points[0];
+            const y1 = door.points[1];
+            const x2 = door.points[2];
+            const y2 = door.points[3];
+            
+            const isSelected = selectedDoor === door.id;
+            
+            // Calculate door length (arc radius)
+            const doorLength = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+            
+            // Calculate angle of the door line
+            const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
+            
+            return (
+              <Group key={door.id}>
+                {/* Door swing arc - 90 degree arc showing door swing */}
+                <Arc
+                  x={x1}
+                  y={y1}
+                  innerRadius={0}
+                  outerRadius={doorLength}
+                  angle={90}
+                  rotation={angle}
+                  fill="transparent"
+                  stroke={isSelected ? "#2196F3" : "#8B4513"}
+                  strokeWidth={2}
+                  draggable={isEditable}
+                  onDragStart={(e) => handleDoorDragStart(e, door.id)}
+                  onDragMove={(e) => handleDoorDragMove(e, door.id)}
+                  onDragEnd={(e) => handleDoorDragEnd(e, door.id)}
+                  onClick={(e) => handleDoorClick(e, door.id)}
+                  style={{ cursor: isEditable ? 'move' : 'default' }}
+                />
+                
+                {/* Door selection indicators */}
+                {isSelected && isEditable && (
+                  <>
+                    {/* Start point handle */}
+                    <Circle
+                      x={x1}
+                      y={y1}
+                      radius={6}
+                      fill="#2196F3"
+                      stroke="#1976D2"
+                      strokeWidth={2}
+                      draggable={false}
+                    />
+                    {/* End point handle */}
+                    <Circle
+                      x={x2}
+                      y={y2}
+                      radius={6}
+                      fill="#2196F3"
+                      stroke="#1976D2"
+                      strokeWidth={2}
+                      draggable={false}
+                    />
+                  </>
+                )}
+              </Group>
+            );
+          })}
+
+          {/* Windows - render on top */}
+          {windows.map(window => {
+            const x1 = window.points[0];
+            const y1 = window.points[1];
+            const x2 = window.points[2];
+            const y2 = window.points[3];
+            
+            const isSelected = selectedWindow === window.id;
+            
+            return (
+              <Group key={window.id}>
+                {/* Window - light blue line */}
+                <Line
+                  points={[x1, y1, x2, y2]}
+                  stroke={isSelected ? "#2196F3" : "#87CEEB"}
+                  strokeWidth={Math.max(6, window.strokeWidth * 1.5)}
+                  lineCap="round"
+                  draggable={isEditable}
+                  onDragStart={(e) => handleWindowDragStart(e, window.id)}
+                  onDragMove={(e) => handleWindowDragMove(e, window.id)}
+                  onDragEnd={(e) => handleWindowDragEnd(e, window.id)}
+                  onClick={(e) => handleWindowClick(e, window.id)}
+                  style={{ cursor: isEditable ? 'move' : 'default' }}
+                />
+                
+                {/* Window selection indicators */}
+                {isSelected && isEditable && (
+                  <>
+                    {/* Start point handle */}
+                    <Circle
+                      x={x1}
+                      y={y1}
+                      radius={6}
+                      fill="#87CEEB"
+                      stroke="#4682B4"
+                      strokeWidth={2}
+                      draggable={false}
+                    />
+                    {/* End point handle */}
+                    <Circle
+                      x={x2}
+                      y={y2}
+                      radius={6}
+                      fill="#87CEEB"
+                      stroke="#4682B4"
+                      strokeWidth={2}
+                      draggable={false}
+                    />
+                  </>
+                )}
+              </Group>
+            );
+          })}
+
+          {/* Creation preview */}
+          {isCreating && newElementStart && (
+            <>
+              {creationMode === 'room' ? (
+                <Rect
+                  x={Math.min(newElementStart.x, stageRef.current?.getPointerPosition()?.x || newElementStart.x)}
+                  y={Math.min(newElementStart.y, stageRef.current?.getPointerPosition()?.y || newElementStart.y)}
+                  width={Math.abs((stageRef.current?.getPointerPosition()?.x || newElementStart.x) - newElementStart.x)}
+                  height={Math.abs((stageRef.current?.getPointerPosition()?.y || newElementStart.y) - newElementStart.y)}
+                  fill="rgba(227, 242, 253, 0.5)"
+                  stroke="#2196F3"
+                  strokeWidth={2}
+                  dash={[5, 5]}
+                />
+              ) : (
+                <Line
+                  points={[
+                    newElementStart.x, 
+                    newElementStart.y, 
+                    stageRef.current?.getPointerPosition()?.x || newElementStart.x,
+                    stageRef.current?.getPointerPosition()?.y || newElementStart.y
+                  ]}
+                  stroke={creationMode === 'door' ? '#4CAF50' : creationMode === 'wall' ? '#2196F3' : '#9C27B0'}
+                  strokeWidth={creationMode === 'door' ? 6 : 4}
+                  lineCap="round"
+                  dash={[5, 5]}
+                  opacity={0.7}
+                />
+              )}
+            </>
+          )}
+        </Layer>
+      </Stage>
+
+      {/* Selection Info - moved to bottom right of floor plan area */}
+      {(selectedRoom || selectedDoor || selectedWall) && (
+        <div className="absolute bottom-4 right-4 bg-white border border-gray-300 rounded-lg p-3 shadow-lg max-w-xs">
+          {selectedRoom && (
+            <>
+              <div className="text-sm font-medium text-gray-900 flex items-center">
+                <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded mr-2"></div>
+                Room: {rooms.find(r => r.id === selectedRoom)?.name || selectedRoom}
+              </div>
+              <div className="text-xs text-gray-600 mt-1">
+                Position: ({Math.round(rooms.find(r => r.id === selectedRoom)?.x || 0)}, {Math.round(rooms.find(r => r.id === selectedRoom)?.y || 0)})
+              </div>
+              <div className="text-xs text-gray-600">
+                Size: {Math.round(rooms.find(r => r.id === selectedRoom)?.width || 0)}×{Math.round(rooms.find(r => r.id === selectedRoom)?.height || 0)}
+              </div>
+            </>
+          )}
+          
+          {selectedDoor && (
+            <>
+              <div className="text-sm font-medium text-gray-900 flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v11a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3" />
+                </svg>
+                Door: {selectedDoor}
+              </div>
+              <div className="text-xs text-gray-600 mt-1">
+                Start: ({Math.round(doors.find(d => d.id === selectedDoor)?.points[0] || 0)}, {Math.round(doors.find(d => d.id === selectedDoor)?.points[1] || 0)})
+              </div>
+              <div className="text-xs text-gray-600">
+                End: ({Math.round(doors.find(d => d.id === selectedDoor)?.points[2] || 0)}, {Math.round(doors.find(d => d.id === selectedDoor)?.points[3] || 0)})
+              </div>
+            </>
+          )}
+          
+          {selectedWall && (
+            <>
+              <div className="text-sm font-medium text-gray-900 flex items-center">
+                <div className="w-4 h-1 bg-gray-600 mr-2"></div>
+                Wall: {selectedWall}
+              </div>
+              <div className="text-xs text-gray-600 mt-1">
+                Start: ({Math.round(walls.find(w => w.id === selectedWall)?.points[0] || 0)}, {Math.round(walls.find(w => w.id === selectedWall)?.points[1] || 0)})
+              </div>
+              <div className="text-xs text-gray-600">
+                End: ({Math.round(walls.find(w => w.id === selectedWall)?.points[2] || 0)}, {Math.round(walls.find(w => w.id === selectedWall)?.points[3] || 0)})
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+    </div>
+  );
+};
+
+export default KonvaFloorPlan;

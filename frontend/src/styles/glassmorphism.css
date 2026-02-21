@@ -1,0 +1,228 @@
+/* Glassmorphism Modal Styles */
+
+/* Base backdrop with blur effect */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Base modal with glass effect */
+.modal-glass {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Form modal with dark glass effect */
+.modal-dark-glass {
+  background: rgba(47, 61, 87, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Premium Advertisement Glass Effect */
+.ad-premium-glass {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.90) 50%,
+    rgba(255, 255, 255, 0.85) 100%
+  );
+  backdrop-filter: blur(25px) saturate(1.2);
+  -webkit-backdrop-filter: blur(25px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 35px 70px -12px rgba(0, 0, 0, 0.25),
+    0 10px 30px -5px rgba(237, 118, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Professional Button Glass Effects */
+.btn-glass-primary {
+  background: linear-gradient(135deg,
+    rgba(237, 118, 0, 0.9) 0%,
+    rgba(255, 153, 51, 0.9) 50%,
+    rgba(255, 215, 0, 0.9) 100%
+  );
+  backdrop-filter: blur(10px) brightness(1.1);
+  -webkit-backdrop-filter: blur(10px) brightness(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 8px 25px rgba(237, 118, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-glass-primary:hover {
+  background: linear-gradient(135deg,
+    rgba(255, 153, 51, 0.95) 0%,
+    rgba(255, 215, 0, 0.95) 50%,
+    rgba(255, 235, 59, 0.95) 100%
+  );
+  box-shadow: 
+    0 15px 35px rgba(237, 118, 0, 0.4),
+    0 5px 15px rgba(255, 153, 51, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.btn-glass-secondary {
+  background: linear-gradient(135deg,
+    rgba(47, 61, 87, 0.9) 0%,
+    rgba(30, 42, 58, 0.9) 50%,
+    rgba(15, 20, 25, 0.9) 100%
+  );
+  backdrop-filter: blur(10px) brightness(1.1);
+  -webkit-backdrop-filter: blur(10px) brightness(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 25px rgba(47, 61, 87, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-glass-secondary:hover {
+  background: linear-gradient(135deg,
+    rgba(30, 42, 58, 0.95) 0%,
+    rgba(15, 20, 25, 0.95) 50%,
+    rgba(0, 0, 0, 0.95) 100%
+  );
+  box-shadow: 
+    0 15px 35px rgba(47, 61, 87, 0.4),
+    0 5px 15px rgba(30, 42, 58, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Premium Floating Elements */
+.floating-particles::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(237, 118, 0, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255, 153, 51, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(255, 215, 0, 0.06) 0%, transparent 50%);
+  animation: floatingParticles 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes floatingParticles {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+/* Premium Card Hover Effects */
+.card-premium-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.card-premium-hover:hover {
+  transform: 
+    perspective(1000px) 
+    rotateX(-5deg) 
+    rotateY(5deg) 
+    translateY(-8px) 
+    scale(1.02);
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.2),
+    0 15px 35px rgba(237, 118, 0, 0.15),
+    inset 0 2px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Modal animation */
+.modal-animate {
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+/* Premium Modal Animation */
+.modal-premium-animate {
+  animation: modalPremiumEntry 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modalPremiumEntry {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(30px) rotateX(-15deg);
+    filter: blur(10px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05) translateY(-5px) rotateX(5deg);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotateX(0deg);
+    filter: blur(0px);
+  }
+}
+
+/* Premium Glow Effects */
+.glow-orange {
+  box-shadow: 
+    0 0 20px rgba(237, 118, 0, 0.3),
+    0 0 40px rgba(237, 118, 0, 0.2),
+    0 0 60px rgba(237, 118, 0, 0.1);
+}
+
+.glow-blue {
+  box-shadow: 
+    0 0 20px rgba(59, 130, 246, 0.3),
+    0 0 40px rgba(59, 130, 246, 0.2),
+    0 0 60px rgba(59, 130, 246, 0.1);
+}
+
+.glow-purple {
+  box-shadow: 
+    0 0 20px rgba(139, 92, 246, 0.3),
+    0 0 40px rgba(139, 92, 246, 0.2),
+    0 0 60px rgba(139, 92, 246, 0.1);
+}
+
+/* Browser compatibility for older browsers */
+@supports not (backdrop-filter: blur()) {
+  .modal-backdrop {
+    background: rgba(0, 0, 0, 0.4);
+  }
+  
+  .modal-glass {
+    background: rgba(255, 255, 255, 0.98);
+  }
+  
+  .modal-dark-glass {
+    background: rgba(47, 61, 87, 0.98);
+  }
+  
+  .ad-premium-glass {
+    background: rgba(255, 255, 255, 0.98);
+  }
+  
+  .btn-glass-primary {
+    background: linear-gradient(135deg, #ED7600, #FF9933, #FFD700);
+  }
+  
+  .btn-glass-secondary {
+    background: linear-gradient(135deg, #2F3D57, #1e2a3a, #0f1419);
+  }
+}

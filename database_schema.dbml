@@ -1,0 +1,237 @@
+// NextGenArchitect Database Schema for dbdiagram.io
+// Use this at: https://dbdiagram.io/
+
+Table users {
+  _id ObjectId [pk]
+  username varchar
+  email varchar [unique]
+  password_hash varchar
+  role varchar [note: 'user, society, admin']
+  is_verified boolean [default: false]
+  created_at timestamp
+  indexes {
+    email [unique]
+  }
+}
+
+Table user_profiles {
+  _id ObjectId [pk]
+  user_id ObjectId [ref: > users._id]
+  cnic varchar
+  first_name varchar
+  last_name varchar
+  phone varchar
+  profile_image_url varchar
+  cnic_front_url varchar
+  cnic_back_url varchar
+  address json [note: 'Address object with street, city, etc.']
+  is_verified boolean [default: false]
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    user_id [unique]
+  }
+}
+
+Table society_registration_forms {
+  _id ObjectId [pk]
+  user_id ObjectId [ref: > users._id]
+  name varchar [note: 'Society name']
+  type varchar [note: 'Society type']
+  regNo varchar [note: 'Registration number']
+  established varchar [note: 'Year established']
+  authority varchar [note: 'Registering authority']
+  contact json [note: 'Contact details']
+  website varchar
+  plots int [note: 'Number of plots']
+  status varchar [default: 'pending', note: 'pending, approved, rejected']
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    user_id
+    status
+  }
+}
+
+Table society_profiles {
+  _id ObjectId [pk]
+  user_id ObjectId [ref: > users._id]
+  name varchar [note: 'Society name']
+  description text
+  location varchar
+  available_plots varchar
+  price_range varchar
+  society_logo text [note: 'Base64 image or URL']
+  is_complete boolean [default: false]
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    user_id [unique]
+    name
+  }
+}
+
+Table plots {
+  _id ObjectId [pk]
+  plot_id varchar [unique]
+  plot_number varchar
+  societyId ObjectId [ref: > society_profiles._id]
+  image text [note: 'Base64 image or URL']
+  price decimal
+  status varchar [default: 'Available', note: 'Available, Sold, Reserved']
+  type varchar [default: 'Residential Plot']
+  area varchar
+  dimension_x int
+  dimension_y int
+  location varchar
+  description json [note: 'Array of description items']
+  seller json [note: 'Seller information']
+  amenities json [note: 'Array of amenities']
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    plot_id [unique]
+    societyId
+    status
+  }
+}
+
+Table reviews {
+  _id ObjectId [pk]
+  plot_id varchar [ref: > plots.plot_id]
+  user_email varchar [ref: > users.email]
+  rating int [note: '1-5 rating']
+  comment text
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    plot_id
+    user_email
+  }
+}
+
+Table approval_requests {
+  _id ObjectId [pk]
+  user_id ObjectId [ref: > users._id]
+  society_id ObjectId [ref: > society_profiles._id]
+  plot_id varchar [ref: > plots.plot_id]
+  design_type varchar
+  floor_plan_file_url varchar
+  notes text
+  status varchar [default: 'Pending', note: 'Pending, Approved, Rejected, In Review']
+  request_date timestamp
+  admin_comments text
+  reviewed_by ObjectId [ref: > users._id]
+  reviewed_at timestamp
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    user_id
+    society_id
+    status
+    plot_id
+  }
+}
+
+Table advertisement_plans {
+  _id ObjectId [pk]
+  name varchar [note: 'weekly, monthly, quarterly, yearly']
+  duration_days int [note: 'Duration in days']
+  price decimal [note: 'Plan price']
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    is_active
+  }
+}
+
+Table advertisements {
+  _id ObjectId [pk]
+  user_email varchar [note: 'User who created the ad']
+  title varchar [note: 'Advertisement title']
+  featured_image varchar [note: 'Main image URL/path']
+  link_url varchar [note: 'Optional - external link']
+  plan_id ObjectId [ref: > advertisement_plans._id]
+  plan_name varchar [note: 'Cached plan name']
+  price decimal [note: 'Amount paid']
+  start_date timestamp [note: 'When ad becomes active']
+  end_date timestamp [note: 'When ad expires']
+  status varchar [default: 'pending', note: 'pending, active, expired, rejected']
+  clicks int [default: 0]
+  impressions int [default: 0]
+  admin_notes text [note: 'Admin approval/rejection notes']
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    user_email
+    status
+    start_date
+    end_date
+  }
+}
+
+Table floorplans {
+  _id ObjectId [pk]
+  user_id ObjectId [ref: > users._id]
+  project_name varchar
+  floor_plan_data json [note: 'Generated floor plan data (walls, doors, labels)']
+  room_data json [note: 'Room coordinate and dimension data']
+  constraints json [note: 'Input constraints used for generation']
+  dimensions json [note: 'width, height']
+  room_requirements json [note: 'rooms, connections, proportions, percentages']
+  generation_parameters json [note: 'algorithm, generations, population_size, fitness_score']
+  is_favorite boolean [default: false]
+  tags json [note: 'User-defined tags']
+  status varchar [default: 'draft', note: 'active, archived, draft']
+  version int [default: 1]
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    user_id
+    status
+    is_favorite
+  }
+}
+
+Table email_verifications {
+  _id ObjectId [pk]
+  email varchar [ref: > users.email]
+  code varchar [unique, note: '6-digit verification code']
+  created_at timestamp
+  expires_at timestamp [note: 'TTL index - auto-delete after expiration']
+  is_used boolean [default: false]
+  indexes {
+    code [unique]
+    email
+    expires_at [note: 'TTL index with expireAfterSeconds=0']
+  }
+}
+
+Table user_activities {
+  _id ObjectId [pk]
+  user_id ObjectId [ref: > users._id]
+  activity_type varchar [note: 'profile_update, request_submitted, etc.']
+  description text
+  metadata json [note: 'Additional activity data']
+  timestamp timestamp
+  indexes {
+    user_id
+    timestamp
+  }
+}
+
+// Relationships Summary:
+// - users -> user_profiles (1:1)
+// - users -> society_registration_forms (1:1 for society role)
+// - users -> society_profiles (1:1 for approved societies)
+// - society_profiles -> plots (1:many)
+// - plots -> reviews (1:many)
+// - users -> reviews (1:many)
+// - users -> approval_requests (1:many)
+// - society_profiles -> approval_requests (1:many)
+// - plots -> approval_requests (1:many)
+// - society_profiles -> advertisements (1:many)
+// - users -> floorplans (1:many)
+// - users -> email_verifications (1:many)
+// - users -> user_activities (1:many)
