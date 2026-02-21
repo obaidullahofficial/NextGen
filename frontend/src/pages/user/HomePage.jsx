@@ -9,54 +9,34 @@ import Navbar from '../../components/user/Navbar';
 import Footer from '../../components/user/Footer';
 import advertisementAPI from '../../services/advertisementAPI';
 import reviewAPI from '../../services/reviewAPI';
-<<<<<<< HEAD
 import '../../styles/glassmorphism.css';
-=======
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
 
 // Animation variants
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
-<<<<<<< HEAD
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
-=======
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
 };
 
 const fadeInLeft = {
   hidden: { opacity: 0, x: -40 },
-<<<<<<< HEAD
   visible: { opacity: 1, x: 0, transition: { duration: 0.3, ease: "easeOut" } }
-=======
-  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } }
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
 };
 
 const fadeInRight = {
   hidden: { opacity: 0, x: 40 },
-<<<<<<< HEAD
   visible: { opacity: 1, x: 0, transition: { duration: 0.3, ease: "easeOut" } }
-=======
-  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } }
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
 };
 
 const staggerContainer = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-<<<<<<< HEAD
     transition: { staggerChildren: 0.08, delayChildren: 0.1 }
-=======
-    transition: { staggerChildren: 0.15, delayChildren: 0.2 }
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
   }
 };
 
 const scaleIn = {
   hidden: { opacity: 0, scale: 0.8 },
-<<<<<<< HEAD
   visible: { opacity: 1, scale: 1, transition: { duration: 0.25, ease: "easeOut" } }
 };
 
@@ -68,15 +48,6 @@ const AnimatedSection = ({ children, className = "" }) => {
     margin: "-20px",
     amount: 0.1 // Trigger when 10% of element is visible
   });
-=======
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: "easeOut" } }
-};
-
-// Animated section component
-const AnimatedSection = ({ children, className = "" }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
   
   return (
     <motion.div
@@ -126,11 +97,8 @@ const HomePage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [advertisement, setAdvertisement] = useState(null); // Holds ad content
   const [showPopup, setShowPopup] = useState(false);
-<<<<<<< HEAD
   const [isScrolledDown, setIsScrolledDown] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
-=======
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
   const [featuredAds, setFeaturedAds] = useState([]);
   const [randomAd, setRandomAd] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -207,7 +175,6 @@ const HomePage = () => {
     fetchPlatformStats();
   }, []);
 
-<<<<<<< HEAD
   // Scroll detection for hiding/showing ads
   useEffect(() => {
     const handleScroll = () => {
@@ -256,8 +223,6 @@ const HomePage = () => {
     };
   }, [isScrolledDown, initialLoadComplete, advertisement]);
 
-=======
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
   // Fetch random advertisement for popup
   useEffect(() => {
     let cycleInterval;
@@ -286,21 +251,14 @@ const HomePage = () => {
           // Show popup after 3 seconds
           popupTimeout = setTimeout(() => {
             setShowPopup(true);
-<<<<<<< HEAD
             setInitialLoadComplete(true);
-=======
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
             // Track impression when popup is shown
             if (firstAd._id) {
               advertisementAPI.trackImpression(firstAd._id);
             }
           }, 3000);
 
-<<<<<<< HEAD
           // Start cycling through ads every 3 seconds
-=======
-          // Start cycling through ads every 15 seconds
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
           cycleInterval = setInterval(() => {
             setCurrentAdIndex(prevIndex => {
               const nextIndex = (prevIndex + 1) % allAdsRef.current.length;
@@ -322,11 +280,7 @@ const HomePage = () => {
               
               return nextIndex;
             });
-<<<<<<< HEAD
           }, 3000);
-=======
-          }, 15000);
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
 
           setPopupCycleInterval(cycleInterval);
         }
@@ -337,15 +291,10 @@ const HomePage = () => {
           setAdvertisement({
             title: "Special Offer!",
             message: "Get 20% off on your first 3D plan conversion.",
-<<<<<<< HEAD
             image: "https://via.placeholder.com/600x400/ED7600/ffffff?text=Special+Offer"
           });
           setShowPopup(true);
           setInitialLoadComplete(true);
-=======
-          });
-          setShowPopup(true);
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
         }, 3000);
       }
     };
@@ -454,13 +403,8 @@ const HomePage = () => {
   });
   
   // Smooth spring animations for parallax - softer springs for flowing motion
-<<<<<<< HEAD
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, mass: 0.3 });
   const smoothSection2 = useSpring(section2Progress, { stiffness: 80, damping: 25, mass: 0.5 });
-=======
-  const smoothProgress = useSpring(scrollYProgress, { stiffness: 50, damping: 20, mass: 0.5 });
-  const smoothSection2 = useSpring(section2Progress, { stiffness: 40, damping: 18, mass: 0.8 });
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
   
   // Section 2 TIDY-style transforms - smoother flowing transitions
   const mockupX = useTransform(smoothSection2, [0, 0.15, 0.35, 0.55], ['0%', '0%', '10%', '25%']);
@@ -518,7 +462,6 @@ const HomePage = () => {
             {/* Welcome Badge */}
             {user && (
               <motion.div 
-<<<<<<< HEAD
                 className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-[#2F3D57] rounded-full min-w-fit"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -526,15 +469,6 @@ const HomePage = () => {
               >
                 <span className="w-2 h-2 bg-[#ED7600] rounded-full animate-pulse flex-shrink-0"></span>
                 <p className="text-sm text-white font-medium whitespace-nowrap">Welcome back, <span className="font-bold">
-=======
-                className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-[#2F3D57] rounded-full"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <span className="w-2 h-2 bg-[#ED7600] rounded-full animate-pulse"></span>
-                <p className="text-sm text-white font-medium">Welcome back, <span className="font-bold">
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                   {user.firstName && user.lastName 
                     ? `${user.firstName} ${user.lastName}` 
                     : user.username || user.email}
@@ -545,11 +479,7 @@ const HomePage = () => {
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-<<<<<<< HEAD
               transition={{ duration: 0.4, delay: 0.05 }}
-=======
-              transition={{ duration: 0.8, delay: 0.1 }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
             >
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-[#2F3D57] leading-[1.1] mb-8">
                 <span className="block">You Dream It.</span>
@@ -562,11 +492,7 @@ const HomePage = () => {
               className="text-xl text-gray-600 mb-10 max-w-lg leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-<<<<<<< HEAD
               transition={{ duration: 0.3, delay: 0.15 }}
-=======
-              transition={{ duration: 0.6, delay: 0.3 }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
             >
               NextGenArchitect: Your AI-Powered Gateway to
               Custom Floor Plans & Seamless Plot Purchasing
@@ -576,11 +502,7 @@ const HomePage = () => {
               className="flex flex-wrap gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-<<<<<<< HEAD
               transition={{ duration: 0.3, delay: 0.25 }}
-=======
-              transition={{ duration: 0.6, delay: 0.5 }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
             >
               <motion.button 
                 onClick={handleGenerateNow}
@@ -609,11 +531,7 @@ const HomePage = () => {
               className="mt-16 pt-8 border-t border-gray-200"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-<<<<<<< HEAD
               transition={{ delay: 0.4 }}
-=======
-              transition={{ delay: 0.8 }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
             >
               <p className="text-sm text-[#ED7600] font-semibold tracking-wider uppercase mb-3">Trusted by Architects & Homeowners</p>
               <div className="flex items-center gap-4 flex-wrap">
@@ -656,11 +574,7 @@ const HomePage = () => {
               className="relative origin-center"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-<<<<<<< HEAD
               transition={{ duration: 0.5, delay: 0.2 }}
-=======
-              transition={{ duration: 1, delay: 0.4 }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
               style={{ 
                 perspective: '1500px',
                 transformStyle: 'preserve-3d',
@@ -671,7 +585,6 @@ const HomePage = () => {
               <motion.div
                 className="relative"
                 style={{
-<<<<<<< HEAD
                   transform: 'rotateY(-8deg) rotateX(5deg)',
                   transformStyle: 'preserve-3d'
                 }}
@@ -680,16 +593,6 @@ const HomePage = () => {
                   rotateX: [5, 3, 5]
                 }}
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-=======
-                  transform: 'rotateY(-15deg) rotateX(10deg)',
-                  transformStyle: 'preserve-3d'
-                }}
-                animate={{ 
-                  rotateY: [-15, -12, -15],
-                  rotateX: [10, 8, 10]
-                }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
               >
                 {/* Shadow underneath */}
                 <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-[80%] h-8 bg-black/10 blur-2xl rounded-full"></div>
@@ -788,11 +691,7 @@ const HomePage = () => {
                 <motion.div 
                   className="absolute -right-12 top-8 bg-white rounded-xl shadow-xl p-3 w-32"
                   animate={{ y: [0, -10, 0] }}
-<<<<<<< HEAD
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-=======
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
@@ -808,11 +707,7 @@ const HomePage = () => {
                 <motion.div 
                   className="absolute -left-8 bottom-16 bg-white rounded-xl shadow-xl p-3 w-28"
                   animate={{ y: [0, 8, 0] }}
-<<<<<<< HEAD
                   transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 0.3 }}
-=======
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                 >
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 bg-[#ED7600] rounded-full flex items-center justify-center">
@@ -851,11 +746,7 @@ const HomePage = () => {
             className="absolute top-20 right-20 w-48 h-48 rounded-full pointer-events-none"
             style={{ background: 'radial-gradient(circle, rgba(237,118,0,0.15) 0%, transparent 70%)' }}
             animate={{ scale: [1, 1.2, 1] }}
-<<<<<<< HEAD
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-=======
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
           />
           <motion.div 
             className="absolute bottom-20 left-20 w-64 h-64 rounded-full pointer-events-none"
@@ -943,17 +834,10 @@ const HomePage = () => {
               >
                 {/* Dramatic Light Rays */}
                 <div className="absolute -top-32 -right-32 w-96 h-96 opacity-30 pointer-events-none">
-<<<<<<< HEAD
                   <div className="absolute inset-0 bg-[#ED7600] rounded-full blur-[50px]"></div>
                 </div>
                 <div className="absolute -bottom-20 -left-20 w-64 h-64 opacity-20 pointer-events-none">
                   <div className="absolute inset-0 bg-[#2F3D57] rounded-full blur-[40px]"></div>
-=======
-                  <div className="absolute inset-0 bg-[#ED7600] rounded-full blur-[100px]"></div>
-                </div>
-                <div className="absolute -bottom-20 -left-20 w-64 h-64 opacity-20 pointer-events-none">
-                  <div className="absolute inset-0 bg-[#2F3D57] rounded-full blur-[80px]"></div>
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                 </div>
 
                 {/* Floating Info Cards */}
@@ -962,11 +846,7 @@ const HomePage = () => {
                   initial={{ opacity: 0, x: -30 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-<<<<<<< HEAD
                   transition={{ duration: 0.3, delay: 0.4 }}
-=======
-                  transition={{ duration: 0.6, delay: 0.8 }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-[#ED7600] to-[#FF9933] rounded-xl flex items-center justify-center">
@@ -984,11 +864,7 @@ const HomePage = () => {
                   initial={{ opacity: 0, x: 30 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-<<<<<<< HEAD
                   transition={{ duration: 0.3, delay: 0.5 }}
-=======
-                  transition={{ duration: 0.6, delay: 1 }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-[#2F3D57] to-[#4a5d7a] rounded-xl flex items-center justify-center">
@@ -1006,11 +882,7 @@ const HomePage = () => {
                   initial={{ opacity: 0, x: 30 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-<<<<<<< HEAD
                   transition={{ duration: 0.3, delay: 0.6 }}
-=======
-                  transition={{ duration: 0.6, delay: 1.2 }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                 >
                   <div className="flex items-center gap-2 mb-1">
                     {[1, 2, 3, 4, 5].map((star) => {
@@ -1031,7 +903,6 @@ const HomePage = () => {
                 {/* Main Floor Plan Card */}
                 <motion.div
                   className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100"
-<<<<<<< HEAD
                   initial={{ opacity: 0, y: 30, rotateX: 5 }}
                   whileInView={{ opacity: 1, y: 0, rotateX: 1 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
@@ -1040,13 +911,6 @@ const HomePage = () => {
                   transition={{ duration: 0.5, ease: "easeOut" }}
                   whileHover={{ y: -2, scale: 1.005 }}
                   transition={{ duration: 0.2 }}
-=======
-                  initial={{ opacity: 0, y: 60, rotateX: 10 }}
-                  whileInView={{ opacity: 1, y: 0, rotateX: 3 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  whileHover={{ y: -5, scale: 1.01 }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                   style={{ transformStyle: 'preserve-3d', boxShadow: '0 25px 60px -15px rgba(0,0,0,0.15)' }}
                 >
                   {/* Shadow Layer */}
@@ -1059,23 +923,15 @@ const HomePage = () => {
                       {/* Main Room - Living Room */}
                       <motion.div 
                         className="col-span-2 relative bg-gradient-to-br from-[#ED7600]/15 to-[#ED7600]/5 rounded-xl p-4 h-36 flex items-center justify-center border-2 border-[#2F3D57] cursor-pointer overflow-hidden group"
-<<<<<<< HEAD
                         whileHover={{ scale: 1.01, boxShadow: "0 8px 25px rgba(237,118,0,0.12)" }}
                         transition={{ duration: 0.2 }}
-=======
-                        whileHover={{ scale: 1.02, boxShadow: "0 10px 40px rgba(237,118,0,0.15)" }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                         whileTap={{ scale: 0.98 }}
                         onClick={handleGenerateNow}
                       >
                         <motion.div 
                           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12"
                           animate={{ x: ['-200%', '200%'] }}
-<<<<<<< HEAD
                           transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
-=======
-                          transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                         />
                         <span className="text-base font-bold text-[#2F3D57] relative z-10">LIVING ROOM</span>
                         <motion.div className="absolute bottom-2 right-2 bg-[#ED7600] text-white text-[9px] px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity font-medium">
@@ -1122,12 +978,8 @@ const HomePage = () => {
                       </motion.div>
                       <motion.div 
                         className="relative bg-gradient-to-br from-[#ED7600]/8 to-transparent rounded-xl p-3 flex items-center justify-center border-2 border-[#ED7600] border-dashed cursor-pointer group"
-<<<<<<< HEAD
                         whileHover={{ scale: 1.02, borderStyle: 'solid' }}
                         transition={{ duration: 0.2 }}
-=======
-                        whileHover={{ scale: 1.05, borderStyle: 'solid' }}
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                         whileTap={{ scale: 0.95 }}
                         onClick={handleGenerateNow}
                       >
@@ -1427,7 +1279,6 @@ const HomePage = () => {
       <div className="fixed bottom-6 right-6 z-50">
         {showPopup && advertisement && (
           <motion.div 
-<<<<<<< HEAD
             className="relative max-w-lg w-80 overflow-hidden"
             initial={{ opacity: 0, scale: 0.9, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1579,123 +1430,12 @@ const HomePage = () => {
               {advertisement.image && (
                 <motion.div 
                   className="relative w-full cursor-pointer overflow-hidden mx-4 mb-4 rounded-2xl bg-gradient-to-br from-gray-50/50 to-gray-100/50 backdrop-blur-sm border border-white/30"
-=======
-            className="bg-white rounded-3xl shadow-2xl max-w-md w-96 relative border border-[#ED7600]/20 overflow-hidden"
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          >
-            {/* Gradient top border */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#ED7600] to-[#FF9933]"></div>
-            
-            {/* Header with navigation */}
-            <div className="flex items-center justify-between p-4 pb-2">
-              <div className="flex items-center space-x-2">
-                {allAds.length > 1 && (
-                  <>
-                    <motion.button
-                      onClick={goToPrevAd}
-                      className="p-2 bg-gray-100 hover:bg-[#ED7600] hover:text-white rounded-full text-[#2F3D57] transition-all duration-300"
-                      title="Previous Ad"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      ←
-                    </motion.button>
-                    <span className="text-xs text-gray-500 font-medium px-2">
-                      {currentAdIndex + 1} / {allAds.length}
-                    </span>
-                    <motion.button
-                      onClick={goToNextAd}
-                      className="p-2 bg-gray-100 hover:bg-[#ED7600] hover:text-white rounded-full text-[#2F3D57] transition-all duration-300"
-                      title="Next Ad"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      →
-                    </motion.button>
-                  </>
-                )}
-              </div>
-              <motion.button
-                onClick={() => setShowPopup(false)}
-                className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
-                whileHover={{ scale: 1.1, rotate: 90 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                ✕
-              </motion.button>
-            </div>
-
-            {/* Ad indicators */}
-            {allAds.length > 1 && (
-              <div className="flex justify-center px-4 pb-2 space-x-1.5">
-                {allAds.map((_, index) => (
-                  <motion.button
-                    key={index}
-                    onClick={() => {
-                      setCurrentAdIndex(index);
-                      const selectedAd = allAds[index];
-                      setRandomAd(selectedAd);
-                      setAdvertisement({
-                        id: selectedAd._id,
-                        title: selectedAd.title,
-                        message: 'Click to learn more',
-                        image: selectedAd.featured_image,
-                        link: selectedAd.link_url
-                      });
-                    }}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      index === currentAdIndex 
-                        ? 'bg-gradient-to-r from-[#ED7600] to-[#FF9933] w-6' 
-                        : 'bg-gray-200 w-2 hover:bg-gray-300'
-                    }`}
-                    whileHover={{ scale: 1.2 }}
-                  />
-                ))}
-              </div>
-            )}
-            
-            {/* Advertisement Image */}
-            {advertisement.image && (
-              <motion.div 
-                className="w-full cursor-pointer overflow-hidden"
-                onClick={() => {
-                  if (randomAd) {
-                    handleAdClick(randomAd);
-                  }
-                  setShowPopup(false);
-                }}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
-              >
-                <img 
-                  src={advertisement.image} 
-                  alt={advertisement.title}
-                  className="w-full h-auto object-contain"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-              </motion.div>
-            )}
-
-            {/* Footer with title and buttons */}
-            <div className="p-4 pt-3 bg-gradient-to-b from-gray-50 to-white">
-              <h3 className="font-bold text-lg mb-2 text-[#2F3D57] line-clamp-1">{advertisement.title}</h3>
-              <p className="text-gray-500 mb-4 text-sm">{advertisement.message}</p>
-
-              <div className="flex gap-3">
-                <motion.button
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                   onClick={() => {
                     if (randomAd) {
                       handleAdClick(randomAd);
                     }
                     setShowPopup(false);
                   }}
-<<<<<<< HEAD
                   whileHover={{ 
                     scale: 1.02, 
                     rotateY: 1,
@@ -1835,35 +1575,11 @@ const HomePage = () => {
                     </motion.button>
                   </div>
                 </div>
-=======
-                  className="flex-1 btn-primary py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <FaBullhorn />
-                  Learn More
-                </motion.button>
-                <motion.button
-                  onClick={() => {
-                    if (advertisement.id) {
-                      handleViewClick(advertisement.id);
-                    }
-                    setShowPopup(false);
-                  }}
-                  className="flex-1 bg-[#2F3D57] text-white py-2.5 px-4 rounded-xl text-sm font-semibold hover:bg-[#1e2a3a] transition-all duration-300 flex items-center justify-center gap-2"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <FaEye />
-                  View
-                </motion.button>
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
               </div>
             </div>
           </motion.div>
         )}
         
-<<<<<<< HEAD
         {/* Enhanced Reopen Button */}
         {!showPopup && advertisement && (
           <motion.button
@@ -1929,22 +1645,6 @@ const HomePage = () => {
               }}
               transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
             />
-=======
-        {/* Reopen Button */}
-        {!showPopup && advertisement && (
-          <motion.button
-            onClick={() => setShowPopup(true)}
-            className="relative bg-gradient-to-r from-[#ED7600] to-[#FF9933] text-white p-4 rounded-full shadow-lg shadow-orange-500/30"
-            title="View Advertisement"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            {/* Pulse ring */}
-            <span className="absolute inset-0 rounded-full bg-[#ED7600] animate-ping opacity-25"></span>
-            <FaBullhorn className="text-2xl relative z-10" />
->>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
           </motion.button>
         )}
       </div>
