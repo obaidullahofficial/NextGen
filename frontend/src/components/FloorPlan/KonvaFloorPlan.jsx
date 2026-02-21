@@ -106,16 +106,23 @@ const KonvaFloorPlan = ({
     
     if (floorPlanData) {
       // Calculate scaling factors to fit the floor plan within canvas boundaries
+<<<<<<< HEAD
       const plotWidth = floorPlanData.plotWidth || 1000; // Use actual plot width from data
       const plotHeight = floorPlanData.plotHeight || 1000; // Use actual plot height from data
       const boundaryMargin = 15; // Same as boundary wall margin from canvas edge
       const innerPadding = 25; // Padding from boundary wall to rooms
       const margin = boundaryMargin + innerPadding; // Total margin from canvas edge
+=======
+      const plotWidth = 1000; // Default backend plot width
+      const plotHeight = 1000; // Default backend plot height
+      const margin = 40; // Margin from canvas edges
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
       
       const scaleX = (width - margin * 2) / plotWidth;
       const scaleY = (height - margin * 2) / plotHeight;
       const scale = Math.min(scaleX, scaleY); // Use uniform scaling to maintain aspect ratio
       
+<<<<<<< HEAD
       // Calculate actual content bounds and center offset
       const rawRooms = floorPlanData.rooms || [];
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -143,6 +150,13 @@ const KonvaFloorPlan = ({
         id: room.id || `room-${index}`,
         x: (room.x || 0) * scale + offsetX,
         y: (room.y || 0) * scale + offsetY,
+=======
+      // Convert rooms data with proper scaling
+      const roomsData = (floorPlanData.rooms || []).map((room, index) => ({
+        id: room.id || `room-${index}`,
+        x: (room.x || 0) * scale + margin,
+        y: (room.y || 0) * scale + margin,
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
         width: (room.width || 100) * scale,
         height: (room.height || 100) * scale,
         fill: getRoomColor(room.type || room.tag),
@@ -156,21 +170,35 @@ const KonvaFloorPlan = ({
         originalY: room.y || 0,
         originalWidth: room.width || 100,
         originalHeight: room.height || 100,
+<<<<<<< HEAD
         scale: scale,
         offsetX: offsetX,
         offsetY: offsetY
       }));
 
       // Convert walls data with proper scaling and centering
+=======
+        scale: scale
+      }));
+
+      // Convert walls data with proper scaling
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
       const wallsData = (floorPlanData.mapData || [])
         .filter(item => item.type === 'Wall')
         .map((wall, index) => ({
           id: wall.id || `wall-${index}`,
           points: [
+<<<<<<< HEAD
             (wall.x1 || 0) * scale + offsetX, 
             (wall.y1 || 0) * scale + offsetY, 
             (wall.x2 || 0) * scale + offsetX, 
             (wall.y2 || 0) * scale + offsetY
+=======
+            (wall.x1 || 0) * scale + margin, 
+            (wall.y1 || 0) * scale + margin, 
+            (wall.x2 || 0) * scale + margin, 
+            (wall.y2 || 0) * scale + margin
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
           ],
           stroke: '#000000',
           strokeWidth: Math.max(1, 4 * scale),
@@ -187,10 +215,17 @@ const KonvaFloorPlan = ({
           .map((door, index) => ({
             id: door.id || `door-${index}`,
             points: [
+<<<<<<< HEAD
               (door.x1 || 0) * scale + offsetX, 
               (door.y1 || 0) * scale + offsetY, 
               (door.x2 || 0) * scale + offsetX, 
               (door.y2 || 0) * scale + offsetY
+=======
+              (door.x1 || 0) * scale + margin, 
+              (door.y1 || 0) * scale + margin, 
+              (door.x2 || 0) * scale + margin, 
+              (door.y2 || 0) * scale + margin
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
             ],
             stroke: '#8B4513',
             strokeWidth: Math.max(6, 4 * scale),
@@ -205,10 +240,17 @@ const KonvaFloorPlan = ({
         const directDoors = floorPlanData.doors.map((door, index) => ({
           id: door.id || `direct-door-${index}`,
           points: [
+<<<<<<< HEAD
             (door.x1 || 0) * scale + offsetX, 
             (door.y1 || 0) * scale + offsetY, 
             (door.x2 || 0) * scale + offsetX, 
             (door.y2 || 0) * scale + offsetY
+=======
+            (door.x1 || 0) * scale + margin, 
+            (door.y1 || 0) * scale + margin, 
+            (door.x2 || 0) * scale + margin, 
+            (door.y2 || 0) * scale + margin
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
           ],
           stroke: '#8B4513',
           strokeWidth: Math.max(6, 4 * scale),
@@ -258,10 +300,17 @@ const KonvaFloorPlan = ({
           .map((window, index) => ({
             id: window.id || `window-${index}`,
             points: [
+<<<<<<< HEAD
               (window.x1 || 0) * scale + offsetX, 
               (window.y1 || 0) * scale + offsetY, 
               (window.x2 || 0) * scale + offsetX, 
               (window.y2 || 0) * scale + offsetY
+=======
+              (window.x1 || 0) * scale + margin, 
+              (window.y1 || 0) * scale + margin, 
+              (window.x2 || 0) * scale + margin, 
+              (window.y2 || 0) * scale + margin
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
             ],
             stroke: '#87CEEB',
             strokeWidth: Math.max(5, 3 * scale),
@@ -275,10 +324,17 @@ const KonvaFloorPlan = ({
         const directWindows = floorPlanData.windows.map((window, index) => ({
           id: window.id || `direct-window-${index}`,
           points: [
+<<<<<<< HEAD
             (window.x1 || 0) * scale + offsetX, 
             (window.y1 || 0) * scale + offsetY, 
             (window.x2 || 0) * scale + offsetX, 
             (window.y2 || 0) * scale + offsetY
+=======
+            (window.x1 || 0) * scale + margin, 
+            (window.y1 || 0) * scale + margin, 
+            (window.x2 || 0) * scale + margin, 
+            (window.y2 || 0) * scale + margin
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
           ],
           stroke: '#87CEEB',
           strokeWidth: Math.max(5, 3 * scale),
@@ -1864,6 +1920,7 @@ const KonvaFloorPlan = ({
             </>
           )}
 
+<<<<<<< HEAD
           {/* Outer Boundary Wall - dynamically wraps around rooms */}
           {/* Calculate boundary based on actual room positions */}
           {(() => {
@@ -1916,6 +1973,18 @@ const KonvaFloorPlan = ({
               </>
             );
           })()}
+=======
+          {/* Plot boundary */}
+          <Rect
+            x={2}
+            y={2}
+            width={width - 4}
+            height={height - 4}
+            fill="transparent"
+            stroke="#000000"
+            strokeWidth={3}
+          />
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
 
           {/* Rooms */}
           {rooms.map((room, index) => {
@@ -2326,6 +2395,7 @@ const KonvaFloorPlan = ({
             
             const isSelected = selectedDoor === door.id;
             
+<<<<<<< HEAD
             // Calculate door length (arc radius)
             const doorLength = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
             
@@ -2345,6 +2415,18 @@ const KonvaFloorPlan = ({
                   fill="transparent"
                   stroke={isSelected ? "#2196F3" : "#8B4513"}
                   strokeWidth={2}
+=======
+            return (
+              <Group key={door.id}>
+                {/* Simple door - bold brown line */}
+                <Line
+                  x={0}
+                  y={0}
+                  points={[x1, y1, x2, y2]}
+                  stroke={isSelected ? "#2196F3" : "#8B4513"}
+                  strokeWidth={Math.max(8, door.strokeWidth * 2)}
+                  lineCap="round"
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
                   draggable={isEditable}
                   onDragStart={(e) => handleDoorDragStart(e, door.id)}
                   onDragMove={(e) => handleDoorDragMove(e, door.id)}

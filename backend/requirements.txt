@@ -8,7 +8,10 @@ pip install python-dotenv
 pip install numpy
 pip install stripe
 pip install requests
+<<<<<<< HEAD
 pip install google-genai
+=======
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
 python app.py
 
 {

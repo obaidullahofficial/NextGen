@@ -13,7 +13,10 @@ import { EffectComposer, Bloom, SMAA, Vignette } from '@react-three/postprocessi
 import * as THREE from 'three';
 import SunCalc from 'suncalc';
 import ColorCustomizer from './ColorCustomizer';
+<<<<<<< HEAD
 import { RoomAccessories } from './RoomAccessories';
+=======
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
 
 const ENABLE_POSTPROCESSING = true;
 
@@ -299,7 +302,11 @@ const SunSystem3D = memo(({ target = [0, 0, 0], settings }) => {
 });
 
 // Enhanced Door Component with bi-directional visibility and proper wall penetration
+<<<<<<< HEAD
 const Door3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 2.4, isOpen = false, onToggle, playerPosition, autoOpen = true, wallThickness = 0.2, customColor }) => {
+=======
+const Door3D = memo(({ position, rotation = [0, 0, 0], width = 0.9, height = 2.1, isOpen = false, onToggle, playerPosition, autoOpen = true, wallThickness = 0.2, customColor }) => {
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
   const [localIsOpen, setLocalIsOpen] = useState(isOpen);
   const doorRef = useRef();
   const frameRef = useRef();
@@ -307,8 +314,13 @@ const Door3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 2.4
   const [openAngle, setOpenAngle] = useState(0);
   
   // Enhanced auto-open settings for better user experience
+<<<<<<< HEAD
   const openDistance = 2.5; // Wider proximity for easier walkthrough
   const closeDistance = 4.0; // Larger close distance to prevent flickering
+=======
+  const openDistance = 1.5; // Closer proximity for more natural feel
+  const closeDistance = 2.5; // Larger close distance to prevent flickering
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
   
   // Use custom color or default brown
   const doorColor = customColor || '#8B4513';
@@ -326,10 +338,16 @@ const Door3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 2.4
   // Smooth door animation with useFrame
   useFrame((state, delta) => {
     if (autoOpen && playerPosition && position) {
+<<<<<<< HEAD
       // Use horizontal-only distance (ignore Y) so player height doesn't affect detection
       const dx = position[0] - playerPosition[0];
       const dz = position[2] - playerPosition[2];
       const distance = Math.sqrt(dx * dx + dz * dz);
+=======
+      const doorPos = new THREE.Vector3(...position);
+      const playerPos = new THREE.Vector3(...playerPosition);
+      const distance = doorPos.distanceTo(playerPos);
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
       
       if (distance <= openDistance && !proximityOpen) {
         setProximityOpen(true);
@@ -343,8 +361,13 @@ const Door3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 2.4
     }
     
     // Smooth door opening animation
+<<<<<<< HEAD
     const targetAngle = localIsOpen ? Math.PI * 0.45 : 0; // ~81 degrees when open for wider passage
     const newAngle = THREE.MathUtils.lerp(openAngle, targetAngle, delta * 6);
+=======
+    const targetAngle = localIsOpen ? Math.PI * 0.4 : 0; // 72 degrees when open
+    const newAngle = THREE.MathUtils.lerp(openAngle, targetAngle, delta * 8);
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
     setOpenAngle(newAngle);
     
     if (doorRef.current) {
@@ -697,8 +720,13 @@ const Window3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 1
 const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
   const doors = [];
   const windows = [];
+<<<<<<< HEAD
   const doorWidth = 1.2;
   const doorHeight = 2.4;
+=======
+  const doorWidth = 0.9;
+  const doorHeight = 2.1;
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
   const windowWidth = 0.8;
   const windowHeight = 1.2;
   
@@ -849,7 +877,11 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
         globalPosition: [globalDoorX, 0, globalDoorZ], // Exact wall boundary position
         connectedRooms: connectedRoomIds,
         connectedRoomData: connectedRooms,
+<<<<<<< HEAD
         width: Math.max(1.0, Math.min(detectedDoor.width / 80, 1.6)),
+=======
+        width: Math.max(0.6, Math.min(detectedDoor.width / 100, 1.2)),
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
         height: doorHeight,
         type: connectedRooms.length > 1 ? 'interior' : 'exterior',
         isOpen: false,
@@ -881,7 +913,11 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
           id: `detected-door-${index}`,
           globalPosition: [doorCenterX, 0, doorCenterZ],
           connectedRooms: [closestRoom.room.id],
+<<<<<<< HEAD
           width: Math.max(1.0, Math.min(detectedDoor.width / 80, 1.6)),
+=======
+          width: Math.max(0.6, Math.min(detectedDoor.width / 100, 1.2)),
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
           height: doorHeight,
           type: 'exterior',
           isOpen: false,
@@ -2092,6 +2128,7 @@ const Room3D = ({ room, bounds, showLabels = true, doors = [], windows = [], wal
           </Text>
         );
       })()}
+<<<<<<< HEAD
 
       {/* Room Accessories/Furniture */}
       <RoomAccessories
@@ -2099,6 +2136,8 @@ const Room3D = ({ room, bounds, showLabels = true, doors = [], windows = [], wal
         roomWidth={world.width}
         roomHeight={world.height}
       />
+=======
+>>>>>>> 8c5c38606ddd9ab9afb8fdc239bef476b16886ce
     </group>
   );
 };
