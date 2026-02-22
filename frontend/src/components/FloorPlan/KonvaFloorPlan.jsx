@@ -44,6 +44,7 @@ const KonvaFloorPlan = forwardRef(({
   const [resizeHandle, setResizeHandle] = useState(null); // Track which handle is being used
   const resizeThrottleRef = useRef(null); // Throttle resize updates
   const isUserInteracting = useRef(false); // Flag to prevent updates during user interaction
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, type: null, id: null });
 
   // Expose the stage ref to parent component
   useImperativeHandle(ref, () => stageRef.current);
@@ -53,6 +54,79 @@ const KonvaFloorPlan = forwardRef(({
     if (!snapToGrid) return value;
     return Math.round(value / gridSize) * gridSize;
   }, [snapToGrid, gridSize]);
+
+  // Handle context menu for delete
+  const handleContextMenu = useCallback((e, type, id) => {
+    if (!isEditable) return;
+    e.evt.preventDefault();
+    const stage = e.target.getStage();
+    const container = stage.container().getBoundingClientRect();
+    setContextMenu({
+      visible: true,
+      x: e.evt.clientX - container.left,
+      y: e.evt.clientY - container.top,
+      type,
+      id
+    });
+  }, [isEditable]);
+
+  // Handle delete from context menu
+  const handleDeleteFromContextMenu = useCallback(() => {
+    if (!contextMenu.visible) return;
+    
+    const { type, id } = contextMenu;
+    
+    if (type === 'room') {
+      const updatedRooms = rooms.filter(r => r.id !== id);
+      const updatedPercentages = { ...roomPercentages };
+      delete updatedPercentages[id];
+      
+      setRooms(updatedRooms);
+      setRoomPercentages(updatedPercentages);
+      
+      if (onRoomsChange) {
+        onRoomsChange(updatedRooms);
+      }
+      setSelectedRoom(null);
+    } else if (type === 'door') {
+      const updatedDoors = doors.filter(d => d.id !== id);
+      setDoors(updatedDoors);
+      if (onDoorsChange) {
+        onDoorsChange(updatedDoors);
+      }
+      setSelectedDoor(null);
+    } else if (type === 'wall') {
+      const updatedWalls = walls.filter(w => w.id !== id);
+      setWalls(updatedWalls);
+      if (onWallsChange) {
+        onWallsChange(updatedWalls);
+      }
+      setSelectedWall(null);
+    } else if (type === 'window') {
+      const updatedWindows = windows.filter(w => w.id !== id);
+      setWindows(updatedWindows);
+      if (onWindowsChange) {
+        onWindowsChange(updatedWindows);
+      }
+      setSelectedWindow(null);
+    }
+    
+    setContextMenu({ visible: false, x: 0, y: 0, type: null, id: null });
+  }, [contextMenu, doors, walls, windows, rooms, roomPercentages, onDoorsChange, onWallsChange, onWindowsChange, onRoomsChange]);
+
+  // Close context menu on outside click
+  useEffect(() => {
+    const handleClick = () => {
+      if (contextMenu.visible) {
+        setContextMenu({ visible: false, x: 0, y: 0, type: null, id: null });
+      }
+    };
+    
+    if (contextMenu.visible) {
+      window.addEventListener('click', handleClick);
+      return () => window.removeEventListener('click', handleClick);
+    }
+  }, [contextMenu.visible]);
 
   // Keyboard controls
   useEffect(() => {
@@ -1898,6 +1972,7 @@ const KonvaFloorPlan = forwardRef(({
                 onDragMove={(e) => handleRoomDragMove(e, room.id)}
                 onDragEnd={(e) => handleRoomDragEnd(e, room.id)}
                 onClick={(e) => handleRoomClick(e, room.id)}
+                onContextMenu={(e) => handleContextMenu(e, 'room', room.id)}
                 style={{ cursor: isEditable ? 'move' : 'default' }}
                 shadowBlur={selectedRoom === room.id ? 10 : 0}
                 shadowColor="rgba(33, 150, 243, 0.5)"
@@ -2172,6 +2247,7 @@ const KonvaFloorPlan = forwardRef(({
                 onDragStart={(e) => handleWallDragStart(e, wall.id)}
                 onDragEnd={(e) => handleWallDragEnd(e, wall.id)}
                 onClick={(e) => handleWallClick(e, wall.id)}
+                onContextMenu={(e) => handleContextMenu(e, 'wall', wall.id)}
                 style={{ cursor: isEditable ? 'move' : 'default' }}
               />
               {/* Wall selection indicator */}
@@ -2273,6 +2349,7 @@ const KonvaFloorPlan = forwardRef(({
                   lineCap="round"
                   draggable={false}
                   onClick={(e) => handleDoorClick(e, door.id)}
+                  onContextMenu={(e) => handleContextMenu(e, 'door', door.id)}
                   style={{ cursor: isEditable ? 'pointer' : 'default' }}
                 />
                 
@@ -2361,6 +2438,7 @@ const KonvaFloorPlan = forwardRef(({
                   onDragMove={(e) => handleWindowDragMove(e, window.id)}
                   onDragEnd={(e) => handleWindowDragEnd(e, window.id)}
                   onClick={(e) => handleWindowClick(e, window.id)}
+                  onContextMenu={(e) => handleContextMenu(e, 'window', window.id)}
                   style={{ cursor: isEditable ? 'move' : 'default' }}
                 />
                 
@@ -2476,6 +2554,48 @@ const KonvaFloorPlan = forwardRef(({
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* Context Menu for delete */}
+      {contextMenu.visible && isEditable && (
+        <div
+          style={{
+            position: 'absolute',
+            left: contextMenu.x,
+            top: contextMenu.y,
+            backgroundColor: 'white',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            zIndex: 1000,
+            minWidth: '120px'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            style={{
+              padding: '8px 16px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              color: '#d32f2f'
+            }}
+            onClick={handleDeleteFromContextMenu}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f5f5f5';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />
+            </svg>
+            Delete {contextMenu.type}
+          </div>
         </div>
       )}
     </div>

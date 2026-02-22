@@ -1080,6 +1080,66 @@ const FloorPlanGenerator = () => {
       const bw = plotWidth * scale;
       const bh = plotHeight * scale;
       
+      // Draw grey diagonal hatching for empty space (before rooms and walls)
+      if (floorPlanData.rooms && Array.isArray(floorPlanData.rooms) && floorPlanData.rooms.length === 0) {
+        // If no rooms, fill entire plot with diagonal hatching
+        ctx.save();
+        ctx.strokeStyle = '#CCCCCC';
+        ctx.lineWidth = 1;
+        const spacing = 10; // Space between diagonal lines
+        
+        for (let i = -bh; i < bw + bh; i += spacing) {
+          ctx.beginPath();
+          ctx.moveTo(bx + i, by);
+          ctx.lineTo(bx + i - bh, by + bh);
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else if (floorPlanData.rooms && Array.isArray(floorPlanData.rooms)) {
+        // Draw hatching in areas not covered by rooms
+        ctx.save();
+        ctx.strokeStyle = '#CCCCCC';
+        ctx.lineWidth = 0.5;
+        const spacing = 10;
+        
+        // Create a function to check if a point is inside any room
+        const isInsideAnyRoom = (x, y) => {
+          return floorPlanData.rooms.some(room => {
+            const rx = sx(room.x || 0);
+            const ry = sy(room.y || 0);
+            const rw = (room.width || 0) * scale;
+            const rh = (room.height || 0) * scale;
+            return x >= rx && x <= rx + rw && y >= ry && y <= ry + rh;
+          });
+        };
+        
+        // Draw diagonal lines across the plot
+        for (let i = -bh; i < bw + bh; i += spacing) {
+          ctx.beginPath();
+          let isDrawing = false;
+          
+          for (let j = 0; j <= bh; j++) {
+            const px = bx + i - j;
+            const py = by + j;
+            
+            if (px >= bx && px <= bx + bw && py >= by && py <= by + bh) {
+              const inRoom = isInsideAnyRoom(px, py);
+              
+              if (!inRoom && !isDrawing) {
+                ctx.moveTo(px, py);
+                isDrawing = true;
+              } else if (!inRoom && isDrawing) {
+                ctx.lineTo(px, py);
+              } else if (inRoom && isDrawing) {
+                isDrawing = false;
+              }
+            }
+          }
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      
       // Top wall
       drawWallRect(bx, by, bx + bw, by, outerWallThickness);
       // Right wall
@@ -1129,7 +1189,7 @@ const FloorPlanGenerator = () => {
         });
       }
       
-      // Draw doors (as arcs - architectural style)
+      // Draw doors (as arcs - architectural style, NO hinge line for clean wall when deleted)
       if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData)) {
         const doors = floorPlanData.mapData.filter(item => item.type === 'Door');
         ctx.strokeStyle = '#000000';
@@ -1141,12 +1201,6 @@ const FloorPlanGenerator = () => {
           const y1 = sy(door.y1 || 0);
           const x2 = sx(door.x2 || 0);
           const y2 = sy(door.y2 || 0);
-          
-          // Draw door frame line (hinge side)
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.stroke();
           
           // Calculate door swing arc
           const dx = x2 - x1;
@@ -1167,13 +1221,10 @@ const FloorPlanGenerator = () => {
           ctx.lineTo(endX, endY);
           ctx.stroke();
           
-          // Draw connection circles at door endpoints
+          // Draw small hinge circle only (not connection circles at both ends)
           ctx.fillStyle = '#000000';
           ctx.beginPath();
-          ctx.arc(x1, y1, 3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(x2, y2, 3, 0, Math.PI * 2);
+          ctx.arc(x1, y1, 2, 0, Math.PI * 2);
           ctx.fill();
         });
       }
