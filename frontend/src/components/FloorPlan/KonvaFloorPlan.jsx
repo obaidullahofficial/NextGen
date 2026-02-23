@@ -10,7 +10,9 @@ const KonvaFloorPlan = forwardRef(({
   onWallsChange,
   onDoorsChange,
   onWindowsChange,
-  isEditable = false 
+  isEditable = false,
+  showWalls = true,
+  showAllocatedArea = true 
 }, ref) => {
   const [rooms, setRooms] = useState([]);
   const [walls, setWalls] = useState([]);
@@ -45,9 +47,190 @@ const KonvaFloorPlan = forwardRef(({
   const resizeThrottleRef = useRef(null); // Throttle resize updates
   const isUserInteracting = useRef(false); // Flag to prevent updates during user interaction
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, type: null, id: null });
+  const [boundaryWarning, setBoundaryWarning] = useState(false);
+  const boundaryWarningTimeoutRef = useRef(null);
+  const [collisionWarning, setCollisionWarning] = useState(false);
+  const collisionWarningTimeoutRef = useRef(null);
+  const [showRoomTypeDialog, setShowRoomTypeDialog] = useState(false);
+  
+  // Room types matching the generation form
+  const roomTypes = [
+    { key: 'livingroom', label: 'Living Room', icon: '🛋️' },
+    { key: 'kitchen', label: 'Kitchen', icon: '🍴' },
+    { key: 'bedroom', label: 'Bedroom', icon: '🛏️' },
+    { key: 'bathroom', label: 'Bathroom', icon: '🚿' },
+    { key: 'carporch', label: 'Car Porch', icon: '🚗' },
+    { key: 'garden', label: 'Garden', icon: '🌳' },
+    { key: 'drawingroom', label: 'Drawing Room', icon: '🛋️' }
+  ];
 
-  // Expose the stage ref to parent component
+  // Helper function to check and constrain room within allocated area
+  const constrainRoomToBoundary = useCallback((x, y, roomWidth, roomHeight, showWarning = true) => {
+    const margin = 40;
+    const plotWidth = floorPlanData?.plotWidth || 1000;
+    const plotHeight = floorPlanData?.plotHeight || 1000;
+    
+    // Calculate scale factor (same as room conversion)
+    const scaleX = (width - margin * 2) / plotWidth;
+    const scaleY = (height - margin * 2) / plotHeight;
+    const scale = Math.min(scaleX, scaleY);
+    
+    // Calculate allocated area bounds using scaled dimensions
+    const allocatedMinX = margin;
+    const allocatedMinY = margin;
+    const allocatedMaxX = margin + plotWidth * scale;
+    const allocatedMaxY = margin + plotHeight * scale;
+    
+    let constrainedX = x;
+    let constrainedY = y;
+    let wasConstrained = false;
+    
+    // Constrain X position
+    if (x < allocatedMinX) {
+      constrainedX = allocatedMinX;
+      wasConstrained = true;
+    } else if (x + roomWidth > allocatedMaxX) {
+      constrainedX = allocatedMaxX - roomWidth;
+      wasConstrained = true;
+    }
+    
+    // Constrain Y position
+    if (y < allocatedMinY) {
+      constrainedY = allocatedMinY;
+      wasConstrained = true;
+    } else if (y + roomHeight > allocatedMaxY) {
+      constrainedY = allocatedMaxY - roomHeight;
+      wasConstrained = true;
+    }
+    
+    // Show warning if room was constrained
+    if (wasConstrained && showWarning && isEditable) {
+      setBoundaryWarning(true);
+      
+      // Clear existing timeout
+      if (boundaryWarningTimeoutRef.current) {
+        clearTimeout(boundaryWarningTimeoutRef.current);
+      }
+      
+      // Hide warning after 2 seconds
+      boundaryWarningTimeoutRef.current = setTimeout(() => {
+        setBoundaryWarning(false);
+      }, 2000);
+    }
+    
+    return { x: constrainedX, y: constrainedY, wasConstrained };
+  }, [floorPlanData, width, height, isEditable]);
+
+  // Helper function to check if two rooms overlap
+  const checkRoomOverlap = useCallback((x1, y1, w1, h1, x2, y2, w2, h2) => {
+    // Add small buffer (2px) to prevent touching rooms from being flagged as overlapping
+    const buffer = 2;
+    return !(
+      x1 + w1 - buffer < x2 + buffer ||
+      x2 + w2 - buffer < x1 + buffer ||
+      y1 + h1 - buffer < y2 + buffer ||
+      y2 + h2 - buffer < y1 + buffer
+    );
+  }, []);
+
+  // Helper function to constrain room to avoid collision with other rooms
+  // Auto-adjusts position so room borders are in contact without overlapping
+  const constrainRoomToAvoidCollision = useCallback((currentRoomId, x, y, roomWidth, roomHeight, prevX, prevY, prevWidth, prevHeight, showWarning = true) => {
+    let adjustedX = x;
+    let adjustedY = y;
+    let hasCollision = false;
+    const gap = 0; // No gap - borders touch perfectly
+    const maxIterations = 10; // Prevent infinite loops
+    let iteration = 0;
+
+    // Keep adjusting until no overlaps exist (or max iterations reached)
+    while (iteration < maxIterations) {
+      let foundCollision = false;
+      iteration++;
+
+      // Check collision with all other rooms
+      for (const room of rooms) {
+        if (room.id === currentRoomId) continue;
+
+        // Check if there's overlap
+        const overlapX = Math.min(adjustedX + roomWidth, room.x + room.width) - Math.max(adjustedX, room.x);
+        const overlapY = Math.min(adjustedY + roomHeight, room.y + room.height) - Math.max(adjustedY, room.y);
+
+        // If both overlaps are positive, rooms are colliding
+        if (overlapX > 0 && overlapY > 0) {
+          foundCollision = true;
+          hasCollision = true;
+
+          // Calculate center points to determine push direction
+          const currentCenterX = adjustedX + roomWidth / 2;
+          const currentCenterY = adjustedY + roomHeight / 2;
+          const otherCenterX = room.x + room.width / 2;
+          const otherCenterY = room.y + room.height / 2;
+
+          // Determine which direction has less overlap - push in that direction
+          if (overlapX < overlapY) {
+            // Push horizontally - borders touch perfectly
+            if (currentCenterX < otherCenterX) {
+              // Current room is on the left, push it left so right border touches other's left border
+              adjustedX = room.x - roomWidth - gap;
+            } else {
+              // Current room is on the right, push it right so left border touches other's right border
+              adjustedX = room.x + room.width + gap;
+            }
+          } else {
+            // Push vertically - borders touch perfectly
+            if (currentCenterY < otherCenterY) {
+              // Current room is above, push it up so bottom border touches other's top border
+              adjustedY = room.y - roomHeight - gap;
+            } else {
+              // Current room is below, push it down so top border touches other's bottom border
+              adjustedY = room.y + room.height + gap;
+            }
+          }
+          
+          // Break and re-check all rooms with new position
+          break;
+        }
+      }
+
+      // If no collision found in this iteration, we're done
+      if (!foundCollision) {
+        break;
+      }
+    }
+
+    // Show warning if collision was detected and adjusted
+    if (hasCollision && showWarning && isEditable) {
+      setCollisionWarning(true);
+      
+      // Clear existing timeout
+      if (collisionWarningTimeoutRef.current) {
+        clearTimeout(collisionWarningTimeoutRef.current);
+      }
+      
+      // Hide warning after 2 seconds
+      collisionWarningTimeoutRef.current = setTimeout(() => {
+        setCollisionWarning(false);
+      }, 2000);
+    }
+
+    // Return adjusted position (borders touching perfectly if collision was detected)
+    return { x: adjustedX, y: adjustedY, width: roomWidth, height: roomHeight, hasCollision };
+  }, [rooms, isEditable]);
+
   useImperativeHandle(ref, () => stageRef.current);
+  
+  // Cleanup warning timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (boundaryWarningTimeoutRef.current) {
+        clearTimeout(boundaryWarningTimeoutRef.current);
+      }
+      if (collisionWarningTimeoutRef.current) {
+        clearTimeout(collisionWarningTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Snap to grid helper function
   const snapToGridCoordinate = useCallback((value) => {
@@ -59,12 +242,10 @@ const KonvaFloorPlan = forwardRef(({
   const handleContextMenu = useCallback((e, type, id) => {
     if (!isEditable) return;
     e.evt.preventDefault();
-    const stage = e.target.getStage();
-    const container = stage.container().getBoundingClientRect();
     setContextMenu({
       visible: true,
-      x: e.evt.clientX - container.left,
-      y: e.evt.clientY - container.top,
+      x: e.evt.clientX,
+      y: e.evt.clientY,
       type,
       id
     });
@@ -183,8 +364,8 @@ const KonvaFloorPlan = forwardRef(({
     
     if (floorPlanData) {
       // Calculate scaling factors to fit the floor plan within canvas boundaries
-      const plotWidth = 1000; // Default backend plot width
-      const plotHeight = 1000; // Default backend plot height
+      const plotWidth = floorPlanData.plotWidth || 1000; // Use actual plot dimensions
+      const plotHeight = floorPlanData.plotHeight || 1000; // Use actual plot dimensions
       const margin = 40; // Margin from canvas edges
       
       const scaleX = (width - margin * 2) / plotWidth;
@@ -478,7 +659,8 @@ const KonvaFloorPlan = forwardRef(({
     isUserInteracting.current = true; // Set flag to prevent updates
     
     const room = rooms.find(r => r.id === roomId);
-    setDragStart({ x: room.x, y: room.y });
+    // Store previous position and dimensions for collision revert
+    setDragStart({ x: room.x, y: room.y, width: room.width, height: room.height });
     setSelectedRoom(roomId);
     setSelectedDoor(null);
     setSelectedWall(null);
@@ -556,10 +738,31 @@ const KonvaFloorPlan = forwardRef(({
         }, 0);
       }
 
-      // Update room position with free movement - no constraints
+      // Get previous position from dragStart (stored in handleRoomDragStart)
+      const prevX = dragStart.x || snappedX;
+      const prevY = dragStart.y || snappedY;
+      const prevWidth = dragStart.width || room.width;
+      const prevHeight = dragStart.height || room.height;
+
+      // Check collision with other rooms first (auto-adjusts to touch borders)
+      const collisionResult = constrainRoomToAvoidCollision(
+        roomId, snappedX, snappedY, room.width, room.height,
+        prevX, prevY, prevWidth, prevHeight
+      );
+      let finalX = collisionResult.x;
+      let finalY = collisionResult.y;
+
+      // Then apply boundary constraints (always apply after collision adjustment)
+      const boundaryConstrained = constrainRoomToBoundary(finalX, finalY, room.width, room.height, true);
+      finalX = boundaryConstrained.x;
+      finalY = boundaryConstrained.y;
+      
+      // Update the Konva element position immediately to prevent visual mismatch
+      e.target.position({ x: finalX, y: finalY });
+      
       return prevRooms.map(r => 
         r.id === roomId 
-          ? { ...r, x: snappedX, y: snappedY, originalX, originalY, scale }
+          ? { ...r, x: finalX, y: finalY, originalX, originalY, scale }
           : r
       );
     });
@@ -567,19 +770,46 @@ const KonvaFloorPlan = forwardRef(({
     setIsDragging(false);
     setDragType(null);
     isUserInteracting.current = false; // Clear flag after drag ends
-  }, [isEditable, onRoomUpdate, snapToGridCoordinate]);
+  }, [isEditable, onRoomUpdate, snapToGridCoordinate, constrainRoomToAvoidCollision, constrainRoomToBoundary, dragStart]);
 
   // Handle room drag move for visual feedback
   const handleRoomDragMove = useCallback((e, roomId) => {
     if (!isEditable || !isDragging) return;
     
-    // Apply snap to grid during drag for visual feedback
-    const currentX = snapToGridCoordinate(e.target.x());
-    const currentY = snapToGridCoordinate(e.target.y());
+    // Get current position
+    const currentX = e.target.x();
+    const currentY = e.target.y();
     
-    // Update target position to snapped coordinates
-    e.target.position({ x: currentX, y: currentY });
-  }, [isEditable, isDragging, snapToGridCoordinate]);
+    // Apply snap to grid
+    const snappedX = snapToGridCoordinate(currentX);
+    const snappedY = snapToGridCoordinate(currentY);
+    
+    // Get room dimensions
+    const room = rooms.find(r => r.id === roomId);
+    if (!room) return;
+    
+    // Get previous position from dragStart
+    const prevX = dragStart.x || snappedX;
+    const prevY = dragStart.y || snappedY;
+    const prevWidth = dragStart.width || room.width;
+    const prevHeight = dragStart.height || room.height;
+    
+    // Apply collision detection in real-time (no warning during drag)
+    const collisionResult = constrainRoomToAvoidCollision(
+      roomId, snappedX, snappedY, room.width, room.height,
+      prevX, prevY, prevWidth, prevHeight, false // Don't show warning during drag
+    );
+    let finalX = collisionResult.x;
+    let finalY = collisionResult.y;
+    
+    // Apply boundary constraints
+    const boundaryConstrained = constrainRoomToBoundary(finalX, finalY, room.width, room.height, false);
+    finalX = boundaryConstrained.x;
+    finalY = boundaryConstrained.y;
+    
+    // Update target position to constrained coordinates
+    e.target.position({ x: finalX, y: finalY });
+  }, [isEditable, isDragging, snapToGridCoordinate, rooms, dragStart, constrainRoomToAvoidCollision, constrainRoomToBoundary]);
 
   // Helper function to find the nearest wall edge for door placement
   const findNearestWallEdge = useCallback((x, y, doorLength) => {
@@ -1262,12 +1492,32 @@ const KonvaFloorPlan = forwardRef(({
 
     // Use functional setState to avoid stale closure issues
     setRooms(prevRooms => {
+      const room = prevRooms.find(r => r.id === roomId);
+      if (!room) return prevRooms;
+      
+      // Check collision with other rooms (auto-adjusts to touch borders)
+      const collisionResult = constrainRoomToAvoidCollision(
+        roomId, room.x, room.y, constrainedWidth, constrainedHeight,
+        room.x, room.y, room.width, room.height
+      );
+      let finalX = collisionResult.x;
+      let finalY = collisionResult.y;
+      let finalWidth = collisionResult.width;
+      let finalHeight = collisionResult.height;
+
+      // Then check boundary constraints (always apply after collision adjustment)
+      const boundaryConstrained = constrainRoomToBoundary(finalX, finalY, finalWidth, finalHeight, true);
+      finalX = boundaryConstrained.x;
+      finalY = boundaryConstrained.y;
+      
       const updatedRooms = prevRooms.map(r => 
         r.id === roomId 
           ? { 
               ...r, 
-              width: constrainedWidth, 
-              height: constrainedHeight
+              x: finalX,
+              y: finalY,
+              width: finalWidth, 
+              height: finalHeight
             }
           : r
       );
@@ -1278,7 +1528,7 @@ const KonvaFloorPlan = forwardRef(({
       
       return updatedRooms;
     });
-  }, [isEditable]);
+  }, [isEditable, constrainRoomToBoundary, constrainRoomToAvoidCollision]);
 
   // Handle room resize with position adjustment (for left/top edge resizing)
   const handleResizeWithPosition = useCallback((roomId, newX, newY, newWidth, newHeight) => {
@@ -1293,23 +1543,39 @@ const KonvaFloorPlan = forwardRef(({
     // Ensure minimum constraints
     const constrainedWidth = Math.max(50, Math.min(newWidth, 2000));
     const constrainedHeight = Math.max(50, Math.min(newHeight, 2000));
-    const constrainedX = Math.max(10, newX);
-    const constrainedY = Math.max(10, newY);
-
+    
     setRooms(prevRooms => {
+      const room = prevRooms.find(r => r.id === roomId);
+      if (!room) return prevRooms;
+
+      // Check collision with other rooms (auto-adjusts to touch borders)
+      const collisionResult = constrainRoomToAvoidCollision(
+        roomId, newX, newY, constrainedWidth, constrainedHeight,
+        room.x, room.y, room.width, room.height
+      );
+      let finalX = collisionResult.x;
+      let finalY = collisionResult.y;
+      let finalWidth = collisionResult.width;
+      let finalHeight = collisionResult.height;
+
+      // Then check boundary constraints (always apply after collision adjustment)
+      const boundaryConstrained = constrainRoomToBoundary(finalX, finalY, finalWidth, finalHeight, true);
+      finalX = boundaryConstrained.x;
+      finalY = boundaryConstrained.y;
+
       return prevRooms.map(r => 
         r.id === roomId 
           ? { 
               ...r, 
-              x: constrainedX,
-              y: constrainedY,
-              width: constrainedWidth, 
-              height: constrainedHeight
+              x: finalX,
+              y: finalY,
+              width: finalWidth, 
+              height: finalHeight
             }
           : r
       );
     });
-  }, [isEditable]);
+  }, [isEditable, constrainRoomToBoundary, constrainRoomToAvoidCollision]);
 
   // Handle mouse move for resizing and creation preview
   const handleStageMouseMove = useCallback((e) => {
@@ -1628,9 +1894,20 @@ const KonvaFloorPlan = forwardRef(({
   );
 
   return (
-    <div className="flex bg-gray-50">
-      {/* Left Sidebar - Quick Add Tools */}
-      {isEditable && (
+    <>
+      <style>
+        {`
+          @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            10% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            90% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+          }
+        `}
+      </style>
+      <div className="flex bg-gray-50">
+        {/* Left Sidebar - Quick Add Tools */}
+        {isEditable && (
         <div className="w-64 bg-white border-r border-gray-300 p-4 space-y-4 overflow-y-auto">
           {/* Quick Add Section */}
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
@@ -1687,46 +1964,7 @@ const KonvaFloorPlan = forwardRef(({
               
               {/* Quick Add Room */}
               <button
-                onClick={() => {
-                  const roomId = `new-room-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                  const newRoom = {
-                    id: roomId,
-                    x: 100,
-                    y: 100,
-                    width: 150,
-                    height: 120,
-                    fill: getRoomColor('Room'),
-                    stroke: '#333',
-                    strokeWidth: 2,
-                    draggable: isEditable,
-                    tag: `Room ${rooms.length + 1}`,
-                    type: 'Room',
-                    name: `New Room ${rooms.length + 1}`,
-                    originalX: 60, // (100 - 40) / 1 = 60, margin = 40, scale = 1
-                    originalY: 60,
-                    originalWidth: 150,
-                    originalHeight: 120,
-                    scale: 1
-                  };
-                  const updatedRooms = [...rooms, newRoom];
-                  setRooms(updatedRooms);
-                  setSelectedRoom(roomId);
-                  setSelectedDoor(null);
-                  setSelectedWall(null);
-                  setSelectedWindow(null);
-                  
-                  // Initialize percentage for new room
-                  const roomArea = 150 * 120; // width * height
-                  const percentage = calculateAreaPercentage(roomArea);
-                  setRoomPercentages(prev => ({
-                    ...prev,
-                    [roomId]: percentage
-                  }));
-                  
-                  if (onRoomsChange) {
-                    onRoomsChange(updatedRooms);
-                  }
-                }}
+                onClick={() => setShowRoomTypeDialog(true)}
                 className="w-full px-3 py-2 text-xs rounded-lg border bg-purple-50 border-purple-300 text-purple-800 hover:bg-purple-100 transition-colors"
                 title="Add room at center"
               >
@@ -1915,7 +2153,7 @@ const KonvaFloorPlan = forwardRef(({
             </>
           )}
 
-          {/* Plot boundary */}
+          {/* Plot boundary - always visible */}
           <Rect
             x={2}
             y={2}
@@ -1925,6 +2163,30 @@ const KonvaFloorPlan = forwardRef(({
             stroke="#000000"
             strokeWidth={3}
           />
+
+          {/* Allocated buildable area - blue bordered indicator */}
+          {showAllocatedArea && floorPlanData && (() => {
+            const margin = 40;
+            const plotWidth = floorPlanData.plotWidth || 1000;
+            const plotHeight = floorPlanData.plotHeight || 1000;
+            const scaleX = (width - margin * 2) / plotWidth;
+            const scaleY = (height - margin * 2) / plotHeight;
+            const scale = Math.min(scaleX, scaleY);
+            
+            return (
+              <Rect
+                x={margin}
+                y={margin}
+                width={plotWidth * scale}
+                height={plotHeight * scale}
+                fill="rgba(33, 150, 243, 0.05)"
+                stroke="#2196F3"
+                strokeWidth={2}
+                dash={[10, 5]}
+                listening={false}
+              />
+            );
+          })()}
 
           {/* Rooms */}
           {rooms.map((room, index) => {
@@ -2024,6 +2286,7 @@ const KonvaFloorPlan = forwardRef(({
                     onMouseDown={(e) => {
                       e.cancelBubble = true;
                       isUserInteracting.current = true;
+                      setDragStart({ x: room.x, y: room.y, width: room.width, height: room.height });
                       setResizingRoom(room.id);
                       setResizeHandle('br');
                     }}
@@ -2051,6 +2314,7 @@ const KonvaFloorPlan = forwardRef(({
                     onMouseDown={(e) => {
                       e.cancelBubble = true;
                       isUserInteracting.current = true;
+                      setDragStart({ x: room.x, y: room.y, width: room.width, height: room.height });
                       setResizingRoom(room.id);
                       setResizeHandle('r');
                     }}
@@ -2078,6 +2342,7 @@ const KonvaFloorPlan = forwardRef(({
                     onMouseDown={(e) => {
                       e.cancelBubble = true;
                       isUserInteracting.current = true;
+                      setDragStart({ x: room.x, y: room.y, width: room.width, height: room.height });
                       setResizingRoom(room.id);
                       setResizeHandle('b');
                     }}
@@ -2105,6 +2370,7 @@ const KonvaFloorPlan = forwardRef(({
                     onMouseDown={(e) => {
                       e.cancelBubble = true;
                       isUserInteracting.current = true;
+                      setDragStart({ x: room.x, y: room.y, width: room.width, height: room.height });
                       setResizingRoom(room.id);
                       setResizeHandle('t');
                     }}
@@ -2132,6 +2398,7 @@ const KonvaFloorPlan = forwardRef(({
                     onMouseDown={(e) => {
                       e.cancelBubble = true;
                       isUserInteracting.current = true;
+                      setDragStart({ x: room.x, y: room.y, width: room.width, height: room.height });
                       setResizingRoom(room.id);
                       setResizeHandle('l');
                     }}
@@ -2159,6 +2426,7 @@ const KonvaFloorPlan = forwardRef(({
                     onMouseDown={(e) => {
                       e.cancelBubble = true;
                       isUserInteracting.current = true;
+                      setDragStart({ x: room.x, y: room.y, width: room.width, height: room.height });
                       setResizingRoom(room.id);
                       setResizeHandle('tl');
                     }}
@@ -2186,6 +2454,7 @@ const KonvaFloorPlan = forwardRef(({
                     onMouseDown={(e) => {
                       e.cancelBubble = true;
                       isUserInteracting.current = true;
+                      setDragStart({ x: room.x, y: room.y, width: room.width, height: room.height });
                       setResizingRoom(room.id);
                       setResizeHandle('tr');
                     }}
@@ -2213,6 +2482,7 @@ const KonvaFloorPlan = forwardRef(({
                     onMouseDown={(e) => {
                       e.cancelBubble = true;
                       isUserInteracting.current = true;
+                      setDragStart({ x: room.x, y: room.y, width: room.width, height: room.height });
                       setResizingRoom(room.id);
                       setResizeHandle('bl');
                     }}
@@ -2233,8 +2503,41 @@ const KonvaFloorPlan = forwardRef(({
             );
           })}
 
+          {/* Room Overlaps - Show overlapping areas in red translucent */}
+          {isEditable && rooms.map((room1, i) => 
+            rooms.slice(i + 1).map((room2, j) => {
+              // Calculate overlap between room1 and room2
+              const overlapLeft = Math.max(room1.x, room2.x);
+              const overlapTop = Math.max(room1.y, room2.y);
+              const overlapRight = Math.min(room1.x + room1.width, room2.x + room2.width);
+              const overlapBottom = Math.min(room1.y + room1.height, room2.y + room2.height);
+              
+              const overlapWidth = overlapRight - overlapLeft;
+              const overlapHeight = overlapBottom - overlapTop;
+              
+              // Only render if there's actual overlap (both dimensions positive)
+              if (overlapWidth > 0 && overlapHeight > 0) {
+                return (
+                  <Rect
+                    key={`overlap-${room1.id}-${room2.id}-${j}`}
+                    x={overlapLeft}
+                    y={overlapTop}
+                    width={overlapWidth}
+                    height={overlapHeight}
+                    fill="rgba(255, 0, 0, 0.3)"
+                    stroke="rgba(255, 0, 0, 0.6)"
+                    strokeWidth={2}
+                    listening={false}
+                    dash={[5, 5]}
+                  />
+                );
+              }
+              return null;
+            })
+          )}
+
           {/* Walls - render on top of rooms */}
-          {walls.map(wall => (
+          {showWalls && walls.map(wall => (
             <Group key={wall.id}>
               <Line
                 x={0}
@@ -2347,10 +2650,12 @@ const KonvaFloorPlan = forwardRef(({
                   stroke={isSelected ? "#2196F3" : "#8B4513"}
                   strokeWidth={Math.max(8, door.strokeWidth * 2)}
                   lineCap="round"
-                  draggable={false}
+                  draggable={isEditable}
+                  onDragStart={(e) => handleDoorDragStart(e, door.id)}
+                  onDragEnd={(e) => handleDoorDragEnd(e, door.id)}
                   onClick={(e) => handleDoorClick(e, door.id)}
                   onContextMenu={(e) => handleContextMenu(e, 'door', door.id)}
-                  style={{ cursor: isEditable ? 'pointer' : 'default' }}
+                  style={{ cursor: isEditable ? 'move' : 'default' }}
                 />
                 
                 {/* Door endpoint handles - draggable */}
@@ -2376,10 +2681,17 @@ const KonvaFloorPlan = forwardRef(({
                         setDoors(updatedDoors);
                       }}
                       onDragEnd={(e) => {
+                        const newX = e.target.x();
+                        const newY = e.target.y();
+                        const updatedDoors = doors.map(d =>
+                          d.id === door.id
+                            ? { ...d, points: [newX, newY, d.points[2], d.points[3]] }
+                            : d
+                        );
+                        setDoors(updatedDoors);
                         if (onDoorsChange) {
-                          onDoorsChange(doors);
+                          onDoorsChange(updatedDoors);
                         }
-                        e.target.position({ x: 0, y: 0 });
                       }}
                       style={{ cursor: 'move' }}
                     />
@@ -2403,10 +2715,17 @@ const KonvaFloorPlan = forwardRef(({
                         setDoors(updatedDoors);
                       }}
                       onDragEnd={(e) => {
+                        const newX = e.target.x();
+                        const newY = e.target.y();
+                        const updatedDoors = doors.map(d =>
+                          d.id === door.id
+                            ? { ...d, points: [d.points[0], d.points[1], newX, newY] }
+                            : d
+                        );
+                        setDoors(updatedDoors);
                         if (onDoorsChange) {
-                          onDoorsChange(doors);
+                          onDoorsChange(updatedDoors);
                         }
-                        e.target.position({ x: 0, y: 0 });
                       }}
                       style={{ cursor: 'move' }}
                     />
@@ -2556,12 +2875,13 @@ const KonvaFloorPlan = forwardRef(({
           )}
         </div>
       )}
+      </div>
 
       {/* Context Menu for delete */}
       {contextMenu.visible && isEditable && (
         <div
           style={{
-            position: 'absolute',
+            position: 'fixed',
             left: contextMenu.x,
             top: contextMenu.y,
             backgroundColor: 'white',
@@ -2598,8 +2918,232 @@ const KonvaFloorPlan = forwardRef(({
           </div>
         </div>
       )}
+
+      {/* Warning Notifications - Right Side Middle List */}
+      <div style={{
+        position: 'fixed',
+        right: '20px',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        zIndex: 1001,
+        maxWidth: '320px'
+      }}>
+        {/* Boundary Warning Notification */}
+        {boundaryWarning && isEditable && (
+          <div
+            style={{
+              backgroundColor: '#ff9800',
+              color: 'white',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              animation: 'fadeInOut 2s ease-in-out'
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>Outside allocated area! Auto-adjusted to fit boundary.</span>
+          </div>
+        )}
+
+        {/* Collision Warning Notification */}
+        {collisionWarning && isEditable && (
+          <div
+            style={{
+              backgroundColor: '#f44336',
+              color: 'white',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              animation: 'fadeInOut 2s ease-in-out'
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            <span>Room overlaps detected! Auto-adjusted to avoid collision.</span>
+          </div>
+        )}
+      </div>
+
+      {/* Room Type Selection Dialog */}
+      {showRoomTypeDialog && isEditable && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000
+          }}
+          onClick={() => setShowRoomTypeDialog(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '500px',
+              width: '90%',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#333', marginBottom: '8px' }}>
+                Select Room Type
+              </h3>
+              <p style={{ fontSize: '14px', color: '#666' }}>
+                Choose the type of room you want to add to your floor plan
+              </p>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '12px',
+              marginBottom: '20px'
+            }}>
+              {roomTypes.map((roomType) => (
+                <button
+                  key={roomType.key}
+                  onClick={() => {
+                    const roomId = `new-room-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    const roomCount = rooms.filter(r => r.type && r.type.startsWith(roomType.key)).length + 1;
+                    
+                    // Calculate the same scale used for existing rooms
+                    const plotWidth = floorPlanData?.plotWidth || 1000;
+                    const plotHeight = floorPlanData?.plotHeight || 1000;
+                    const margin = 40;
+                    const scaleX = (width - margin * 2) / plotWidth;
+                    const scaleY = (height - margin * 2) / plotHeight;
+                    const scale = Math.min(scaleX, scaleY);
+                    
+                    // Define backend (original) dimensions first
+                    const backendWidth = 150;
+                    const backendHeight = 120;
+                    const backendX = 60;
+                    const backendY = 60;
+                    
+                    const newRoom = {
+                      id: roomId,
+                      x: backendX * scale + margin,
+                      y: backendY * scale + margin,
+                      width: backendWidth * scale,
+                      height: backendHeight * scale,
+                      fill: getRoomColor(roomType.key),
+                      stroke: '#333',
+                      strokeWidth: 2,
+                      draggable: isEditable,
+                      tag: `${roomType.label} ${roomCount}`,
+                      type: roomType.key,
+                      name: `${roomType.label} ${roomCount}`,
+                      originalX: backendX,
+                      originalY: backendY,
+                      originalWidth: backendWidth,
+                      originalHeight: backendHeight,
+                      scale: scale
+                    };
+                    
+                    const updatedRooms = [...rooms, newRoom];
+                    setRooms(updatedRooms);
+                    setSelectedRoom(roomId);
+                    setSelectedDoor(null);
+                    setSelectedWall(null);
+                    setSelectedWindow(null);
+                    
+                    // Initialize percentage for new room (use backend dimensions for area)
+                    const roomArea = backendWidth * backendHeight;
+                    const percentage = calculateAreaPercentage(roomArea);
+                    setRoomPercentages(prev => ({
+                      ...prev,
+                      [roomId]: percentage
+                    }));
+                    
+                    if (onRoomsChange) {
+                      onRoomsChange(updatedRooms);
+                    }
+                    
+                    setShowRoomTypeDialog(false);
+                  }}
+                  style={{
+                    padding: '16px',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '12px',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#ED7600';
+                    e.currentTarget.style.backgroundColor = '#FFF8F0';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#e0e0e0';
+                    e.currentTarget.style.backgroundColor = 'white';
+                  }}
+                >
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
+                    {roomType.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setShowRoomTypeDialog(false)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #ccc',
+                borderRadius: '8px',
+                backgroundColor: '#f5f5f5',
+                color: '#666',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#e0e0e0';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#f5f5f5';
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
-    </div>
+    </>
   );
 });
 

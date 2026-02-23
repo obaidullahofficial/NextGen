@@ -141,8 +141,8 @@ const FloorPlanCustomization = () => {
       if (!prevData) return prevData;
       
       const margin = 40;
-      const plotWidth = 1000;
-      const plotHeight = 1000;
+      const plotWidth = prevData.plotWidth || 1000;
+      const plotHeight = prevData.plotHeight || 1000;
       const scaleX = (800 - margin * 2) / plotWidth;
       const scaleY = (600 - margin * 2) / plotHeight;
       const scale = Math.min(scaleX, scaleY);
@@ -182,8 +182,8 @@ const FloorPlanCustomization = () => {
       if (!prevData) return prevData;
       
       const margin = 40;
-      const plotWidth = 1000;
-      const plotHeight = 1000;
+      const plotWidth = prevData.plotWidth || 1000;
+      const plotHeight = prevData.plotHeight || 1000;
       const scaleX = (800 - margin * 2) / plotWidth;
       const scaleY = (600 - margin * 2) / plotHeight;
       const scale = Math.min(scaleX, scaleY);
@@ -223,8 +223,8 @@ const FloorPlanCustomization = () => {
       if (!prevData) return prevData;
       
       const margin = 40;
-      const plotWidth = 1000;
-      const plotHeight = 1000;
+      const plotWidth = prevData.plotWidth || 1000;
+      const plotHeight = prevData.plotHeight || 1000;
       const scaleX = (800 - margin * 2) / plotWidth;
       const scaleY = (600 - margin * 2) / plotHeight;
       const scale = Math.min(scaleX, scaleY);
@@ -851,6 +851,7 @@ const FloorPlanCustomization = () => {
                   width={800}
                   height={600}
                   isEditable={true}
+                  showWalls={false}
                   onRoomUpdate={handleRoomUpdate}
                   onRoomsChange={handleRoomsChange}
                   onWallsChange={handleWallsChange}

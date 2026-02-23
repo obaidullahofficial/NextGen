@@ -1495,7 +1495,9 @@ const FloorPlanGenerator = () => {
             id: idx + 1,
             fitness: Math.random() * 100, // Placeholder fitness score
             rooms: transformedRooms,
-            mapData: plan // Store original map data for visualization
+            mapData: plan, // Store original map data for visualization
+            plotWidth: parseFloat(formData.plotWidth) || 1000,
+            plotHeight: parseFloat(formData.plotHeight) || 1000
           };
         });
 
