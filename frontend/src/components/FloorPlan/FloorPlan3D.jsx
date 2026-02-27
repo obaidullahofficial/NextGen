@@ -1,4 +1,4 @@
-import React, { Suspense, useRef, useState, useEffect, useCallback, useMemo, memo } from 'react';
+﻿import React, { Suspense, useRef, useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { 
   OrbitControls, 
@@ -9,10 +9,9 @@ import {
   ContactShadows,
   Line
 } from '@react-three/drei';
-import { EffectComposer, Bloom, SMAA, Vignette } from '@react-three/postprocessing';
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import SunCalc from 'suncalc';
-import ColorCustomizer from './ColorCustomizer';
 import { RoomAccessories } from './RoomAccessories';
 
 const ENABLE_POSTPROCESSING = true;
@@ -23,12 +22,60 @@ const FOUNDATION_PADDING = 1.5; // How much foundation extends beyond building
 
 const DEFAULT_SUN_SETTINGS = {
   enabled: true,
-  showPath: true,
-  lat: 0,
-  lng: 0,
-  northOffsetDeg: 0,
-  date: new Date().toISOString().slice(0, 10),
-  time: new Date().toTimeString().slice(0, 5)
+  // Position controls (X, Y, Z)
+  posX: 8,
+  posY: 25,
+  posZ: 5,
+  // Lighting intensity
+  brightness: 1.8,
+  shadowStrength: 0.8,
+  // Time preset: 'morning', 'noon', 'afternoon', 'evening', 'custom'
+  preset: 'noon',
+  // Color temperature (2700K warm to 6500K cool)
+  colorTemp: 5500,
+  // Shadow quality: 'low', 'medium', 'high', 'ultra'
+  shadowQuality: 'high'
+};
+
+// Time-of-day presets with position, color temp, and brightness
+const SUN_PRESETS = {
+  morning: { posX: -15, posY: 12, posZ: 10, colorTemp: 3200, brightness: 1.2 },
+  noon: { posX: 8, posY: 25, posZ: 5, colorTemp: 5500, brightness: 1.8 },
+  afternoon: { posX: 18, posY: 18, posZ: -8, colorTemp: 4500, brightness: 1.5 },
+  evening: { posX: 25, posY: 8, posZ: -15, colorTemp: 2700, brightness: 0.8 }
+};
+
+// Shadow quality settings
+const SHADOW_QUALITY = {
+  low: { mapSize: 1024, bias: -0.001 },
+  medium: { mapSize: 2048, bias: -0.0005 },
+  high: { mapSize: 4096, bias: -0.0001 },
+  ultra: { mapSize: 8192, bias: -0.00005 }
+};
+
+// Convert color temperature to RGB hex
+const colorTempToHex = (kelvin) => {
+  const temp = kelvin / 100;
+  let r, g, b;
+  
+  if (temp <= 66) {
+    r = 255;
+    g = Math.min(255, Math.max(0, 99.4708025861 * Math.log(temp) - 161.1195681661));
+  } else {
+    r = Math.min(255, Math.max(0, 329.698727446 * Math.pow(temp - 60, -0.1332047592)));
+    g = Math.min(255, Math.max(0, 288.1221695283 * Math.pow(temp - 60, -0.0755148492)));
+  }
+  
+  if (temp >= 66) {
+    b = 255;
+  } else if (temp <= 19) {
+    b = 0;
+  } else {
+    b = Math.min(255, Math.max(0, 138.5177312231 * Math.log(temp - 10) - 305.0447927307));
+  }
+  
+  const toHex = (c) => Math.round(c).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 };
 
 const clampNumber = (value, min, max) => {
@@ -39,115 +86,43 @@ const clampNumber = (value, min, max) => {
 
 const degToRad = (deg) => (deg * Math.PI) / 180;
 
-// Solar visualization + dynamic sunlight
+// Solar visualization + dynamic sunlight with simplified controls
 const SunSystem3D = memo(({ target = [0, 0, 0], settings }) => {
   const { scene } = useThree();
   const lightRef = useRef();
 
   const {
     enabled,
-    showPath,
-    lat,
-    lng,
-    northOffsetDeg,
-    date,
-    time
+    posX,
+    posY,
+    posZ,
+    brightness,
+    shadowStrength,
+    colorTemp,
+    shadowQuality
   } = settings || DEFAULT_SUN_SETTINGS;
-
-  const dateTime = useMemo(() => {
-    try {
-      return new Date(`${date}T${time}:00`);
-    } catch {
-      return new Date();
-    }
-  }, [date, time]);
 
   const solar = useMemo(() => {
     if (!enabled) return null;
 
-    const latitude = clampNumber(lat, -90, 90);
-    const longitude = clampNumber(lng, -180, 180);
-    const northOffset = degToRad(clampNumber(northOffsetDeg, -180, 180));
-
-    const pos = SunCalc.getPosition(dateTime, latitude, longitude);
-    const altitude = pos.altitude;
-    const bearing = pos.azimuth + Math.PI + northOffset; // bearing from north, clockwise
-
-    const radius = 90;
-    const horizontal = Math.cos(altitude) * radius;
-    const sunX = horizontal * Math.sin(bearing);
-    const sunY = Math.sin(altitude) * radius;
-    const sunZ = horizontal * -Math.cos(bearing); // north = -Z
-
-    const dayFactor = THREE.MathUtils.clamp(altitude / (Math.PI / 2), 0, 1);
-    const visible = altitude > -0.08;
-    const intensity = visible ? (0.15 + dayFactor * 1.35) : 0;
-
-    const noonWhite = new THREE.Color('#FFF8DC');
-    const horizonWarm = new THREE.Color('#FFB07C');
-    const warmMix = THREE.MathUtils.clamp(1 - dayFactor * 2.2, 0, 1);
-    const color = noonWhite.clone().lerp(horizonWarm, warmMix);
-
-    const times = SunCalc.getTimes(new Date(`${date}T00:00:00`), latitude, longitude);
-    const sunrise = times?.sunrise instanceof Date ? times.sunrise : null;
-    const sunset = times?.sunset instanceof Date ? times.sunset : null;
-
-    const markerAtTime = (t) => {
-      if (!(t instanceof Date)) return null;
-      const p = SunCalc.getPosition(t, latitude, longitude);
-      const b = p.azimuth + Math.PI + northOffset;
-      const r = 85;
-      const h = Math.cos(p.altitude) * r;
-      return {
-        position: [h * Math.sin(b), 0.6, h * -Math.cos(b)],
-        bearing: b,
-        time: t
-      };
-    };
-
-    const sunriseMarker = markerAtTime(sunrise);
-    const sunsetMarker = markerAtTime(sunset);
-
-    // Build a path line (sunrise -> sunset). Fallback: +/- 6 hours around selected time.
-    const points = [];
-    const addPoint = (t) => {
-      const p = SunCalc.getPosition(t, latitude, longitude);
-      const b = p.azimuth + Math.PI + northOffset;
-      const r = 90;
-      const h = Math.cos(p.altitude) * r;
-      const x = h * Math.sin(b);
-      const y = Math.sin(p.altitude) * r;
-      const z = h * -Math.cos(b);
-      if (y > -3) points.push([x, Math.max(0, y), z]);
-    };
-
-    if (sunrise && sunset && sunset.getTime() > sunrise.getTime()) {
-      const steps = 40;
-      const start = sunrise.getTime();
-      const end = sunset.getTime();
-      for (let i = 0; i <= steps; i++) {
-        addPoint(new Date(start + ((end - start) * i) / steps));
-      }
-    } else {
-      const steps = 36;
-      const start = new Date(dateTime.getTime() - 6 * 60 * 60 * 1000);
-      const end = new Date(dateTime.getTime() + 6 * 60 * 60 * 1000);
-      for (let i = 0; i <= steps; i++) {
-        addPoint(new Date(start.getTime() + ((end.getTime() - start.getTime()) * i) / steps));
-      }
-    }
-
+    // Use direct position controls
+    const sunPosition = [posX, posY, posZ];
+    
+    // Convert color temperature to actual color
+    const sunColor = colorTempToHex(colorTemp);
+    
+    // Get shadow quality settings
+    const shadowSettings = SHADOW_QUALITY[shadowQuality] || SHADOW_QUALITY.high;
+    
     return {
-      sunPosition: [sunX, Math.max(0.5, sunY), sunZ],
-      sunVisible: visible,
-      sunIntensity: intensity,
-      sunColor: `#${color.getHexString()}`,
-      sunriseMarker,
-      sunsetMarker,
-      pathPoints: points,
-      northOffset
+      sunPosition,
+      sunVisible: true,
+      sunIntensity: brightness,
+      sunColor,
+      shadowSettings,
+      shadowStrength
     };
-  }, [enabled, lat, lng, northOffsetDeg, date, time, dateTime]);
+  }, [enabled, posX, posY, posZ, brightness, colorTemp, shadowQuality, shadowStrength]);
 
   useEffect(() => {
     if (!lightRef.current || !scene) return;
@@ -163,137 +138,72 @@ const SunSystem3D = memo(({ target = [0, 0, 0], settings }) => {
 
   if (!solar) return null;
 
-  const compassRadius = 14;
-  const compass = (label, bearingRad) => {
-    const x = compassRadius * Math.sin(bearingRad);
-    const z = compassRadius * -Math.cos(bearingRad);
-    return (
-      <Text
-        key={label}
-        position={[x, 0.15, z]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.65}
-        color={label === 'N' ? '#2563EB' : '#111827'}
-        outlineWidth={0.01}
-        outlineColor="#FFFFFF"
-        anchorX="center"
-        anchorY="middle"
-      >
-        {label}
-      </Text>
-    );
-  };
-
-  const northOffset = solar.northOffset || 0;
-  const northBearing = 0 + northOffset;
-  const eastBearing = Math.PI / 2 + northOffset;
-  const southBearing = Math.PI + northOffset;
-  const westBearing = (3 * Math.PI) / 2 + northOffset;
-
   return (
     <>
-      {/* Dynamic sunlight */}
+      {/* Dynamic sunlight with customizable position */}
       <directionalLight
         ref={lightRef}
         position={solar.sunPosition}
         intensity={solar.sunIntensity}
         color={solar.sunColor}
         castShadow
-        shadow-mapSize-width={4096}
-        shadow-mapSize-height={4096}
+        shadow-mapSize-width={solar.shadowSettings.mapSize}
+        shadow-mapSize-height={solar.shadowSettings.mapSize}
         shadow-camera-near={0.1}
-        shadow-camera-far={220}
-        shadow-camera-left={-55}
-        shadow-camera-right={55}
-        shadow-camera-top={55}
-        shadow-camera-bottom={-55}
-        shadow-bias={-0.00008}
+        shadow-camera-far={100}
+        shadow-camera-left={-40}
+        shadow-camera-right={40}
+        shadow-camera-top={40}
+        shadow-camera-bottom={-40}
+        shadow-bias={solar.shadowSettings.bias}
+        shadow-normalBias={0.02}
       />
 
-      {/* Sun visual */}
+      {/* Sun visual - brightness based on settings */}
       {solar.sunVisible && (
         <mesh position={solar.sunPosition}>
-          <sphereGeometry args={[1.8, 24, 24]} />
+          <sphereGeometry args={[2.2, 32, 32]} />
           <meshStandardMaterial
             color={solar.sunColor}
             emissive={solar.sunColor}
-            emissiveIntensity={1.4}
+            emissiveIntensity={solar.sunIntensity}
             toneMapped={false}
           />
         </mesh>
       )}
 
-      {/* Sun direction on ground */}
-      <Line
-        points={[
-          [0, 0.06, 0],
-          [solar.sunPosition[0] * 0.25, 0.06, solar.sunPosition[2] * 0.25]
-        ]}
-        color="#F59E0B"
-        lineWidth={2}
-        transparent
-        opacity={0.9}
+      {/* Ambient light adjusted by shadow strength (inverse relationship) */}
+      <ambientLight intensity={0.5 - (solar.shadowStrength * 0.3)} color="#E6F3FF" />
+      
+      {/* Sky hemisphere light for realistic outdoor lighting */}
+      <hemisphereLight 
+        skyColor="#87CEEB" 
+        groundColor="#8B7355" 
+        intensity={0.5} 
       />
 
-      {/* Sunrise / Sunset markers */}
-      {solar.sunriseMarker && (
-        <group>
-          <mesh position={solar.sunriseMarker.position}>
-            <sphereGeometry args={[0.65, 18, 18]} />
-            <meshStandardMaterial color="#34D399" emissive="#34D399" emissiveIntensity={0.8} toneMapped={false} />
-          </mesh>
-          <Text
-            position={[solar.sunriseMarker.position[0], 1.6, solar.sunriseMarker.position[2]]}
-            fontSize={0.4}
-            color="#065F46"
-            outlineWidth={0.01}
-            outlineColor="#FFFFFF"
-            anchorX="center"
-            anchorY="middle"
-          >
-            Sunrise
-          </Text>
-        </group>
-      )}
-      {solar.sunsetMarker && (
-        <group>
-          <mesh position={solar.sunsetMarker.position}>
-            <sphereGeometry args={[0.65, 18, 18]} />
-            <meshStandardMaterial color="#FB7185" emissive="#FB7185" emissiveIntensity={0.8} toneMapped={false} />
-          </mesh>
-          <Text
-            position={[solar.sunsetMarker.position[0], 1.6, solar.sunsetMarker.position[2]]}
-            fontSize={0.4}
-            color="#9F1239"
-            outlineWidth={0.01}
-            outlineColor="#FFFFFF"
-            anchorX="center"
-            anchorY="middle"
-          >
-            Sunset
-          </Text>
-        </group>
-      )}
-
-      {/* Sun path */}
-      {showPath && solar.pathPoints && solar.pathPoints.length > 2 && (
-        <Line
-          points={solar.pathPoints}
-          color="#FBBF24"
-          lineWidth={1.5}
-          dashed
-          dashSize={1.2}
-          gapSize={0.6}
-          transparent
-          opacity={0.85}
-        />
-      )}
-
-      {/* Compass (N/E/S/W) */}
-      {compass('N', northBearing)}
-      {compass('E', eastBearing)}
-      {compass('S', southBearing)}
-      {compass('W', westBearing)}
+      {/* Sun rays effect */}
+      <group position={solar.sunPosition}>
+        {[0, 1, 2, 3, 4, 5].map(i => {
+          const angle = (i / 6) * Math.PI * 2;
+          const length = 3;
+          const x = Math.cos(angle) * 0.1;
+          const z = Math.sin(angle) * 0.1;
+          return (
+            <Line
+              key={i}
+              points={[
+                [x, 0, z],
+                [x, -length, z]
+              ]}
+              color={solar.sunColor}
+              lineWidth={1}
+              transparent
+              opacity={0.5}
+            />
+          );
+        })}
+      </group>
     </>
   );
 });
@@ -704,33 +614,47 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
   
   // Early return if no rooms to prevent unnecessary processing
   if (!rooms || rooms.length === 0) {
-    console.log('🚪 No rooms available for door generation');
+    console.log('ðŸšª No rooms available for door generation');
     return doors;
   }
   
   // Early return if bounds are invalid
   if (!bounds || typeof bounds.minX === 'undefined') {
-    console.log('🚪 Invalid bounds for door generation');
+    console.log('ðŸšª Invalid bounds for door generation');
     return doors;
   }
   
-  console.log('🚪 Enhanced door generation with detected doors:', detectedDoors.length);
-  console.log('🏠 Rooms available:', rooms.map(r => ({ id: r.id, name: r.name, type: r.type })));
-  console.log('📏 Bounds:', bounds);
+  console.log('ðŸšª Enhanced door generation with detected doors:', detectedDoors.length);
+  console.log('ðŸ  Rooms available:', rooms.map(r => ({ id: r.id, name: r.name, type: r.type })));
+  console.log('ðŸ“ Bounds:', bounds);
   
   // Process detected doors from the 2D floor plan with enhanced boundary detection
   detectedDoors.forEach((detectedDoor, index) => {
+    // Door x,y are now center coordinates (from updated parsing)
     const world = convertToWorld3D(detectedDoor.x, detectedDoor.y, detectedDoor.width, detectedDoor.height, bounds);
-    // Use door's edge position (x, y) for wall boundary detection, not center
-    // The door's y position is where it sits on the wall
-    const doorCenterX = world.x + world.width / 2;
-    const doorEdgeZ = world.z; // Use edge, not center - doors are placed AT wall boundary
-    const doorCenterZ = doorEdgeZ; // Alias for compatibility
+    
+    // Use center position directly - no need to add width/2 anymore since x,y are center coords
+    const doorCenterX = world.x;
+    const doorCenterZ = world.z;
+    
+    // VALIDATION: Skip doors with coordinates clearly outside the building bounds
+    // This handles corrupted data from previous coordinate conversion bugs
+    // World coordinates should typically be within a reasonable range (worldScale is 25/maxDimension)
+    const maxReasonableCoord = 50; // World coordinates should be within ~0-25 range typically
+    if (Math.abs(doorCenterX) > maxReasonableCoord || Math.abs(doorCenterZ) > maxReasonableCoord) {
+      console.warn(`⚠️ Door ${index} has invalid coordinates (${doorCenterX.toFixed(2)}, ${doorCenterZ.toFixed(2)}) - skipping`);
+      return; // Skip this door
+    }
+    
+    // Use door's isHorizontal property if available for better orientation detection
+    const doorIsHorizontal = detectedDoor.isHorizontal !== undefined ? detectedDoor.isHorizontal : true;
+    
+    console.log('Door', index, 'at center:', doorCenterX.toFixed(2), doorCenterZ.toFixed(2), 'isHorizontal:', doorIsHorizontal);
     
     // Find ALL rooms this door connects with enhanced detection
     const connectedRooms = [];
     // Increased tolerance to account for coordinate conversion precision
-    const tolerance = 1.5;
+    const tolerance = 2.0;
     
     rooms.forEach(room => {
       const roomWorld = convertToWorld3D(room.x, room.y, room.width, room.height, bounds);
@@ -761,7 +685,7 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
       }
     });
     
-    console.log(`🚪 Door ${index} connects ${connectedRooms.length} rooms:`, 
+    console.log(`ðŸšª Door ${index} connects ${connectedRooms.length} rooms:`, 
                 connectedRooms.map(cr => cr.room.name || cr.room.id));
     
     // Enhanced door positioning for perfect wall boundary alignment
@@ -815,7 +739,7 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
         
         // Room3D positions walls relative to room center:
         // - roomX/roomZ is the center of the room (roomWorld.x + roomWorld.width/2)
-        // - Walls are positioned at ±world.height/2 or ±world.width/2 from center
+        // - Walls are positioned at Â±world.height/2 or Â±world.width/2 from center
         // So exterior doors should be positioned at the room boundary from its center
         const roomCenterX = roomWorld.x + roomWorld.width / 2;
         const roomCenterZ = roomWorld.z + roomWorld.height / 2;
@@ -844,27 +768,35 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
       const doorId = `detected-door-${index}`;
       const connectedRoomIds = connectedRooms.map(cr => cr.room.id);
       
+      // Calculate door width from 2D door length - scale appropriately
+      // detectedDoor.width is now the line length in 2D pixels
+      const doorWorldWidth = Math.max(1.0, Math.min(world.width, 1.6));
+      
+      // Use detected door orientation if wall detection doesn't override
+      const finalRotation = doorRotation[1] !== 0 ? doorRotation : 
+                           (doorIsHorizontal ? [0, 0, 0] : [0, Math.PI/2, 0]);
+      
       doors.push({
         id: doorId,
         globalPosition: [globalDoorX, 0, globalDoorZ], // Exact wall boundary position
         connectedRooms: connectedRoomIds,
         connectedRoomData: connectedRooms,
-        width: Math.max(1.0, Math.min(detectedDoor.width / 80, 1.6)),
+        width: doorWorldWidth,
         height: doorHeight,
         type: connectedRooms.length > 1 ? 'interior' : 'exterior',
         isOpen: false,
-        rotation: doorRotation, // Store rotation for proper wall alignment
+        rotation: finalRotation, // Store rotation for proper wall alignment
         onToggle: null,
         // Enhanced room positioning for better wall cutouts
         roomPositions: connectedRooms.map(cr => ({
           roomId: cr.room.id,
           wall: cr.wall,
           wallPosition: cr.wallPosition,
-          rotation: doorRotation // Use calculated rotation
+          rotation: finalRotation // Use calculated rotation
         }))
       });
       
-      console.log(`🚪 Created door connecting rooms: ${connectedRoomIds.join(' <-> ')}`);
+      console.log(`ðŸšª Created door connecting rooms: ${connectedRoomIds.join(' <-> ')}`);
     } else {
       // Fallback: create as exterior door for the closest room
       const closestRoom = rooms.reduce((closest, room) => {
@@ -877,14 +809,19 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
       }, null);
       
       if (closestRoom) {
+        // Calculate door width from 2D door length
+        const doorWorldWidth = Math.max(1.0, Math.min(world.width, 1.6));
+        const fallbackRotation = doorIsHorizontal ? [0, 0, 0] : [0, Math.PI/2, 0];
+        
         doors.push({
           id: `detected-door-${index}`,
           globalPosition: [doorCenterX, 0, doorCenterZ],
           connectedRooms: [closestRoom.room.id],
-          width: Math.max(1.0, Math.min(detectedDoor.width / 80, 1.6)),
+          width: doorWorldWidth,
           height: doorHeight,
           type: 'exterior',
           isOpen: false,
+          rotation: fallbackRotation,
           onToggle: null
         });
       }
@@ -897,11 +834,11 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
       case 'north': 
         return [0, 0, 0];        // Door faces north/south - default orientation
       case 'south': 
-        return [0, Math.PI, 0];  // Door faces north/south - flipped 180°
+        return [0, Math.PI, 0];  // Door faces north/south - flipped 180Â°
       case 'east': 
-        return [0, -Math.PI/2, 0]; // Door faces east/west - 90° CCW
+        return [0, -Math.PI/2, 0]; // Door faces east/west - 90Â° CCW
       case 'west': 
-        return [0, Math.PI/2, 0];  // Door faces east/west - 90° CW
+        return [0, Math.PI/2, 0];  // Door faces east/west - 90Â° CW
       default: 
         return [0, 0, 0];
     }
@@ -909,7 +846,7 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
   
   // Add main entrance door if no detected doors found
   if (doors.length === 0 && rooms.length > 0) {
-    console.log('🚪 No doors detected, creating intelligent door placement');
+    console.log('ðŸšª No doors detected, creating intelligent door placement');
     
     // Create a realistic door placement system based on architectural principles
     const roomConnections = [];
@@ -1073,7 +1010,7 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
       doorCount[room2.id]++;
       roomConnections.push([room1.id, room2.id]);
       
-      console.log(`🚪 Created smart door between ${room1.name || room1.id} and ${room2.name || room2.id}`);
+      console.log(`ðŸšª Created smart door between ${room1.name || room1.id} and ${room2.name || room2.id}`);
     });
     
     // Add main entrance door to a logical entry room (only if needed)
@@ -1106,12 +1043,12 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
           }]
         });
         
-        console.log(`🚪 Created entrance door for ${entryRoom.name || entryRoom.id}`);
+        console.log(`ðŸšª Created entrance door for ${entryRoom.name || entryRoom.id}`);
       }
     }
   }
   
-  console.log(`🚪 Generated ${doors.length} doors total`);
+  console.log(`ðŸšª Generated ${doors.length} doors total`);
   
   // Log door distribution for debugging
   const doorsByRoom = {};
@@ -1121,7 +1058,7 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
     });
   });
   
-  console.log(`🚪 Door distribution:`, doorsByRoom);
+  console.log(`ðŸšª Door distribution:`, doorsByRoom);
   return doors;
 };
 
@@ -1131,24 +1068,24 @@ const generateSmartWindows = (rooms, bounds, detectedWindows = []) => {
   
   // Early return if no rooms to prevent unnecessary processing
   if (!rooms || rooms.length === 0) {
-    console.log('🪟 No rooms available for window generation');
+    console.log('ðŸªŸ No rooms available for window generation');
     return windows;
   }
   
   // Early return if bounds are invalid
   if (!bounds || typeof bounds.minX === 'undefined') {
-    console.log('🪟 Invalid bounds for window generation');
+    console.log('ðŸªŸ Invalid bounds for window generation');
     return windows;
   }
   
-  console.log('🪟 Window generation with detected windows:', detectedWindows.length);
+  console.log('ðŸªŸ Window generation with detected windows:', detectedWindows.length);
   
   // Process detected windows from the 2D floor plan
   if (detectedWindows && detectedWindows.length > 0) {
     const wallThickness = 0.08; // Must match Room3D wall thickness
     
     detectedWindows.forEach((window, idx) => {
-      console.log(`🪟 Processing detected window ${idx}:`, window);
+      console.log(`ðŸªŸ Processing detected window ${idx}:`, window);
       
       // Convert window position to 3D world coordinates
       const x1 = window.x || 0;
@@ -1207,7 +1144,7 @@ const generateSmartWindows = (rooms, bounds, detectedWindows = []) => {
         isDetected: true
       });
       
-      console.log(`🪟 Added detected window:`, windows[windows.length - 1]);
+      console.log(`ðŸªŸ Added detected window:`, windows[windows.length - 1]);
     });
   }
   
@@ -1282,11 +1219,11 @@ const generateSmartWindows = (rooms, bounds, detectedWindows = []) => {
   });
   */
   
-  console.log('🪟 Generated windows:', windows);
+  console.log('ðŸªŸ Generated windows:', windows);
   return windows;
 };
 const analyzeFloorPlanData = (data) => {
-  console.log('🔍 Analyzing floor plan data:', data);
+  console.log('ðŸ” Analyzing floor plan data:', data);
   
   let rooms = [];
   let walls = [];
@@ -1295,7 +1232,7 @@ const analyzeFloorPlanData = (data) => {
   
   // First, check for direct rooms array (from 2D editor) - prioritize this
   if (data && data.rooms && Array.isArray(data.rooms) && data.rooms.length > 0) {
-    console.log('🏠 Found direct rooms array from 2D editor with', data.rooms.length, 'rooms');
+    console.log('ðŸ  Found direct rooms array from 2D editor with', data.rooms.length, 'rooms');
     rooms = data.rooms.map((room, index) => {
       const processedRoom = {
         id: room.id || `room-${index}`,
@@ -1307,14 +1244,14 @@ const analyzeFloorPlanData = (data) => {
         name: room.name || room.type || room.tag || 'Room',
         source: room.source || 'unknown'
       };
-      console.log(`  Processing room ${index}:`, room, '→', processedRoom);
+      console.log(`  Processing room ${index}:`, room, 'â†’', processedRoom);
       return processedRoom;
     });
   }
   
   // Then check if data has mapData array (genetic algorithm output)
   if (data && data.mapData && Array.isArray(data.mapData)) {
-    console.log('📊 Found mapData with', data.mapData.length, 'items');
+    console.log('ðŸ“Š Found mapData with', data.mapData.length, 'items');
     
     // Separate different types of elements (only if no direct rooms array found)
     data.mapData.forEach((item, index) => {
@@ -1352,7 +1289,7 @@ const analyzeFloorPlanData = (data) => {
           y2: parseFloat(item.y2 || 100)
         };
         walls.push(wallData);
-        console.log('🧱 Found wall:', wallData);
+        console.log('ðŸ§± Found wall:', wallData);
       } 
       // Extract door data - Enhanced to detect doors in multiple formats
       else if (item.type === 'door' || item.type === 'Door' || item.type === 'Wall') {
@@ -1360,34 +1297,60 @@ const analyzeFloorPlanData = (data) => {
         if (item.type === 'Wall') {
           // Skip walls, handle them separately
         } else if (item.x1 !== undefined && item.y1 !== undefined && item.x2 !== undefined && item.y2 !== undefined) {
-          // Line format from mapData (x1, y1, x2, y2)
-          const x = Math.min(item.x1, item.x2);
-          const y = Math.min(item.y1, item.y2);
-          const width = Math.abs(item.x2 - item.x1) || 30;
-          const height = Math.abs(item.y2 - item.y1) || 80;
+          // Line format from mapData (x1, y1, x2, y2) - use center coordinates for consistency
+          const x1 = parseFloat(item.x1);
+          const y1 = parseFloat(item.y1);
+          const x2 = parseFloat(item.x2);
+          const y2 = parseFloat(item.y2);
+          
+          // VALIDATION: Skip doors with coordinates clearly outside reasonable bounds
+          // Plot dimensions are typically 0-2000 range, anything beyond 3000 is corrupted data
+          const maxReasonableCoord = 3000;
+          if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
+              Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
+            console.warn(`⚠️ Skipping door with corrupted coordinates: x1=${x1}, y1=${y1}, x2=${x2}, y2=${y2}`);
+            return; // Skip this corrupted door
+          }
+          
+          const centerX = (x1 + x2) / 2;
+          const centerY = (y1 + y2) / 2;
+          const doorLength = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+          const isHorizontal = Math.abs(x2 - x1) > Math.abs(y2 - y1);
           
           doors.push({
             id: item.id || `door-${doors.length}`,
-            x: parseFloat(x),
-            y: parseFloat(y),
-            width: Math.max(parseFloat(width), 10),
-            height: Math.max(parseFloat(height), 10),
+            x: centerX,
+            y: centerY,
+            width: Math.max(doorLength, 10),
+            height: 10, // Nominal height for line-based doors
+            points: [x1, y1, x2, y2], // Preserve original points
+            isHorizontal: isHorizontal,
             rotation: parseFloat(item.rotation || 0),
             type: 'door'
           });
-          console.log('🚪 Found door (line format):', doors[doors.length - 1]);
+          console.log('ðŸšª Found door (line format) at center:', centerX, centerY, 'isHorizontal:', isHorizontal);
         } else if (item.x !== undefined && item.width !== undefined && item.height !== undefined) {
-          // Rectangle format
+          // Rectangle format - x,y is already center or top-left, keep as-is
+          const doorX = parseFloat(item.x || 0);
+          const doorY = parseFloat(item.y || 0);
+          
+          // VALIDATION: Skip doors with corrupted coordinates
+          const maxReasonableCoord = 3000;
+          if (Math.abs(doorX) > maxReasonableCoord || Math.abs(doorY) > maxReasonableCoord) {
+            console.warn(`⚠️ Skipping door with corrupted coordinates: x=${doorX}, y=${doorY}`);
+            return; // Skip this corrupted door
+          }
+          
           doors.push({
             id: item.id || `door-${doors.length}`,
-            x: parseFloat(item.x || 0),
-            y: parseFloat(item.y || 0),
+            x: doorX,
+            y: doorY,
             width: parseFloat(item.width || 30),
             height: parseFloat(item.height || 80),
             rotation: parseFloat(item.rotation || 0),
             type: 'door'
           });
-          console.log('🚪 Found door (rect format):', doors[doors.length - 1]);
+          console.log('ðŸšª Found door (rect format):', doors[doors.length - 1]);
         }
       }
       // Extract window data
@@ -1408,7 +1371,7 @@ const analyzeFloorPlanData = (data) => {
             rotation: parseFloat(item.rotation || 0),
             type: 'window'
           });
-          console.log('🪟 Found window:', windows[windows.length - 1]);
+          console.log('ðŸªŸ Found window:', windows[windows.length - 1]);
         } else if (item.x !== undefined && item.width !== undefined && item.height !== undefined) {
           // Rectangle format
           windows.push({
@@ -1420,7 +1383,7 @@ const analyzeFloorPlanData = (data) => {
             rotation: parseFloat(item.rotation || 0),
             type: 'window'
           });
-          console.log('🪟 Found window (rect format):', windows[windows.length - 1]);
+          console.log('ðŸªŸ Found window (rect format):', windows[windows.length - 1]);
         }
       }
       // Handle rooms without explicit type (legacy format) - only if no direct rooms
@@ -1463,58 +1426,103 @@ const analyzeFloorPlanData = (data) => {
   // Check for doors array (from 2D editor)
   if (data && data.doors && Array.isArray(data.doors)) {
     console.log('🚪 Using direct doors array with', data.doors.length, 'doors');
+    const maxReasonableCoord = 3000; // Coordinates beyond this are corrupted
+    
     doors = data.doors.map((door, index) => {
       // Handle both line format (x1,y1,x2,y2) and rect format (x,y,width,height)
       if (door.x1 !== undefined && door.y1 !== undefined) {
         // Line format - convert to rect format
-        const x = Math.min(door.x1, door.x2);
-        const y = Math.min(door.y1, door.y2);
-        const width = Math.abs(door.x2 - door.x1) || 30;
-        const height = Math.abs(door.y2 - door.y1) || 80;
+        const x1 = parseFloat(door.x1);
+        const y1 = parseFloat(door.y1);
+        const x2 = parseFloat(door.x2);
+        const y2 = parseFloat(door.y2);
+        
+        // VALIDATION: Skip doors with corrupted coordinates
+        if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
+            Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
+          console.warn(`⚠️ Skipping door ${index} with corrupted coordinates`);
+          return null; // Will be filtered out
+        }
+        
+        // Calculate door length as the primary dimension
+        const doorLength = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        const isHorizontal = Math.abs(x2 - x1) > Math.abs(y2 - y1);
+        
+        // Use center point of door line
+        const centerX = (x1 + x2) / 2;
+        const centerY = (y1 + y2) / 2;
         
         return {
           id: door.id || `door-${index}`,
-          x: parseFloat(x),
-          y: parseFloat(y),
-          width: Math.max(parseFloat(width), 10),
-          height: Math.max(parseFloat(height), 10),
-          rotation: 0,
+          x: centerX,
+          y: centerY,
+          width: doorLength || 30,
+          height: 10, // Nominal height for line-based doors
+          points: [x1, y1, x2, y2], // Preserve original points
+          isHorizontal: isHorizontal,
+          rotation: isHorizontal ? 0 : Math.PI / 2,
           type: 'door'
         };
       } else if (door.points && Array.isArray(door.points) && door.points.length >= 4) {
         // Points array format [x1, y1, x2, y2]
-        const x = Math.min(door.points[0], door.points[2]);
-        const y = Math.min(door.points[1], door.points[3]);
-        const width = Math.abs(door.points[2] - door.points[0]) || 30;
-        const height = Math.abs(door.points[3] - door.points[1]) || 80;
+        const x1 = parseFloat(door.points[0]);
+        const y1 = parseFloat(door.points[1]);
+        const x2 = parseFloat(door.points[2]);
+        const y2 = parseFloat(door.points[3]);
+        
+        // VALIDATION: Skip doors with corrupted coordinates
+        if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
+            Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
+          console.warn(`⚠️ Skipping door ${index} with corrupted coordinates`);
+          return null; // Will be filtered out
+        }
+        
+        // Calculate door length as the primary dimension
+        const doorLength = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        const isHorizontal = Math.abs(x2 - x1) > Math.abs(y2 - y1);
+        
+        // Use center point of door line
+        const centerX = (x1 + x2) / 2;
+        const centerY = (y1 + y2) / 2;
         
         return {
           id: door.id || `door-${index}`,
-          x: parseFloat(x),
-          y: parseFloat(y),
-          width: Math.max(parseFloat(width), 10),
-          height: Math.max(parseFloat(height), 10),
-          rotation: 0,
+          x: centerX,
+          y: centerY,
+          width: doorLength || 30,
+          height: 10, // Nominal height for line-based doors
+          points: [x1, y1, x2, y2], // Preserve original points
+          isHorizontal: isHorizontal,
+          rotation: isHorizontal ? 0 : Math.PI / 2,
           type: 'door'
         };
       } else {
         // Standard rect format
+        const doorX = parseFloat(door.x || 0);
+        const doorY = parseFloat(door.y || 0);
+        
+        // VALIDATION: Skip doors with corrupted coordinates
+        if (Math.abs(doorX) > maxReasonableCoord || Math.abs(doorY) > maxReasonableCoord) {
+          console.warn(`⚠️ Skipping door ${index} with corrupted coordinates`);
+          return null; // Will be filtered out
+        }
+        
         return {
           id: door.id || `door-${index}`,
-          x: parseFloat(door.x || 0),
-          y: parseFloat(door.y || 0),
+          x: doorX,
+          y: doorY,
           width: parseFloat(door.width || 30),
           height: parseFloat(door.height || 80),
           rotation: parseFloat(door.rotation || 0),
           type: 'door'
         };
       }
-    });
+    }).filter(Boolean); // Remove null entries from corrupted doors
   }
   
   // Check for walls array (from 2D editor)
   if (data && data.walls && Array.isArray(data.walls)) {
-    console.log('🧱 Using direct walls array with', data.walls.length, 'walls:', data.walls);
+    console.log('ðŸ§± Using direct walls array with', data.walls.length, 'walls:', data.walls);
     walls = data.walls.map((wall, idx) => {
       if (wall.points && Array.isArray(wall.points) && wall.points.length >= 4) {
         const wallData = {
@@ -1524,7 +1532,7 @@ const analyzeFloorPlanData = (data) => {
           x2: parseFloat(wall.points[2]),
           y2: parseFloat(wall.points[3])
         };
-        console.log(`  Wall ${idx}:`, wall.points, '→', wallData);
+        console.log(`  Wall ${idx}:`, wall.points, 'â†’', wallData);
         return wallData;
       }
       return {
@@ -1539,8 +1547,8 @@ const analyzeFloorPlanData = (data) => {
   
   // Fallback 1: check for direct rooms array (from 2D editor)
   if (rooms.length === 0 && data && data.rooms && Array.isArray(data.rooms)) {
-    console.log('📋 Using direct rooms array from 2D editor with', data.rooms.length, 'rooms');
-    console.log('📋 Raw rooms data:', data.rooms);
+    console.log('ðŸ“‹ Using direct rooms array from 2D editor with', data.rooms.length, 'rooms');
+    console.log('ðŸ“‹ Raw rooms data:', data.rooms);
     rooms = data.rooms.map((room, index) => {
       const processedRoom = {
         id: room.id || `room-${index}`,
@@ -1552,14 +1560,14 @@ const analyzeFloorPlanData = (data) => {
         name: room.name || room.type || room.tag || 'Room',
         source: room.source || 'unknown' // Track room source
       };
-      console.log(`  Room ${index}:`, room, '→', processedRoom);
+      console.log(`  Room ${index}:`, room, 'â†’', processedRoom);
       return processedRoom;
     });
   }
   
   // Fallback 2: check if data is directly a rooms array
   if (rooms.length === 0 && Array.isArray(data)) {
-    console.log('📋 Data is directly a rooms array');
+    console.log('ðŸ“‹ Data is directly a rooms array');
     rooms = data.map((room, index) => ({
       id: room.id || `room-${index}`,
       x: parseFloat(room.x || 0),
@@ -1573,7 +1581,7 @@ const analyzeFloorPlanData = (data) => {
   
   // Create demo data if no rooms found
   if (rooms.length === 0) {
-    console.log('⚠️ No room data found, creating demo rooms');
+    console.log('âš ï¸ No room data found, creating demo rooms');
     rooms = [
       {
         id: 'demo-living',
@@ -1599,9 +1607,9 @@ const analyzeFloorPlanData = (data) => {
     ];
   }
   
-  console.log('✅ Final analysis:', { rooms: rooms.length, walls: walls.length, doors: doors.length });
-  console.log('🏠 Room details:', rooms);
-  console.log('🧱 Wall details:', walls);
+  console.log('âœ… Final analysis:', { rooms: rooms.length, walls: walls.length, doors: doors.length });
+  console.log('ðŸ  Room details:', rooms);
+  console.log('ðŸ§± Wall details:', walls);
   return { rooms, walls, doors, windows };
 };
 
@@ -1641,8 +1649,8 @@ const calculateBounds = (rooms) => {
     maxY: Math.max(...rooms.map(r => r.y + r.height))
   };
   
-  console.log('📏 Calculated bounds (no padding):', bounds);
-  console.log('📐 Room positions:', rooms.map(r => ({ 
+  console.log('ðŸ“ Calculated bounds (no padding):', bounds);
+  console.log('ðŸ“ Room positions:', rooms.map(r => ({ 
     name: r.name, 
     x: r.x, 
     y: r.y, 
@@ -1659,7 +1667,7 @@ const Wall3D = ({ wall, bounds, customColors }) => {
   const wallThickness = 0.08; // Match room boundary walls
   const wallColor = customColors?.walls || '#FAFAFA';
   
-  console.log('🧱 Rendering wall:', wall, 'bounds:', bounds);
+  console.log('ðŸ§± Rendering wall:', wall, 'bounds:', bounds);
   
   // Convert wall coordinates to 3D world space
   const start = convertToWorld3D(wall.x1, wall.y1, 0, 0, bounds);
@@ -1702,7 +1710,7 @@ const SimpleDoor3D = ({ door, bounds }) => {
   const rectWidth = door.width || 30;
   const rectHeight = door.height || 80;
   
-  console.log('🚪 Door input data:', { x, y, rectWidth, rectHeight });
+  console.log('ðŸšª Door input data:', { x, y, rectWidth, rectHeight });
   
   // Determine door orientation based on rectangle dimensions
   // If width > height, door is horizontal; if height > width, door is vertical
@@ -1742,9 +1750,9 @@ const SimpleDoor3D = ({ door, bounds }) => {
     angle = Math.atan2(dz, dx);
   }
   
-  console.log('🚪 SimpleDoor3D:', { 
+  console.log('ðŸšª SimpleDoor3D:', { 
     center: [centerX.toFixed(2), centerZ.toFixed(2)], 
-    angle: (angle * 180 / Math.PI).toFixed(1) + '°',
+    angle: (angle * 180 / Math.PI).toFixed(1) + 'Â°',
     doorWidth: doorWidth.toFixed(2),
     orientation: rectWidth > rectHeight ? 'horizontal' : 'vertical'
   });
@@ -1856,7 +1864,7 @@ const Room3D = ({ room, bounds, showLabels = true, doors = [], windows = [], wal
   return (
     <group position={[roomX, 0, roomZ]}>
       {/* Floor - slightly larger to overlap with adjacent rooms and hide seams */}
-      <mesh position={[0, 0.001, 0]} rotation={[-Math.PI/2, 0, 0]} receiveShadow>
+      <mesh position={[0, 0.005, 0]} rotation={[-Math.PI/2, 0, 0]} receiveShadow>
         <planeGeometry args={[world.width + 0.1, world.height + 0.1]} />
         <meshLambertMaterial color={roomColor} />
       </mesh>
@@ -2103,31 +2111,48 @@ const Room3D = ({ room, bounds, showLabels = true, doors = [], windows = [], wal
   );
 };
 
-// Professional lighting setup with improved realism
+// Professional outdoor daylight lighting setup
 const Lighting3D = ({ sunSettings }) => (
   <>
-    {/* Ambient light for overall illumination */}
-    <ambientLight intensity={0.3} color="#F5F5F5" />
+    {/* Outdoor ambient light for natural illumination */}
+    <ambientLight intensity={0.25} color="#E6F3FF" />
+    
+    {/* Sky hemisphere light for realistic outdoor environment */}
+    <hemisphereLight 
+      skyColor="#87CEEB" 
+      groundColor="#8B7355" 
+      intensity={0.5} 
+    />
 
-    {/* Sun + compass + sunrise/sunset */}
+    {/* Sun system or fallback directional light */}
     {sunSettings?.enabled ? (
       <SunSystem3D settings={sunSettings} />
     ) : (
-      <directionalLight
-        position={[25, 35, 20]}
-        intensity={1.2}
-        color="#FFF8DC"
-        castShadow
-        shadow-mapSize-width={4096}
-        shadow-mapSize-height={4096}
-        shadow-camera-near={0.1}
-        shadow-camera-far={150}
-        shadow-camera-left={-40}
-        shadow-camera-right={40}
-        shadow-camera-top={40}
-        shadow-camera-bottom={-40}
-        shadow-bias={-0.0001}
-      />
+      <>
+        {/* Natural daylight positioned above house */}
+        <directionalLight
+          position={[8, 25, 5]}
+          intensity={1.6}
+          color="#FFF8DC"
+          castShadow
+          shadow-mapSize-width={4096}
+          shadow-mapSize-height={4096}
+          shadow-camera-near={0.1}
+          shadow-camera-far={100}
+          shadow-camera-left={-40}
+          shadow-camera-right={40}
+          shadow-camera-top={40}
+          shadow-camera-bottom={-40}
+          shadow-bias={-0.0001}
+          shadow-normalBias={0.02}
+        />
+        {/* Secondary fill light for softer shadows */}
+        <directionalLight
+          position={[-15, 20, -10]}
+          intensity={0.4}
+          color="#B8D4F0"
+        />
+      </>
     )}
     
     {/* Secondary directional light for softer shadows */}
@@ -2509,11 +2534,11 @@ const CameraController3D = ({ mode, bounds, rooms, onPlayerPositionChange }) => 
       camera.lookAt(worldCenterX, 2, worldCenterZ); // Look at building center, slightly above ground
       camera.updateMatrixWorld();
       
-      console.log('📷 Enhanced camera positioning:', {
+      console.log('ðŸ“· Enhanced camera positioning:', {
         buildingCenter: [worldCenterX, worldCenterZ],
         cameraPosition: [cameraX, cameraHeight, cameraZ],
         viewDistance,
-        angle: angle * (180 / Math.PI) + '°'
+        angle: angle * (180 / Math.PI) + 'Â°'
       });
     } else if (mode === 'walk') {
       // Position camera inside the first room at human height (on foundation)
@@ -2553,19 +2578,20 @@ const CameraController3D = ({ mode, bounds, rooms, onPlayerPositionChange }) => 
       enablePan={true}
       enableZoom={true}
       enableRotate={true}
-      minPolarAngle={Math.PI / 8} // 22.5° - prevent going too low (underground view)
-      maxPolarAngle={Math.PI / 2.2} // ~82° - prevent going completely overhead
+      minPolarAngle={Math.PI / 8} // 22.5Â° - prevent going too low (underground view)
+      maxPolarAngle={Math.PI / 2.2} // ~82Â° - prevent going completely overhead
       minAzimuthAngle={-Infinity} // Unlimited horizontal rotation
       maxAzimuthAngle={Infinity} // Unlimited horizontal rotation
       minDistance={viewDistance * 0.3} // Closer minimum for detail views
       maxDistance={viewDistance * 2.5} // Reasonable maximum distance
       enableDamping={true}
-      dampingFactor={0.08} // Smoother damping
-      rotateSpeed={0.6} // Balanced rotation speed
-      zoomSpeed={0.8} // Controlled zoom speed
-      panSpeed={0.5} // Gentler panning
+      dampingFactor={0.15} // Higher damping for smoother motion (reduces flickering)
+      rotateSpeed={0.5} // Slightly slower for smoother rotation
+      zoomSpeed={0.7} // Controlled zoom speed
+      panSpeed={0.4} // Gentler panning
       autoRotate={false}
       autoRotateSpeed={0.3} // Slower auto-rotate when enabled
+      makeDefault
     />
   );
 };
@@ -2586,20 +2612,20 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
   
   // Analyze and extract data - memoized to prevent infinite loops
   const analysisData = useMemo(() => {
-    console.log('🔍 Analyzing floor plan data for 3D rendering:', floorPlanData);
-    console.log('🔍 Data structure check - has rooms?:', floorPlanData?.rooms?.length || 0);
-    console.log('🔍 Data structure check - has walls?:', floorPlanData?.walls?.length || 0);
-    console.log('🔍 Data structure check - has doors?:', floorPlanData?.doors?.length || 0);
-    console.log('🔍 Data structure check - has mapData?:', floorPlanData?.mapData?.length || 0);
-    console.log('🔍 Update timestamp:', floorPlanData?._updateTimestamp);
+    console.log('ðŸ” Analyzing floor plan data for 3D rendering:', floorPlanData);
+    console.log('ðŸ” Data structure check - has rooms?:', floorPlanData?.rooms?.length || 0);
+    console.log('ðŸ” Data structure check - has walls?:', floorPlanData?.walls?.length || 0);
+    console.log('ðŸ” Data structure check - has doors?:', floorPlanData?.doors?.length || 0);
+    console.log('ðŸ” Data structure check - has mapData?:', floorPlanData?.mapData?.length || 0);
+    console.log('ðŸ” Update timestamp:', floorPlanData?._updateTimestamp);
     
     if (floorPlanData?.rooms) {
-      console.log('🏠 Direct rooms data for 3D:', floorPlanData.rooms.map(r => ({ id: r.id, name: r.name, source: r.source })));
+      console.log('ðŸ  Direct rooms data for 3D:', floorPlanData.rooms.map(r => ({ id: r.id, name: r.name, source: r.source })));
     }
     
     const result = analyzeFloorPlanData(floorPlanData);
-    console.log('🎯 Analysis result - rooms for 3D:', result.rooms.length, result.rooms.map(r => ({ id: r.id, name: r.name, source: r.source })));
-    console.log('🪟 Analysis result - windows for 3D:', result.windows?.length || 0);
+    console.log('ðŸŽ¯ Analysis result - rooms for 3D:', result.rooms.length, result.rooms.map(r => ({ id: r.id, name: r.name, source: r.source })));
+    console.log('ðŸªŸ Analysis result - windows for 3D:', result.windows?.length || 0);
     return result;
   }, [floorPlanData]);
   
@@ -2612,7 +2638,7 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
     }
   }, [rooms, onRoomsAnalyzed]);
   
-  console.log('📊 Extracted data:', { 
+  console.log('ðŸ“Š Extracted data:', { 
     rooms: rooms.length, 
     walls: walls.length, 
     doors: doors.length,
@@ -2622,14 +2648,14 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
   
   // Calculate bounds - memoized
   const bounds = useMemo(() => {
-    console.log('📏 Calculating bounds for rooms:', rooms.length);
+    console.log('ðŸ“ Calculating bounds for rooms:', rooms.length);
     return calculateBounds(rooms);
   }, [rooms]);
   
   // Generate smart doors and windows using detected doors from 2D plan - memoized to prevent loops
   // Always generate smart doors for room connectivity
   const smartDoors = useMemo(() => {
-    console.log('🚪 Generating smart doors for', rooms.length, 'rooms, detected 2D doors:', doors.length);
+    console.log('ðŸšª Generating smart doors for', rooms.length, 'rooms, detected 2D doors:', doors.length);
     return generateSmartDoors(rooms, bounds, doors);
   }, [rooms, bounds, doors]);
   
@@ -2641,7 +2667,7 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
   }, [smartDoors, onDoorsAnalyzed]);
   
   const smartWindows = useMemo(() => {
-    console.log('🪟 Generating smart windows for', rooms.length, 'rooms, detected windows:', windows.length);
+    console.log('ðŸªŸ Generating smart windows for', rooms.length, 'rooms, detected windows:', windows.length);
     return generateSmartWindows(rooms, bounds, windows);
   }, [rooms, bounds, windows]);
   
@@ -2687,7 +2713,7 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
     };
   }, [bounds]);
   
-  console.log('🏗️ Building with doors and windows:', { 
+  console.log('ðŸ—ï¸ Building with doors and windows:', { 
     rooms: rooms.length,
     smartDoors: smartDoors.length,
     smartWindows: smartWindows.length,
@@ -2700,13 +2726,16 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
   
   return (
     <group>
-      {/* Enhanced ground plane positioned correctly */}
-      <mesh position={[0, -0.01, 0]} rotation={[-Math.PI/2, 0, 0]} receiveShadow>
+      {/* Enhanced ground plane positioned correctly - lowered to prevent z-fighting */}
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI/2, 0, 0]} receiveShadow>
         <planeGeometry args={[80, 80]} />
         <meshStandardMaterial 
           color={colors.ground} 
           roughness={0.8}
           metalness={0.0}
+          polygonOffset
+          polygonOffsetFactor={1}
+          polygonOffsetUnits={1}
         />
       </mesh>
       
@@ -2764,9 +2793,9 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
       
       {/* Render doors from 2D editor - DISABLED, using smart doors instead */}
       {/* SimpleDoor3D is only for user-placed doors in customization mode */}
-      {false && walls.length > 0 && console.log('🔧 About to render user doors:', doors?.length, doors)}
+      {false && walls.length > 0 && console.log('ðŸ”§ About to render user doors:', doors?.length, doors)}
       {false && walls.length > 0 && doors && doors.length > 0 && doors.map((door, index) => {
-        console.log(`🚪 Rendering user door ${index}:`, door);
+        console.log(`ðŸšª Rendering user door ${index}:`, door);
         return (
           <SimpleDoor3D 
             key={`2d-door-${index}`}
@@ -2904,6 +2933,7 @@ const FloorPlan3D = ({ floorPlanData, className = "", isVisible = true }) => {
   const [analyzedDoors, setAnalyzedDoors] = useState([]);
   const [isSunPanelOpen, setIsSunPanelOpen] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState('idle');
+  const [activeTab, setActiveTab] = useState('sun');
 
   // Sun / daylight visualization settings
   const mergedDefaultSun = useMemo(() => {
@@ -2913,22 +2943,38 @@ const FloorPlan3D = ({ floorPlanData, className = "", isVisible = true }) => {
   }, [savedState]);
 
   const [sunEnabled, setSunEnabled] = useState(mergedDefaultSun.enabled);
-  const [sunShowPath, setSunShowPath] = useState(mergedDefaultSun.showPath);
-  const [sunLat, setSunLat] = useState(mergedDefaultSun.lat);
-  const [sunLng, setSunLng] = useState(mergedDefaultSun.lng);
-  const [sunNorthOffsetDeg, setSunNorthOffsetDeg] = useState(mergedDefaultSun.northOffsetDeg);
-  const [sunDate, setSunDate] = useState(mergedDefaultSun.date);
-  const [sunTime, setSunTime] = useState(mergedDefaultSun.time);
+  const [sunPosX, setSunPosX] = useState(mergedDefaultSun.posX);
+  const [sunPosY, setSunPosY] = useState(mergedDefaultSun.posY);
+  const [sunPosZ, setSunPosZ] = useState(mergedDefaultSun.posZ);
+  const [sunBrightness, setSunBrightness] = useState(mergedDefaultSun.brightness);
+  const [sunShadowStrength, setSunShadowStrength] = useState(mergedDefaultSun.shadowStrength);
+  const [sunPreset, setSunPreset] = useState(mergedDefaultSun.preset);
+  const [sunColorTemp, setSunColorTemp] = useState(mergedDefaultSun.colorTemp);
+  const [sunShadowQuality, setSunShadowQuality] = useState(mergedDefaultSun.shadowQuality);
+
+  // Apply preset when changed
+  const applyPreset = useCallback((presetName) => {
+    const preset = SUN_PRESETS[presetName];
+    if (preset) {
+      setSunPosX(preset.posX);
+      setSunPosY(preset.posY);
+      setSunPosZ(preset.posZ);
+      setSunColorTemp(preset.colorTemp);
+      setSunBrightness(preset.brightness);
+      setSunPreset(presetName);
+    }
+  }, []);
 
   const sunSettings = useMemo(() => ({
-    enabled: !!sunEnabled,
-    showPath: !!sunShowPath,
-    lat: clampNumber(sunLat, -90, 90),
-    lng: clampNumber(sunLng, -180, 180),
-    northOffsetDeg: clampNumber(sunNorthOffsetDeg, -180, 180),
-    date: sunDate,
-    time: sunTime
-  }), [sunEnabled, sunShowPath, sunLat, sunLng, sunNorthOffsetDeg, sunDate, sunTime]);
+    enabled: !sunEnabled,
+    posX: clampNumber(sunPosX, -50, 50),
+    posY: clampNumber(sunPosY, 5, 50),
+    posZ: clampNumber(sunPosZ, -50, 50),
+    brightness: clampNumber(sunBrightness, 0.1, 3),
+    shadowStrength: clampNumber(sunShadowStrength, 0, 1),
+    colorTemp: clampNumber(sunColorTemp, 2000, 8000),
+    shadowQuality: sunShadowQuality
+  }), [sunEnabled, sunPosX, sunPosY, sunPosZ, sunBrightness, sunShadowStrength, sunColorTemp, sunShadowQuality]);
   
   // Use analyzed rooms from 3D scene for color customizer (ensures ID consistency)
   const rooms = analyzedRooms.length > 0 ? analyzedRooms : (floorPlanData?.rooms || []);
@@ -2990,175 +3036,94 @@ const FloorPlan3D = ({ floorPlanData, className = "", isVisible = true }) => {
   }, [customColors, roomColors, doorColors, viewMode, autoRotate, sunSettings, saveState]);
   
   return (
-    <div className={`relative ${className}`}>
-      {/* Compact HUD */}
-      <div className="absolute top-4 left-4 z-10 w-90 max-w-[calc(100vw-2rem)]">
-        <div className="rounded-2xl border border-gray-200 bg-white/85 backdrop-blur-md shadow-xl">
-          <div className="p-3">
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-semibold text-slate-900">3D Controls</div>
-              <button
-                onClick={handleSaveProgress}
-                className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors border ${
-                  saveFeedback === 'saved'
-                    ? 'bg-emerald-600 text-white border-emerald-600'
-                    : 'bg-slate-900 text-white border-slate-900 hover:bg-slate-800'
-                }`}
-                title="Save your 3D customizations"
-              >
-                {saveFeedback === 'saved' ? '✅ Saved' : '💾 Save'}
-              </button>
-            </div>
-
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setViewMode('overview')}
-                className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors border ${
-                  viewMode === 'overview'
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-slate-800 border-gray-200 hover:bg-slate-50'
-                }`}
-              >
-                🏗️ Overview
-              </button>
-              <button
-                onClick={() => setViewMode('walk')}
-                className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors border ${
-                  viewMode === 'walk'
-                    ? 'bg-emerald-600 text-white border-emerald-600'
-                    : 'bg-white text-slate-800 border-gray-200 hover:bg-slate-50'
-                }`}
-              >
-                🚶 Walk
-              </button>
-            </div>
-
-            <div className="mt-3 flex items-center justify-between">
-              <button
-                onClick={() => setIsSunPanelOpen(!isSunPanelOpen)}
-                className="rounded-lg px-3 py-1.5 text-xs font-semibold border border-gray-200 bg-white hover:bg-slate-50 text-slate-800"
-              >
-                ☀️ Sun settings
-              </button>
-
-              {viewMode === 'overview' && (
-                <button
-                  onClick={() => setAutoRotate(!autoRotate)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${
-                    autoRotate
-                      ? 'bg-violet-600 text-white border-violet-600'
-                      : 'bg-white text-slate-800 border-gray-200 hover:bg-slate-50'
-                  }`}
-                >
-                  🔄 Auto-rotate
-                </button>
-              )}
-            </div>
-
-            {isSunPanelOpen && (
-              <div className="mt-3 rounded-xl border border-gray-200 bg-white p-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs font-semibold text-slate-900">Sun / Daylight</div>
+    <div className={`flex h-full ${className}`}>
+      {/* Left Sidebar - Color Customizer */}
+      <div className="w-72 bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0">
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <span>🎨</span>
+              <span>Customize Colors</span>
+            </h3>
+          </div>
+          
+          {/* Inline Color Customizer Content */}
+          <div className="space-y-4">
+            {/* Color presets */}
+            <div>
+              <div className="text-xs font-semibold text-slate-700 mb-2">Quick Presets</div>
+              <div className="grid grid-cols-2 gap-1">
+                {[
+                  { name: 'Modern', colors: { walls: '#FAFAFA', windows: '#87CEEB', ground: '#90EE90', foundation: '#D3D3D3', doors: '#8B4513' } },
+                  { name: 'Warm', colors: { walls: '#F5DEB3', windows: '#4682B4', ground: '#98D8C8', foundation: '#C4A582', doors: '#8B6914' } },
+                  { name: 'Cool', colors: { walls: '#E0E0E0', windows: '#5F9EA0', ground: '#8FBC8F', foundation: '#A9A9A9', doors: '#696969' } },
+                  { name: 'Cream', colors: { walls: '#FFF8DC', windows: '#6495ED', ground: '#7CFC00', foundation: '#DEB887', doors: '#D2691E' } },
+                ].map((preset) => (
                   <button
-                    onClick={() => setSunEnabled(!sunEnabled)}
-                    className={`px-2 py-1 rounded-md text-xs font-semibold transition-colors border ${
-                      sunEnabled
-                        ? 'bg-amber-500 text-white border-amber-500'
-                        : 'bg-slate-100 text-slate-700 border-slate-200'
-                    }`}
-                    title="Toggle sun visualization"
+                    key={preset.name}
+                    onClick={() => handleColorsChange(preset.colors, roomColors, doorColors)}
+                    className="px-2 py-1.5 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
                   >
-                    {sunEnabled ? 'On' : 'Off'}
+                    {preset.name}
                   </button>
-                </div>
+                ))}
+              </div>
+            </div>
 
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <label className="text-xs text-slate-700">
-                    Latitude
-                    <input
-                      type="number"
-                      step="0.0001"
-                      value={sunLat}
-                      onChange={(e) => setSunLat(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1 text-sm"
-                    />
-                  </label>
-                  <label className="text-xs text-slate-700">
-                    Longitude
-                    <input
-                      type="number"
-                      step="0.0001"
-                      value={sunLng}
-                      onChange={(e) => setSunLng(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1 text-sm"
-                    />
-                  </label>
-                  <label className="text-xs text-slate-700">
-                    Date
-                    <input
-                      type="date"
-                      value={sunDate}
-                      onChange={(e) => setSunDate(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1 text-sm"
-                    />
-                  </label>
-                  <label className="text-xs text-slate-700">
-                    Time
-                    <input
-                      type="time"
-                      value={sunTime}
-                      onChange={(e) => setSunTime(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-gray-200 px-2 py-1 text-sm"
-                    />
-                  </label>
-                </div>
-
-                <div className="mt-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-700">North Offset</span>
-                    <span className="text-xs font-semibold text-slate-900">{Math.round(Number(sunNorthOffsetDeg) || 0)}°</span>
-                  </div>
+            {/* Individual color controls */}
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-slate-700">Element Colors</div>
+              {[
+                { key: 'walls', label: 'Walls', emoji: '🧱' },
+                { key: 'windows', label: 'Windows', emoji: '🪟' },
+                { key: 'doors', label: 'Doors', emoji: '🚪' },
+                { key: 'ground', label: 'Ground', emoji: '🌿' },
+              ].map((item) => (
+                <div key={item.key} className="flex items-center justify-between">
+                  <span className="text-xs text-slate-600">{item.emoji} {item.label}</span>
                   <input
-                    type="range"
-                    min={-180}
-                    max={180}
-                    value={sunNorthOffsetDeg}
-                    onChange={(e) => setSunNorthOffsetDeg(e.target.value)}
-                    className="w-full"
+                    type="color"
+                    value={customColors[item.key] || '#FFFFFF'}
+                    onChange={(e) => handleColorsChange({ ...customColors, [item.key]: e.target.value }, roomColors, doorColors)}
+                    className="w-8 h-6 rounded border border-gray-200 cursor-pointer"
                   />
-                  <div className="text-[11px] text-slate-600 leading-snug">
-                    Tip: adjust until the “N” marker matches your plot’s north.
-                  </div>
                 </div>
+              ))}
+            </div>
 
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <label className="flex items-center gap-2 text-xs text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={sunShowPath}
-                      onChange={(e) => setSunShowPath(e.target.checked)}
-                    />
-                    Show sun path
-                  </label>
-                  <button
-                    onClick={() => {
-                      if (!navigator?.geolocation) return;
-                      navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                          setSunLat(pos.coords.latitude);
-                          setSunLng(pos.coords.longitude);
-                        },
-                        () => {
-                          // ignore
-                        },
-                        { enableHighAccuracy: true, timeout: 8000 }
-                      );
-                    }}
-                    className="px-2 py-1 rounded-md text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800"
-                    title="Use browser location (permission required)"
-                  >
-                    Use location
-                  </button>
+            {/* Room-specific colors */}
+            {rooms.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-slate-700">Room Colors</div>
+                <div className="max-h-40 overflow-y-auto space-y-1">
+                  {rooms.map((room) => (
+                    <div key={room.id} className="flex items-center justify-between">
+                      <span className="text-[10px] text-slate-600 truncate max-w-24">{room.name || room.type || `Room ${room.id}`}</span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="color"
+                          value={roomColors[String(room.id)] || customColors.walls || '#FAFAFA'}
+                          onChange={(e) => {
+                            const newRoomColors = { ...roomColors, [String(room.id)]: e.target.value };
+                            handleColorsChange(customColors, newRoomColors, doorColors);
+                          }}
+                          className="w-6 h-5 rounded border border-gray-200 cursor-pointer"
+                        />
+                        {roomColors[String(room.id)] && (
+                          <button
+                            onClick={() => {
+                              const newRoomColors = { ...roomColors, [String(room.id)]: null };
+                              handleColorsChange(customColors, newRoomColors, doorColors);
+                            }}
+                            className="text-[10px] text-slate-400 hover:text-red-500"
+                            title="Reset"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -3166,89 +3131,65 @@ const FloorPlan3D = ({ floorPlanData, className = "", isVisible = true }) => {
         </div>
       </div>
 
-      {/* Status badge */}
-      <div className="absolute top-4 right-4 z-10">
-        <div className="bg-white/85 backdrop-blur-md border border-gray-200 rounded-xl px-3 py-2 shadow-lg">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-900">
-            <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full"></span>
-            <span>3D rendering</span>
-          </div>
-          {viewMode === 'walk' && (
-            <div className="mt-1 text-[11px] text-slate-600">
-              Walk mode: WASD + mouse
+      {/* Center - 3D Canvas */}
+      <div className="flex-1 relative min-w-0 bg-sky-200">
+        {/* Status badge */}
+        <div className="absolute top-3 left-3 z-10">
+          <div className="bg-white/85 backdrop-blur-md border border-gray-200 rounded-lg px-2 py-1 shadow-md">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-900">
+              <span className="inline-block w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+              <span>3D rendering</span>
             </div>
-          )}
+          </div>
         </div>
-      </div>
 
+        {viewMode === 'walk' && (
+          <div className="absolute top-3 left-28 z-10">
+            <div className="bg-amber-100 border border-amber-300 rounded-lg px-2 py-1 text-[10px] text-amber-800 font-medium">
+              WASD + mouse to navigate
+            </div>
+          </div>
+        )}
 
-
-      {/* Walk mode trigger with enhanced visual indicator */}
-      {viewMode === 'walk' && (
-        <div 
-          id="walk-mode-trigger" 
-          className="absolute inset-0 z-0 cursor-crosshair bg-linear-to-br from-blue-900/10 to-purple-900/10"
-          title="Try WASD keys to move, Arrow keys to look around if mouse doesn't work"
-          onClick={() => {
-            const canvas = document.querySelector('canvas');
-            if (canvas) {
-              canvas.focus();
-              if (canvas.requestPointerLock) {
-                canvas.requestPointerLock();
+        {/* Walk mode click indicator */}
+        {viewMode === 'walk' && (
+          <div 
+            className="absolute inset-0 z-0 cursor-crosshair"
+            onClick={() => {
+              const canvas = document.querySelector('canvas');
+              if (canvas) {
+                canvas.focus();
+                if (canvas.requestPointerLock) {
+                  canvas.requestPointerLock();
+                }
               }
-              setWalkModeStatus('active');
-            }
-          }}
-          style={{ 
-            width: '100%', 
-            height: '100%',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            zIndex: 0
-          }}
-        >
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-linear-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-md rounded-2xl p-10 pointer-events-none border-2 border-blue-400/40 shadow-2xl">
-            <div className="text-white text-center">
-              <div className="text-5xl mb-4 animate-pulse">🎮</div>
-              <div className="text-xl font-bold mb-3 text-blue-200">First Person Walk-Through</div>
-              <div className="text-sm font-semibold mb-3 text-yellow-200">Click anywhere to start walking</div>
-              <div className="text-xs opacity-90 space-y-2 bg-black/20 rounded-lg p-3">
-                <div className="flex items-center justify-center space-x-2">
-                  <span>🖱️</span><span>Mouse: Look around</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2">
-                  <span>⌨️</span><span>WASD: Walk/Move</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2">
-                  <span>⚡</span><span>Shift: Sprint/Run</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2">
-                  <span>🏃</span><span>Arrow Keys: Look (backup)</span>
-                </div>
-                <div className="flex items-center justify-center space-x-2">
-                  <span>🚪</span><span>Doors open automatically</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            }}
+          />
+        )}
 
-      {/* Enhanced 3D Canvas with optimized camera settings */}
-      <Canvas
-        shadows
-        dpr={[1, 2]}
-        frameloop={isVisible ? 'always' : 'demand'}
-        gl={{ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true }}
-        camera={{ 
-          position: [25, 18, 25], // Better initial positioning for architectural overview
-          fov: 55, // Slightly tighter field of view for better perspective
-          near: 0.1, 
-          far: 1000 
-        }}
-        className="w-full h-full"
-        tabIndex={0} // Make canvas focusable
+        {/* Enhanced 3D Canvas with optimized camera settings */}
+        <Canvas
+          shadows
+          dpr={[1, 1.5]}
+          frameloop="always"
+          flat
+          gl={{ 
+            antialias: true, 
+            powerPreference: 'high-performance', 
+            preserveDrawingBuffer: true,
+            alpha: false,
+            stencil: false,
+            depth: true
+          }}
+          camera={{ 
+            position: [25, 18, 25], // Better initial positioning for architectural overview
+            fov: 55, // Slightly tighter field of view for better perspective
+            near: 0.1, 
+            far: 1000 
+          }}
+          className="w-full h-full"
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          tabIndex={0} // Make canvas focusable
         onCreated={({ scene, gl, camera }) => {
           // Enhanced scene settings for better visual quality
           scene.fog = new THREE.Fog('#87CEEB', 20, 150); // Extended fog range
@@ -3281,7 +3222,7 @@ const FloorPlan3D = ({ floorPlanData, className = "", isVisible = true }) => {
         <color attach="background" args={['#87CEEB']} />
         
         <Suspense fallback={<LoadingSpinner3D />}>
-          <SoftShadows size={18} samples={24} focus={0.6} />
+          <SoftShadows size={15} samples={16} focus={0.5} />
           <Environment preset="apartment" background={false} intensity={0.75} blur={0.25} />
           <FloorPlan3DScene 
             floorPlanData={floorPlanData} 
@@ -3295,34 +3236,214 @@ const FloorPlan3D = ({ floorPlanData, className = "", isVisible = true }) => {
             sunSettings={sunSettings}
           />
 
-          {/* Subtle grounding shadows for a more realistic “anchored” look */}
+          {/* Subtle grounding shadows for a more realistic â€œanchoredâ€ look */}
           <ContactShadows
-            position={[0, 0.01, 0]}
-            opacity={0.35}
+            position={[0, -0.04, 0]}
+            opacity={0.3}
             scale={85}
-            blur={2.2}
+            blur={2.5}
             far={55}
-            resolution={1024}
-            frames={1}
+            resolution={512}
+            frames={Infinity}
           />
 
           {ENABLE_POSTPROCESSING && (
-            <EffectComposer multisampling={0}>
-              <SMAA />
+            <EffectComposer multisampling={4} disableNormalPass>
               <Bloom
-                intensity={0.25}
-                luminanceThreshold={0.85}
-                luminanceSmoothing={0.2}
+                intensity={0.2}
+                luminanceThreshold={0.9}
+                luminanceSmoothing={0.3}
                 mipmapBlur
               />
-              <Vignette eskil={false} offset={0.12} darkness={0.95} />
+              <Vignette eskil={false} offset={0.1} darkness={0.85} />
             </EffectComposer>
           )}
         </Suspense>
-      </Canvas>
+        </Canvas>
+      </div>
 
-      {/* Color Customizer Panel */}
-      <ColorCustomizer onColorsChange={handleColorsChange} rooms={rooms} doors={analyzedDoors} />
+      {/* Right Sidebar - View Controls */}
+      <div className="w-64 bg-white border-l border-gray-200 overflow-y-auto flex-shrink-0">
+        <div className="p-4">
+          <h3 className="text-sm font-bold text-slate-900 mb-4">🎮 View Controls</h3>
+          
+          {/* View Mode */}
+          <div className="space-y-3">
+            <div className="flex gap-1">
+              <button
+                onClick={() => setViewMode('overview')}
+                className={`flex-1 rounded-lg px-2 py-2 text-xs font-semibold transition-colors ${
+                  viewMode === 'overview'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setViewMode('walk')}
+                className={`flex-1 rounded-lg px-2 py-2 text-xs font-semibold transition-colors ${
+                  viewMode === 'walk'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Walk
+              </button>
+            </div>
+
+            {viewMode === 'overview' && (
+              <button
+                onClick={() => setAutoRotate(!autoRotate)}
+                className={`w-full rounded-lg px-2 py-2 text-xs font-semibold transition-colors ${
+                  autoRotate
+                    ? 'bg-violet-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                ↻ Auto-rotate {autoRotate ? 'ON' : 'OFF'}
+              </button>
+            )}
+
+            <button
+              onClick={handleSaveProgress}
+              className={`w-full rounded-lg px-2 py-2 text-xs font-semibold transition-colors ${
+                saveFeedback === 'saved'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-900 text-white hover:bg-slate-800'
+              }`}
+            >
+              {saveFeedback === 'saved' ? '✓ Saved' : '💾 Save Progress'}
+            </button>
+          </div>
+
+          {/* Sun Settings */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h4 className="text-xs font-bold text-slate-900 mb-3">☀️ Sun / Lighting</h4>
+            
+            {/* Sun Toggle + Presets */}
+            <div className="flex items-center gap-1.5 mb-3">
+              <button
+                onClick={() => setSunEnabled(!sunEnabled)}
+                className={`px-2 py-1 rounded text-xs font-semibold ${
+                  sunEnabled
+                    ? 'bg-amber-500 text-white'
+                    : 'bg-slate-200 text-slate-600'
+                }`}
+              >
+                {sunEnabled ? 'ON' : 'OFF'}
+              </button>
+              <div className="flex-1 flex gap-0.5">
+                {['morning', 'noon', 'afternoon', 'evening'].map((preset) => (
+                  <button
+                    key={preset}
+                    onClick={() => applyPreset(preset)}
+                    className={`flex-1 px-1 py-1 rounded text-[9px] font-medium ${
+                      sunPreset === preset
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {preset.slice(0, 3).toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Position X/Y/Z */}
+            <div className="grid grid-cols-3 gap-1 mb-3">
+              {[
+                { label: 'X', value: sunPosX, setter: setSunPosX },
+                { label: 'Y', value: sunPosY, setter: setSunPosY },
+                { label: 'Z', value: sunPosZ, setter: setSunPosZ },
+              ].map((axis) => (
+                <label key={axis.label} className="text-[10px] text-slate-600">
+                  {axis.label}
+                  <input
+                    type="number"
+                    step="1"
+                    value={axis.value}
+                    onChange={(e) => { axis.setter(Number(e.target.value)); setSunPreset('custom'); }}
+                    className="w-full rounded border border-gray-200 px-1.5 py-0.5 text-xs"
+                  />
+                </label>
+              ))}
+            </div>
+
+            {/* Brightness */}
+            <div className="mb-2">
+              <div className="flex justify-between text-[10px] text-slate-600">
+                <span>Brightness</span>
+                <span>{sunBrightness.toFixed(1)}</span>
+              </div>
+              <input
+                type="range"
+                min={0.1}
+                max={3}
+                step={0.1}
+                value={sunBrightness}
+                onChange={(e) => setSunBrightness(Number(e.target.value))}
+                className="w-full h-1.5 accent-amber-500"
+              />
+            </div>
+
+            {/* Shadow Strength */}
+            <div className="mb-2">
+              <div className="flex justify-between text-[10px] text-slate-600">
+                <span>Shadow</span>
+                <span>{Math.round(sunShadowStrength * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={sunShadowStrength}
+                onChange={(e) => setSunShadowStrength(Number(e.target.value))}
+                className="w-full h-1.5 accent-slate-600"
+              />
+            </div>
+
+            {/* Color Temp */}
+            <div className="mb-2">
+              <div className="flex justify-between text-[10px] text-slate-600">
+                <span>Temp</span>
+                <span>{sunColorTemp}K</span>
+              </div>
+              <input
+                type="range"
+                min={2000}
+                max={8000}
+                step={100}
+                value={sunColorTemp}
+                onChange={(e) => setSunColorTemp(Number(e.target.value))}
+                className="w-full h-1.5"
+                style={{ background: 'linear-gradient(to right, #FF8C00, #FFD700, #FFFACD, #ADD8E6)' }}
+              />
+            </div>
+
+            {/* Shadow Quality + Reset */}
+            <div className="flex items-center gap-2">
+              <select
+                value={sunShadowQuality}
+                onChange={(e) => setSunShadowQuality(e.target.value)}
+                className="flex-1 text-[10px] rounded border border-gray-200 px-1.5 py-1 bg-white"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="ultra">Ultra</option>
+              </select>
+              <button
+                onClick={() => applyPreset('noon')}
+                className="px-2 py-1 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

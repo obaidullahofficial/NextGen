@@ -94,19 +94,34 @@ const FloorPlanCustomization = () => {
     setFloorPlanData(prevData => {
       if (!prevData) return prevData;
       
+      // Use same dynamic canvas dimensions as KonvaFloorPlan (matching the actual component props)
+      const canvasWidth = window.innerWidth - 280;
+      const canvasHeight = window.innerHeight - 180;
+      const minMargin = 40;
+      const plotWidth = prevData.plotWidth || 1000;
+      const plotHeight = prevData.plotHeight || 1000;
+      const scaleX = (canvasWidth - minMargin * 2) / plotWidth;
+      const scaleY = (canvasHeight - minMargin * 2) / plotHeight;
+      const scale = Math.min(scaleX, scaleY);
+      
+      // Calculate centered offsets (matching KonvaFloorPlan layoutProps)
+      const scaledWidth = plotWidth * scale;
+      const scaledHeight = plotHeight * scale;
+      const offsetX = (canvasWidth - scaledWidth) / 2;
+      const offsetY = (canvasHeight - scaledHeight) / 2;
+      
       // Convert Konva rooms back to backend format
       const backendRooms = updatedRooms.map(room => {
         // For newly created rooms, convert Konva coordinates back to backend coordinates
         if (room.id && (room.id.toString().startsWith('new-room-') || room.id.toString().startsWith('created-room-'))) {
-          const margin = 40;
-          const scale = room.scale || 1;
+          const roomScale = room.scale || scale;
           
           return {
             id: room.id,
-            x: (room.x - margin) / scale,
-            y: (room.y - margin) / scale,
-            width: room.width / scale,
-            height: room.height / scale,
+            x: (room.x - offsetX) / roomScale,
+            y: (room.y - offsetY) / roomScale,
+            width: room.width / roomScale,
+            height: room.height / roomScale,
             type: room.type,
             tag: room.tag,
             name: room.name
@@ -140,22 +155,31 @@ const FloorPlanCustomization = () => {
     setFloorPlanData(prevData => {
       if (!prevData) return prevData;
       
-      const margin = 40;
+      // Use same dynamic canvas dimensions as KonvaFloorPlan (matching the actual component props)
+      const canvasWidth = window.innerWidth - 280;
+      const canvasHeight = window.innerHeight - 180;
+      const minMargin = 40;
       const plotWidth = prevData.plotWidth || 1000;
       const plotHeight = prevData.plotHeight || 1000;
-      const scaleX = (800 - margin * 2) / plotWidth;
-      const scaleY = (600 - margin * 2) / plotHeight;
+      const scaleX = (canvasWidth - minMargin * 2) / plotWidth;
+      const scaleY = (canvasHeight - minMargin * 2) / plotHeight;
       const scale = Math.min(scaleX, scaleY);
       
-      // Convert ALL Konva walls to backend format
+      // Calculate centered offsets (matching KonvaFloorPlan layoutProps)
+      const scaledWidth = plotWidth * scale;
+      const scaledHeight = plotHeight * scale;
+      const offsetX = (canvasWidth - scaledWidth) / 2;
+      const offsetY = (canvasHeight - scaledHeight) / 2;
+      
+      // Convert ALL Konva walls to backend format using centered offsets
       const backendWalls = updatedWalls.map(wall => {
         return {
           type: 'Wall',
           id: wall.id,
-          x1: (wall.points[0] - margin) / scale,
-          y1: (wall.points[1] - margin) / scale,
-          x2: (wall.points[2] - margin) / scale,
-          y2: (wall.points[3] - margin) / scale
+          x1: (wall.points[0] - offsetX) / scale,
+          y1: (wall.points[1] - offsetY) / scale,
+          x2: (wall.points[2] - offsetX) / scale,
+          y2: (wall.points[3] - offsetY) / scale
         };
       });
       
@@ -181,22 +205,31 @@ const FloorPlanCustomization = () => {
     setFloorPlanData(prevData => {
       if (!prevData) return prevData;
       
-      const margin = 40;
+      // Use same dynamic canvas dimensions as KonvaFloorPlan (matching the actual component props)
+      const canvasWidth = window.innerWidth - 280;
+      const canvasHeight = window.innerHeight - 180;
+      const minMargin = 40;
       const plotWidth = prevData.plotWidth || 1000;
       const plotHeight = prevData.plotHeight || 1000;
-      const scaleX = (800 - margin * 2) / plotWidth;
-      const scaleY = (600 - margin * 2) / plotHeight;
+      const scaleX = (canvasWidth - minMargin * 2) / plotWidth;
+      const scaleY = (canvasHeight - minMargin * 2) / plotHeight;
       const scale = Math.min(scaleX, scaleY);
       
-      // Convert ALL Konva doors to backend format (not just manually created ones)
+      // Calculate centered offsets (matching KonvaFloorPlan layoutProps)
+      const scaledWidth = plotWidth * scale;
+      const scaledHeight = plotHeight * scale;
+      const offsetX = (canvasWidth - scaledWidth) / 2;
+      const offsetY = (canvasHeight - scaledHeight) / 2;
+      
+      // Convert ALL Konva doors to backend format using centered offsets
       const backendDoors = updatedDoors.map(door => {
         return {
           type: 'Door',
           id: door.id, // Keep the ID so we can track it
-          x1: (door.points[0] - margin) / scale,
-          y1: (door.points[1] - margin) / scale,
-          x2: (door.points[2] - margin) / scale,
-          y2: (door.points[3] - margin) / scale
+          x1: (door.points[0] - offsetX) / scale,
+          y1: (door.points[1] - offsetY) / scale,
+          x2: (door.points[2] - offsetX) / scale,
+          y2: (door.points[3] - offsetY) / scale
         };
       });
       
@@ -222,22 +255,31 @@ const FloorPlanCustomization = () => {
     setFloorPlanData(prevData => {
       if (!prevData) return prevData;
       
-      const margin = 40;
+      // Use same dynamic canvas dimensions as KonvaFloorPlan (matching the actual component props)
+      const canvasWidth = window.innerWidth - 280;
+      const canvasHeight = window.innerHeight - 180;
+      const minMargin = 40;
       const plotWidth = prevData.plotWidth || 1000;
       const plotHeight = prevData.plotHeight || 1000;
-      const scaleX = (800 - margin * 2) / plotWidth;
-      const scaleY = (600 - margin * 2) / plotHeight;
+      const scaleX = (canvasWidth - minMargin * 2) / plotWidth;
+      const scaleY = (canvasHeight - minMargin * 2) / plotHeight;
       const scale = Math.min(scaleX, scaleY);
       
-      // Convert ALL Konva windows to backend format
+      // Calculate centered offsets (matching KonvaFloorPlan layoutProps)
+      const scaledWidth = plotWidth * scale;
+      const scaledHeight = plotHeight * scale;
+      const offsetX = (canvasWidth - scaledWidth) / 2;
+      const offsetY = (canvasHeight - scaledHeight) / 2;
+      
+      // Convert ALL Konva windows to backend format using centered offsets
       const backendWindows = updatedWindows.map(window => {
         return {
           type: 'Window',
           id: window.id,
-          x1: (window.points[0] - margin) / scale,
-          y1: (window.points[1] - margin) / scale,
-          x2: (window.points[2] - margin) / scale,
-          y2: (window.points[3] - margin) / scale
+          x1: (window.points[0] - offsetX) / scale,
+          y1: (window.points[1] - offsetY) / scale,
+          x2: (window.points[2] - offsetX) / scale,
+          y2: (window.points[3] - offsetY) / scale
         };
       });
       
@@ -410,104 +452,241 @@ const FloorPlanCustomization = () => {
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           const label = room.name || room.type || 'Room';
-          const dimensions = `${Math.round(room.width)}' x ${Math.round(room.height)}'`;
+          // Convert to feet (divide by 25 to match KonvaFloorPlan display)
+          const widthInFeet = Math.round(w / 25);
+          const heightInFeet = Math.round(h / 25);
+          const dimensions = `${widthInFeet}' x ${heightInFeet}'`;
           ctx.fillText(label, x + w / 2, y + h / 2 - 8);
           ctx.font = '10px Arial';
           ctx.fillText(dimensions, x + w / 2, y + h / 2 + 8);
         });
       }
       
-      // Draw walls (internal) as rectangles
+      // Validation threshold for corrupted coordinates
+      const maxReasonableCoord = 3000;
+      
+      // Draw walls (internal) as rectangles - check multiple data sources like KonvaFloorPlan
+      let wallsData = [];
+      
+      // Method 1: Check mapData for walls  
       if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData)) {
-        const walls = floorPlanData.mapData.filter(item => item.type === 'Wall');
-        
-        walls.forEach(wall => {
-          drawWallRect(sx(wall.x1 || 0), sy(wall.y1 || 0), sx(wall.x2 || 0), sy(wall.y2 || 0), innerWallThickness);
+        const mapWalls = floorPlanData.mapData.filter(item => {
+          if (item.type !== 'Wall') return false;
+          // VALIDATION: Skip walls with corrupted coordinates
+          const x1 = item.x1 || 0;
+          const y1 = item.y1 || 0;
+          const x2 = item.x2 || 0;
+          const y2 = item.y2 || 0;
+          if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
+              Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
+            console.warn('⚠️ PDF download: Skipping wall with corrupted coordinates from mapData');
+            return false;
+          }
+          return true;
+        });
+        wallsData = [...wallsData, ...mapWalls];
+      }
+      
+      // Method 2: Check direct walls array (floorPlanData.walls)
+      if (floorPlanData.walls && Array.isArray(floorPlanData.walls)) {
+        const directWalls = floorPlanData.walls.filter(wall => {
+          const x1 = wall.x1 || 0;
+          const y1 = wall.y1 || 0;
+          const x2 = wall.x2 || 0;
+          const y2 = wall.y2 || 0;
+          if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
+              Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
+            console.warn('⚠️ PDF download: Skipping wall with corrupted coordinates from walls array');
+            return false;
+          }
+          return true;
+        });
+        wallsData = [...wallsData, ...directWalls];
+      }
+      
+      // Draw walls
+      wallsData.forEach(wall => {
+        drawWallRect(sx(wall.x1 || 0), sy(wall.y1 || 0), sx(wall.x2 || 0), sy(wall.y2 || 0), innerWallThickness);
+      });
+      
+      // Draw doors (as arcs - architectural style) - check multiple data sources like KonvaFloorPlan
+      let doorsData = [];
+      
+      // Method 1: Check mapData for doors
+      if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData)) {
+        const mapDoors = floorPlanData.mapData.filter(item => {
+          if (item.type !== 'Door') return false;
+          // VALIDATION: Skip doors with corrupted coordinates
+          const x1 = item.x1 || 0;
+          const y1 = item.y1 || 0;
+          const x2 = item.x2 || 0;
+          const y2 = item.y2 || 0;
+          if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
+              Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
+            console.warn('⚠️ PDF download: Skipping door with corrupted coordinates from mapData');
+            return false;
+          }
+          return true;
+        });
+        doorsData = [...doorsData, ...mapDoors];
+      }
+      
+      // Method 2: Check direct doors array (floorPlanData.doors)
+      if (floorPlanData.doors && Array.isArray(floorPlanData.doors)) {
+        const directDoors = floorPlanData.doors.filter(door => {
+          const x1 = door.x1 || 0;
+          const y1 = door.y1 || 0;
+          const x2 = door.x2 || 0;
+          const y2 = door.y2 || 0;
+          if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
+              Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
+            console.warn('⚠️ PDF download: Skipping door with corrupted coordinates from doors array');
+            return false;
+          }
+          return true;
+        });
+        doorsData = [...doorsData, ...directDoors];
+      }
+      
+      // Method 3: Auto-generate doors on room walls if no doors found (same as KonvaFloorPlan)
+      if (doorsData.length === 0 && floorPlanData.rooms && floorPlanData.rooms.length > 0) {
+        console.log('📋 PDF: Auto-generating doors for rooms (no doors in data)');
+        floorPlanData.rooms.forEach((room, index) => {
+          const roomX = room.x || 0;
+          const roomY = room.y || 0;
+          const roomWidth = room.width || 100;
+          const roomHeight = room.height || 100;
+          
+          // Add door to the bottom edge of each room (centered)
+          const doorWidth = Math.min(80, roomWidth * 0.3);
+          const doorX = roomX + (roomWidth - doorWidth) / 2;
+          const doorY = roomY + roomHeight;
+          
+          doorsData.push({
+            id: `generated-door-${index}`,
+            x1: doorX,
+            y1: doorY,
+            x2: doorX + doorWidth,
+            y2: doorY,
+            type: 'Door'
+          });
         });
       }
       
-      // Draw doors (as arcs - architectural style, NO hinge line for clean wall when deleted)
+      // Draw doors
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = 'round';
+      
+      doorsData.forEach(door => {
+        const x1 = sx(door.x1 || 0);
+        const y1 = sy(door.y1 || 0);
+        const x2 = sx(door.x2 || 0);
+        const y2 = sy(door.y2 || 0);
+        
+        // Calculate door swing arc
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const doorLength = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+        
+        // Draw arc swing (90 degrees from hinge)
+        ctx.beginPath();
+        ctx.arc(x1, y1, doorLength, angle, angle + Math.PI / 2, false);
+        ctx.stroke();
+        
+        // Draw door panel line
+        ctx.beginPath();
+        const endX = x1 + doorLength * Math.cos(angle + Math.PI / 2);
+        const endY = y1 + doorLength * Math.sin(angle + Math.PI / 2);
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        
+        // Draw small hinge circle
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(x1, y1, 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      
+      // Draw windows (as rectangles with white fill) - check multiple data sources like KonvaFloorPlan
+      let windowsData = [];
+      
+      // Method 1: Check mapData for windows
       if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData)) {
-        const doors = floorPlanData.mapData.filter(item => item.type === 'Door');
+        const mapWindows = floorPlanData.mapData.filter(item => {
+          if (item.type !== 'Window') return false;
+          // VALIDATION: Skip windows with corrupted coordinates
+          const x1 = item.x1 || 0;
+          const y1 = item.y1 || 0;
+          const x2 = item.x2 || 0;
+          const y2 = item.y2 || 0;
+          if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
+              Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
+            console.warn('⚠️ PDF download: Skipping window with corrupted coordinates from mapData');
+            return false;
+          }
+          return true;
+        });
+        windowsData = [...windowsData, ...mapWindows];
+      }
+      
+      // Method 2: Check direct windows array (floorPlanData.windows)
+      if (floorPlanData.windows && Array.isArray(floorPlanData.windows)) {
+        const directWindows = floorPlanData.windows.filter(window => {
+          const x1 = window.x1 || 0;
+          const y1 = window.y1 || 0;
+          const x2 = window.x2 || 0;
+          const y2 = window.y2 || 0;
+          if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
+              Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
+            console.warn('⚠️ PDF download: Skipping window with corrupted coordinates from windows array');
+            return false;
+          }
+          return true;
+        });
+        windowsData = [...windowsData, ...directWindows];
+      }
+      
+      // Draw windows
+      windowsData.forEach(window => {
+        const wx1 = sx(window.x1 || 0);
+        const wy1 = sy(window.y1 || 0);
+        const wx2 = sx(window.x2 || 0);
+        const wy2 = sy(window.y2 || 0);
+        
+        // Calculate window rectangle
+        const dx = wx2 - wx1;
+        const dy = wy2 - wy1;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+        const windowThickness = 4;
+        
+        ctx.save();
+        ctx.translate(wx1, wy1);
+        ctx.rotate(angle);
+        
+        // Fill white
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, -windowThickness / 2, length, windowThickness);
+        
+        // Black border
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 1.5;
-        ctx.lineCap = 'round';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0, -windowThickness / 2, length, windowThickness);
         
-        doors.forEach(door => {
-          const x1 = sx(door.x1 || 0);
-          const y1 = sy(door.y1 || 0);
-          const x2 = sx(door.x2 || 0);
-          const y2 = sy(door.y2 || 0);
-          
-          // Calculate door swing arc
-          const dx = x2 - x1;
-          const dy = y2 - y1;
-          const doorLength = Math.sqrt(dx * dx + dy * dy);
-          const angle = Math.atan2(dy, dx);
-          
-          // Draw arc swing (90 degrees from hinge)
-          ctx.beginPath();
-          ctx.arc(x1, y1, doorLength, angle, angle + Math.PI / 2, false);
-          ctx.stroke();
-          
-          // Draw door panel line
-          ctx.beginPath();
-          const endX = x1 + doorLength * Math.cos(angle + Math.PI / 2);
-          const endY = y1 + doorLength * Math.sin(angle + Math.PI / 2);
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(endX, endY);
-          ctx.stroke();
-          
-          // Draw small hinge circle only (not connection circles at both ends)
-          ctx.fillStyle = '#000000';
-          ctx.beginPath();
-          ctx.arc(x1, y1, 2, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      }
-      
-      // Draw windows (as rectangles with white fill)
-      if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData)) {
-        const windows = floorPlanData.mapData.filter(item => item.type === 'Window');
+        ctx.restore();
         
-        windows.forEach(window => {
-          const wx1 = sx(window.x1 || 0);
-          const wy1 = sy(window.y1 || 0);
-          const wx2 = sx(window.x2 || 0);
-          const wy2 = sy(window.y2 || 0);
-          
-          // Calculate window rectangle
-          const dx = wx2 - wx1;
-          const dy = wy2 - wy1;
-          const length = Math.sqrt(dx * dx + dy * dy);
-          const angle = Math.atan2(dy, dx);
-          const windowThickness = 4;
-          
-          ctx.save();
-          ctx.translate(wx1, wy1);
-          ctx.rotate(angle);
-          
-          // Fill white
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(0, -windowThickness / 2, length, windowThickness);
-          
-          // Black border
-          ctx.strokeStyle = '#000000';
-          ctx.lineWidth = 1;
-          ctx.strokeRect(0, -windowThickness / 2, length, windowThickness);
-          
-          ctx.restore();
-          
-          // Draw connection circles at window endpoints
-          ctx.fillStyle = '#000000';
-          ctx.beginPath();
-          ctx.arc(wx1, wy1, 3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(wx2, wy2, 3, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      }
+        // Draw connection circles at window endpoints
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(wx1, wy1, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(wx2, wy2, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
       
       // Convert to grayscale (ensure pure black and white)
       const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
@@ -712,7 +891,7 @@ const FloorPlanCustomization = () => {
       {/* Header */}
       <div className="bg-[#1e2a3a] shadow-lg border-b border-[#ED7600]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14">
             <div className="flex items-center space-x-4">
               <button
                 onClick={handleBack}
@@ -811,45 +990,39 @@ const FloorPlanCustomization = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">
-                  {viewMode === '2d' ? 'Interactive Floor Plan Editor' : '3D Floor Plan Viewer'}
-                </h2>
-                <p className="text-sm text-slate-600 mt-1">
-                  {viewMode === '2d' 
-                    ? 'Drag rooms to reposition them, drag corners to resize, or click to select and view details.'
-                    : 'Experience your floor plan in 3D with realistic lighting, furniture, and walk-through mode.'
-                  }
-                </p>
-              </div>
+      <div className="mx-auto px-2 py-1 max-w-full">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-1">
+            {viewMode === '2d' && (
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <h2 className="text-xs font-semibold text-slate-900">
+                    Interactive Floor Plan Editor
+                  </h2>
+                </div>
               
-              {viewMode === '2d' && (
-                <div className="flex items-center space-x-4 text-sm text-slate-600">
+                <div className="flex items-center space-x-3 text-xs text-slate-600">
                   <div className="flex items-center">
-                    <div className="w-3 h-3 bg-gray-500 rounded mr-2"></div>
+                    <div className="w-2 h-2 bg-gray-500 rounded mr-1"></div>
                     <span>25px Grid</span>
                   </div>
                   <div className="flex items-center">
-                    <div className="w-3 h-3 bg-blue-600 rounded mr-2"></div>
-                    <span>Selected Room</span>
+                    <div className="w-2 h-2 bg-blue-600 rounded mr-1"></div>
+                    <span>Selected</span>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Floor Plan Canvas */}
-            <div className="flex justify-center">
+            <div className="w-full">
               {/* 2D View */}
-              <div style={{ display: viewMode === '2d' ? 'block' : 'none' }}>
+              <div style={{ display: viewMode === '2d' ? 'block' : 'none', height: 'calc(100vh - 150px)' }}>
                 <KonvaFloorPlan
                   ref={stageRef}
                   floorPlanData={floorPlanData}
-                  width={800}
-                  height={600}
+                  width={window.innerWidth - 280}
+                  height={window.innerHeight - 180}
                   isEditable={true}
                   showWalls={false}
                   onRoomUpdate={handleRoomUpdate}
@@ -861,8 +1034,8 @@ const FloorPlanCustomization = () => {
               </div>
               {/* 3D View - kept mounted to avoid WebGL shader recompilation errors */}
               <div 
-                className="w-full h-150 rounded-xl overflow-hidden border border-gray-200"
-                style={{ display: viewMode === '3d' ? 'block' : 'none' }}
+                className="w-full rounded-lg overflow-hidden border border-gray-200 bg-white"
+                style={{ display: viewMode === '3d' ? 'flex' : 'none', height: 'calc(100vh - 120px)' }}
               >
                 <React.Suspense 
                   fallback={
@@ -883,87 +1056,6 @@ const FloorPlanCustomization = () => {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Instructions Panel */}
-        <div className="mt-8 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-            <span className="bg-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-white font-bold">
-              {viewMode === '2d' ? '📐' : '🏗️'}
-            </span>
-            {viewMode === '2d' ? 'Customization Instructions' : '3D Viewer Features'}
-          </h3>
-          
-          {viewMode === '2d' ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
-                  <span className="mr-2">🔄</span> Moving Rooms
-                </h4>
-                <ul className="text-slate-600 space-y-1">
-                  <li>• Click and drag any room to move it</li>
-                  <li>• Rooms snap to a 25px grid for alignment</li>
-                  <li>• Rooms are constrained within plot boundaries</li>
-                </ul>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
-                  <span className="mr-2">🔧</span> Resizing Rooms
-                </h4>
-                <ul className="text-slate-600 space-y-1">
-                  <li>• Select a room by clicking on it</li>
-                  <li>• Drag the orange handles to resize</li>
-                  <li>• Minimum room size is enforced</li>
-                </ul>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
-                  <span className="mr-2">💾</span> Saving Changes
-                </h4>
-                <ul className="text-slate-600 space-y-1">
-                  <li>• Changes are tracked automatically</li>
-                  <li>• Click "Save Changes" to persist updates</li>
-                  <li>• Export your design as JSON file</li>
-                </ul>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
-                  <span className="mr-2">🪟</span> 3D Features
-                </h4>
-                <ul className="text-slate-600 space-y-1">
-                  <li>• Realistic windows with light yellow glass</li>
-                  <li>• Interactive doors that open/close on click</li>
-                  <li>• Soft shadows and realistic lighting</li>
-                  <li>• Color-coded rooms for easy identification</li>
-                </ul>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
-                  <span className="mr-2">🕹️</span> Controls
-                </h4>
-                <ul className="text-slate-600 space-y-1">
-                  <li>• <strong className="text-slate-900">Overview Mode:</strong> Drag to orbit, scroll to zoom</li>
-                  <li>• <strong className="text-slate-900">Walk Mode:</strong> WASD keys + mouse look</li>
-                  <li>• Switch between modes with buttons</li>
-                  <li>• City skybox environment for realism</li>
-                </ul>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
-                  <span className="mr-2">📦</span> Export Options
-                </h4>
-                <ul className="text-slate-600 space-y-1">
-                  <li>• Take screenshots of your 3D model</li>
-                  <li>• Share your design with others</li>
-                  <li>• <span className="text-slate-900">🪑</span> Furniture automatically placed by room type</li>
-                  <li>• Perfect for design presentations</li>
-                </ul>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

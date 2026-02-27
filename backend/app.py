@@ -27,7 +27,7 @@ CORS(app,
 
 # JWT Configuration
 app.config['JWT_SECRET_KEY'] = '6b30c0cdbdc749228ae16f07492b441310eac85611cbd607e1e110237218f89b'
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Increased to 1 hour
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=2)  # Session timeout: 2 hours
 app.config['JWT_ALGORITHM'] = 'HS256'
 app.config['JWT_DECODE_LEEWAY'] = 30
 app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']

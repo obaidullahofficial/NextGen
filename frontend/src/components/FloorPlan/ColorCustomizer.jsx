@@ -150,7 +150,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
   };
 
   return (
-    <div className="absolute bottom-4 right-4 z-10">
+    <div className="absolute top-4 left-4 z-10">
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -163,7 +163,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
 
       {/* Customization Panel */}
       {isOpen && (
-        <div className="absolute bottom-16 right-0 bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 p-5 w-80 max-h-125 overflow-y-auto">
+        <div className="absolute top-16 left-0 bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 p-5 w-80 max-h-125 overflow-y-auto">
           <div className="space-y-4">
             {/* Header */}
             <div className="border-b border-gray-200 pb-3">
