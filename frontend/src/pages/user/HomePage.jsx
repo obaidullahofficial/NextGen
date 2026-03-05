@@ -75,6 +75,7 @@ const SectionCounter = ({ number, total = "04", light = false }) => (
 const ScrollIndicator = ({ onClick, light = false }) => (
   <motion.div 
     className="absolute bottom-8 left-8 flex flex-col items-center cursor-pointer z-20"
+    style={{ position: 'relative' }} // Fix framer-motion positioning warning
     onClick={onClick}
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -108,8 +109,17 @@ const HomePage = () => {
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [popupCycleInterval, setPopupCycleInterval] = useState(null);
   const allAdsRef = useRef([]); // Ref to store current ads for interval access
+  const trackedImpressions = useRef(new Set()); // Track which ads have been tracked
   const [mainView, setMainView] = useState('3d'); // Track which view is in main position
   const [platformStats, setPlatformStats] = useState({ averageRating: 4.8, totalReviews: 150, totalUsers: 1000 });
+
+  // Helper function to track impression only once per ad
+  const trackImpressionOnce = (adId) => {
+    if (adId && !trackedImpressions.current.has(adId)) {
+      trackedImpressions.current.add(adId);
+      advertisementAPI.trackImpression(adId);
+    }
+  };
 
   const slides = [
     { image: homepagePic1, alt: "Modern architectural design 1" },
@@ -182,13 +192,41 @@ const HomePage = () => {
       const isAtTop = scrollPosition < 100; // Consider top if scroll is less than 100px
       
       if (!isAtTop && !isScrolledDown) {
-        // User scrolled down - hide popup
+        // User scrolled down - hide popup and pause cycling
         setIsScrolledDown(true);
         setShowPopup(false);
+        // Pause the cycling interval
+        if (popupCycleInterval) {
+          clearInterval(popupCycleInterval);
+          setPopupCycleInterval(null);
+        }
       } else if (isAtTop && isScrolledDown && initialLoadComplete && advertisement) {
-        // User scrolled back to top - show popup again
+        // User scrolled back to top - show popup and resume cycling
         setIsScrolledDown(false);
         setShowPopup(true);
+        // Resume cycling if there are multiple ads
+        if (allAds.length > 1 && !popupCycleInterval) {
+          const newInterval = setInterval(() => {
+            setCurrentAdIndex(prevIndex => {
+              const nextIndex = (prevIndex + 1) % allAds.length;
+              const nextAd = allAds[nextIndex];
+              
+              setRandomAd(nextAd);
+              setAdvertisement({
+                id: nextAd._id,
+                title: nextAd.title,
+                message: 'Click to learn more',
+                image: nextAd.featured_image,
+                link: nextAd.link_url
+              });
+              
+              trackImpressionOnce(nextAd._id);
+              
+              return nextIndex;
+            });
+          }, 3000);
+          setPopupCycleInterval(newInterval);
+        }
       }
     };
 
@@ -197,31 +235,7 @@ const HomePage = () => {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [isScrolledDown, initialLoadComplete, advertisement]);
-
-  // Scroll detection for hiding/showing ads
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      const isAtTop = scrollPosition < 100; // Consider top if scroll is less than 100px
-      
-      if (!isAtTop && !isScrolledDown) {
-        // User scrolled down - hide popup
-        setIsScrolledDown(true);
-        setShowPopup(false);
-      } else if (isAtTop && isScrolledDown && initialLoadComplete && advertisement) {
-        // User scrolled back to top - show popup again
-        setIsScrolledDown(false);
-        setShowPopup(true);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [isScrolledDown, initialLoadComplete, advertisement]);
+  }, [isScrolledDown, initialLoadComplete, advertisement, popupCycleInterval, allAds]);
 
   // Fetch random advertisement for popup
   useEffect(() => {
@@ -253,36 +267,34 @@ const HomePage = () => {
             setShowPopup(true);
             setInitialLoadComplete(true);
             // Track impression when popup is shown
-            if (firstAd._id) {
-              advertisementAPI.trackImpression(firstAd._id);
-            }
+            trackImpressionOnce(firstAd._id);
           }, 3000);
 
-          // Start cycling through ads every 3 seconds
-          cycleInterval = setInterval(() => {
-            setCurrentAdIndex(prevIndex => {
-              const nextIndex = (prevIndex + 1) % allAdsRef.current.length;
-              const nextAd = allAdsRef.current[nextIndex];
-              
-              setRandomAd(nextAd);
-              setAdvertisement({
-                id: nextAd._id,
-                title: nextAd.title,
-                message: 'Click to learn more',
-                image: nextAd.featured_image,
-                link: nextAd.link_url
+          // Start cycling through ads every 3 seconds (only if more than 1 ad)
+          if (result.data.length > 1) {
+            cycleInterval = setInterval(() => {
+              setCurrentAdIndex(prevIndex => {
+                const nextIndex = (prevIndex + 1) % allAdsRef.current.length;
+                const nextAd = allAdsRef.current[nextIndex];
+                
+                setRandomAd(nextAd);
+                setAdvertisement({
+                  id: nextAd._id,
+                  title: nextAd.title,
+                  message: 'Click to learn more',
+                  image: nextAd.featured_image,
+                  link: nextAd.link_url
+                });
+                
+                // Track impression for the new ad (only once)
+                trackImpressionOnce(nextAd._id);
+                
+                return nextIndex;
               });
-              
-              // Track impression for the new ad
-              if (nextAd._id) {
-                advertisementAPI.trackImpression(nextAd._id);
-              }
-              
-              return nextIndex;
-            });
-          }, 3000);
+            }, 3000);
 
-          setPopupCycleInterval(cycleInterval);
+            setPopupCycleInterval(cycleInterval);
+          }
         }
       } catch (error) {
         console.error('Error fetching ads for popup:', error);
@@ -333,6 +345,16 @@ const HomePage = () => {
     }
   };
 
+  // Handle closing popup and stopping cycling
+  const closePopup = () => {
+    setShowPopup(false);
+    // Stop the cycling interval when popup is closed
+    if (popupCycleInterval) {
+      clearInterval(popupCycleInterval);
+      setPopupCycleInterval(null);
+    }
+  };
+
   // Navigate to next ad in popup
   const goToNextAd = () => {
     if (allAds.length > 1) {
@@ -349,10 +371,8 @@ const HomePage = () => {
         link: nextAd.link_url
       });
       
-      // Track impression for manually viewed ad
-      if (nextAd._id) {
-        advertisementAPI.trackImpression(nextAd._id);
-      }
+      // Track impression for manually viewed ad (only once)
+      trackImpressionOnce(nextAd._id);
     }
   };
 
@@ -372,10 +392,8 @@ const HomePage = () => {
         link: prevAd.link_url
       });
       
-      // Track impression for manually viewed ad
-      if (prevAd._id) {
-        advertisementAPI.trackImpression(prevAd._id);
-      }
+      // Track impression for manually viewed ad (only once)
+      trackImpressionOnce(prevAd._id);
     }
   };
 
@@ -931,7 +949,9 @@ const HomePage = () => {
                           transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
                         />
                         <span className="text-base font-bold text-[#2F3D57] relative z-10">LIVING ROOM</span>
-                        <motion.div className="absolute bottom-2 right-2 bg-[#ED7600] text-white text-[9px] px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+                        <motion.div className="absolute bottom-2 right-2 bg-[#ED7600] text-white text-[9px] px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity font-medium"
+                          style={{ position: 'relative' }} // Fix framer-motion positioning
+                        >
                           Click to design
                         </motion.div>
                       </motion.div>
@@ -940,6 +960,7 @@ const HomePage = () => {
                       <div className="space-y-3">
                         <motion.div 
                           className="relative bg-gradient-to-br from-[#2F3D57]/10 to-[#2F3D57]/5 rounded-xl p-2 h-[66px] flex items-center justify-center border-2 border-[#2F3D57] cursor-pointer"
+                          style={{ position: 'relative' }} // Fix framer-motion positioning
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={handleGenerateNow}
@@ -1367,7 +1388,7 @@ const HomePage = () => {
                 </div>
                 
                 <motion.button
-                  onClick={() => setShowPopup(false)}
+                  onClick={closePopup}
                   className="group relative overflow-hidden p-2.5 bg-gradient-to-r from-red-50/80 to-red-100/80 hover:from-red-500 hover:to-red-600 rounded-xl text-red-400 hover:text-white transition-all duration-500 backdrop-blur-sm border border-red-200/30"
                   whileHover={{ 
                     scale: 1.05, 
@@ -1431,7 +1452,7 @@ const HomePage = () => {
                     if (randomAd) {
                       handleAdClick(randomAd);
                     }
-                    setShowPopup(false);
+                    closePopup();
                   }}
                   whileHover={{ 
                     scale: 1.02, 
@@ -1500,7 +1521,7 @@ const HomePage = () => {
                         if (randomAd) {
                           handleAdClick(randomAd);
                         }
-                        setShowPopup(false);
+                        closePopup();
                       }}
                       className="group relative overflow-hidden flex-1 bg-gradient-to-r from-[#ED7600] to-[#FF9933] hover:from-[#FF9933] hover:to-[#FFD700] text-white py-2.5 px-4 rounded-2xl text-sm font-bold transition-all duration-500 flex items-center justify-center gap-2 border border-orange-200/30"
                       whileHover={{ 
@@ -1538,7 +1559,7 @@ const HomePage = () => {
                         if (advertisement.id) {
                           handleViewClick(advertisement.id);
                         }
-                        setShowPopup(false);
+                        closePopup();
                       }}
                       className="group relative overflow-hidden flex-1 bg-gradient-to-r from-[#2F3D57] to-[#1e2a3a] hover:from-[#1e2a3a] hover:to-[#0f1419] text-white py-2.5 px-4 rounded-2xl text-sm font-bold transition-all duration-500 flex items-center justify-center gap-2 border border-gray-500/20"
                       whileHover={{ 

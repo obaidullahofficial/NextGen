@@ -217,10 +217,11 @@ const MyProgress = () => {
   }
 
   return (
-    <div className="p-8 bg-linear-to-br from-gray-50 to-gray-100 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        {/* Notification Toast */}
-        {notification && (
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="w-full space-y-6">
+          {/* Notification Toast */}
+          {notification && (
           <div 
             className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-2xl border-l-4 flex items-center gap-3 transition-all duration-300 ${
             notification.type === 'success' 
@@ -475,6 +476,7 @@ const MyProgress = () => {
             )}
           </div>
         )}
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}

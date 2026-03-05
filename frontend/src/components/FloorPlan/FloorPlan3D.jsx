@@ -2597,7 +2597,7 @@ const CameraController3D = ({ mode, bounds, rooms, onPlayerPositionChange }) => 
 };
 
 // Main 3D Scene Component - Enhanced with doors and windows
-const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, doorColors = {}, onRoomsAnalyzed, onDoorsAnalyzed, sunSettings }) => {
+const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, doorColors = {}, onRoomsAnalyzed, onDoorsAnalyzed, sunSettings, setbacks = null }) => {
   const [doorStates, setDoorStates] = useState({});
   const [playerPosition, setPlayerPosition] = useState([0, 1.7, 0]);
   
@@ -2773,6 +2773,171 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
         );
       })()}
       
+      {/* ── Outer perimeter boundary wall ── */}
+      {(() => {
+        const worldScale = 25 / Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY, 1);
+        const cx  = ((bounds.minX + bounds.maxX) / 2) * worldScale;
+        const cz  = ((bounds.minY + bounds.maxY) / 2) * worldScale;
+        const bw  = (bounds.maxX - bounds.minX) * worldScale; // building world width
+        const bh  = (bounds.maxY - bounds.minY) * worldScale; // building world height
+
+        const owT = 0.22;   // outer-wall thickness  (world units)
+        const owH = 3.2;    // outer-wall height      (slightly taller than room walls)
+        const owY = foundationHeight + owH / 2;
+        const wallMat = <meshStandardMaterial color="#808080" roughness={0.85} metalness={0.05} />;
+
+        // N/S walls are wider by 2×owT so they cap the corners
+        return (
+          <group>
+            {/* North wall (top in 2D) */}
+            <mesh position={[cx, owY, cz - bh / 2 - owT / 2]} castShadow receiveShadow>
+              <boxGeometry args={[bw + owT * 2, owH, owT]} />
+              {wallMat}
+            </mesh>
+            {/* South wall (bottom in 2D) */}
+            <mesh position={[cx, owY, cz + bh / 2 + owT / 2]} castShadow receiveShadow>
+              <boxGeometry args={[bw + owT * 2, owH, owT]} />
+              {wallMat}
+            </mesh>
+            {/* West wall (left in 2D) */}
+            <mesh position={[cx - bw / 2 - owT / 2, owY, cz]} castShadow receiveShadow>
+              <boxGeometry args={[owT, owH, bh]} />
+              {wallMat}
+            </mesh>
+            {/* East wall (right in 2D) */}
+            <mesh position={[cx + bw / 2 + owT / 2, owY, cz]} castShadow receiveShadow>
+              <boxGeometry args={[owT, owH, bh]} />
+              {wallMat}
+            </mesh>
+          </group>
+        );
+      })()}
+
+      {/* ── Setback distance labels + ground zone tints ── */}
+      {setbacks && (() => {
+        const worldScale = 25 / Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY, 1);
+        const cx  = ((bounds.minX + bounds.maxX) / 2) * worldScale;
+        const cz  = ((bounds.minY + bounds.maxY) / 2) * worldScale;
+        const bw  = (bounds.maxX - bounds.minX) * worldScale;
+        const bh  = (bounds.maxY - bounds.minY) * worldScale;
+        const owT = 0.22; // outer wall thickness (must match boundary wall block above)
+
+        const labelY    = foundationHeight + 1.6; // mid-wall height for text
+        const groundY   = 0.01;            // just above ground
+        const fontSize  = 0.55;
+        const tintAlpha = 0.18;
+
+        // setback distances in world units (ft * worldScale)
+        const frontPx = (setbacks.front || 0) * worldScale;
+        const rearPx  = (setbacks.rear  || 0) * worldScale;
+        const leftPx  = (setbacks.left  || 0) * worldScale;
+        const rightPx = (setbacks.right || 0) * worldScale;
+
+        // Outer wall outer edges (the gap starts here)
+        const northEdge = cz - bh / 2 - owT;  // outer edge of north wall
+        const southEdge = cz + bh / 2 + owT;  // outer edge of south wall
+        const westEdge  = cx - bw / 2 - owT;
+        const eastEdge  = cx + bw / 2 + owT;
+
+        return (
+          <group>
+            {/* ─ Rear setback (north / top) ─ */}
+            {rearPx > 0 && (
+              <group>
+                {/* tinted ground zone */}
+                <mesh position={[cx, groundY, northEdge - rearPx / 2]} rotation={[-Math.PI/2, 0, 0]}>
+                  <planeGeometry args={[bw + owT * 2 + leftPx + rightPx, rearPx]} />
+                  <meshStandardMaterial color="#3B82F6" transparent opacity={tintAlpha} />
+                </mesh>
+                {/* label */}
+                <Text
+                  position={[cx, labelY, northEdge - rearPx / 2]}
+                  rotation={[0, Math.PI, 0]}
+                  fontSize={fontSize}
+                  color="#1D4ED8"
+                  fontWeight="bold"
+                  anchorX="center"
+                  anchorY="middle"
+                  outlineWidth={0.04}
+                  outlineColor="#ffffff"
+                >
+                  {`Rear: ${setbacks.rear}ft`}
+                </Text>
+              </group>
+            )}
+
+            {/* ─ Front setback (south / bottom) ─ */}
+            {frontPx > 0 && (
+              <group>
+                <mesh position={[cx, groundY, southEdge + frontPx / 2]} rotation={[-Math.PI/2, 0, 0]}>
+                  <planeGeometry args={[bw + owT * 2 + leftPx + rightPx, frontPx]} />
+                  <meshStandardMaterial color="#EF4444" transparent opacity={tintAlpha} />
+                </mesh>
+                <Text
+                  position={[cx, labelY, southEdge + frontPx / 2]}
+                  rotation={[0, 0, 0]}
+                  fontSize={fontSize}
+                  color="#B91C1C"
+                  fontWeight="bold"
+                  anchorX="center"
+                  anchorY="middle"
+                  outlineWidth={0.04}
+                  outlineColor="#ffffff"
+                >
+                  {`Front: ${setbacks.front}ft`}
+                </Text>
+              </group>
+            )}
+
+            {/* ─ Left setback (west) ─ */}
+            {leftPx > 0 && (
+              <group>
+                <mesh position={[westEdge - leftPx / 2, groundY, cz]} rotation={[-Math.PI/2, 0, 0]}>
+                  <planeGeometry args={[leftPx, bh]} />
+                  <meshStandardMaterial color="#10B981" transparent opacity={tintAlpha} />
+                </mesh>
+                <Text
+                  position={[westEdge - leftPx / 2, labelY, cz]}
+                  rotation={[0, Math.PI / 2, 0]}
+                  fontSize={fontSize}
+                  color="#065F46"
+                  fontWeight="bold"
+                  anchorX="center"
+                  anchorY="middle"
+                  outlineWidth={0.04}
+                  outlineColor="#ffffff"
+                >
+                  {`Left: ${setbacks.left}ft`}
+                </Text>
+              </group>
+            )}
+
+            {/* ─ Right setback (east) ─ */}
+            {rightPx > 0 && (
+              <group>
+                <mesh position={[eastEdge + rightPx / 2, groundY, cz]} rotation={[-Math.PI/2, 0, 0]}>
+                  <planeGeometry args={[rightPx, bh]} />
+                  <meshStandardMaterial color="#F59E0B" transparent opacity={tintAlpha} />
+                </mesh>
+                <Text
+                  position={[eastEdge + rightPx / 2, labelY, cz]}
+                  rotation={[0, -Math.PI / 2, 0]}
+                  fontSize={fontSize}
+                  color="#92400E"
+                  fontWeight="bold"
+                  anchorX="center"
+                  anchorY="middle"
+                  outlineWidth={0.04}
+                  outlineColor="#ffffff"
+                >
+                  {`Right: ${setbacks.right}ft`}
+                </Text>
+              </group>
+            )}
+          </group>
+        );
+      })()}
+
       {/* Render ONLY manually added walls from 2D editor (IDs starting with 'new-wall-') - elevated on foundation */}
       {/* Room boundary walls are rendered by Room3D, so we only render user-created custom walls */}
       <group position={[0, foundationHeight, 0]}>
@@ -2893,7 +3058,7 @@ const LoadingSpinner3D = () => (
 );
 
 // Main component export with enhanced UI
-const FloorPlan3D = ({ floorPlanData, className = "", isVisible = true }) => {
+const FloorPlan3D = ({ floorPlanData, className = "", isVisible = true, setbacks = null }) => {
   // Generate unique save key based on floor plan data
   const saveKey = useMemo(() => {
     if (floorPlanData?.id) return `floorplan-3d-${floorPlanData.id}`;
@@ -3234,6 +3399,7 @@ const FloorPlan3D = ({ floorPlanData, className = "", isVisible = true }) => {
             onRoomsAnalyzed={handleRoomsAnalyzed}
             onDoorsAnalyzed={handleDoorsAnalyzed}
             sunSettings={sunSettings}
+            setbacks={setbacks}
           />
 
           {/* Subtle grounding shadows for a more realistic â€œanchoredâ€ look */}

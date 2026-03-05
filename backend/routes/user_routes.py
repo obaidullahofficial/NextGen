@@ -1042,6 +1042,19 @@ def google_login():
                             "message": "Invalid registration status. Contact admin."
                         }), 403
                 
+                # Update verification status for Google users (since Google accounts are inherently verified)
+                verification_update = {
+                    'verified': True,
+                    'is_verified': True,
+                    'email_verified': True,
+                    'auth_method': 'google'
+                }
+                users.update_one(
+                    {'_id': existing_user['_id']},
+                    {'$set': verification_update}
+                )
+                print(f"[GOOGLE {intent.upper()}] Updated verification status for user: {google_email}")
+                
                 # Create access token
                 access_token = create_access_token(
                     identity=google_email,
@@ -1098,7 +1111,9 @@ def google_login():
                     'auth_method': 'google',
                     'google_picture': google_picture,
                     'created_at': datetime.now().isoformat(),
-                    'verified': True  # Google accounts are pre-verified
+                    'verified': True,  # Google accounts are pre-verified
+                    'is_verified': True,  # Additional verification field
+                    'email_verified': True  # Explicit email verification
                 }
                 
                 # Insert user into database

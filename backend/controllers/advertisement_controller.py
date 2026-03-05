@@ -94,6 +94,9 @@ class AdvertisementController:
         """Get all advertisements with pagination"""
         try:
             advertisement_model = Advertisement()
+            # Automatically check and mark expired advertisements
+            advertisement_model.check_expired_advertisements()
+            
             result = advertisement_model.get_all_advertisements(filters, page, per_page)
             return {
                 "success": True,
@@ -130,6 +133,9 @@ class AdvertisementController:
         """Get pending advertisements for admin approval"""
         try:
             advertisement_model = Advertisement()
+            # Automatically check and mark expired advertisements
+            advertisement_model.check_expired_advertisements()
+            
             result = advertisement_model.get_pending_advertisements(page, per_page)
             return {
                 "success": True,
@@ -234,11 +240,14 @@ class AdvertisementController:
             return {"success": False, "error": str(e)}
 
     @staticmethod
-    def get_active_advertisements():
+    def get_active_advertisements(limit=None):
         """Get active advertisements for public display"""
         try:
             advertisement_model = Advertisement()
-            ads = advertisement_model.get_active_advertisements()
+            # Automatically check and mark expired advertisements
+            advertisement_model.check_expired_advertisements()
+            
+            ads = advertisement_model.get_active_advertisements(limit)
             return {"success": True, "data": ads}
         except Exception as e:
             return {"success": False, "error": str(e)}

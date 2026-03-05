@@ -119,7 +119,20 @@ def getNthPermutation(array,n):
 #   |___________________|
 #   p2                  p3
 
-def GenCoord(W,H):
+def GenCoord(W,H, setbacks=None):
+    """Generate the buildable area coordinates, applying setbacks if provided.
+    
+    setbacks: dict with keys 'front', 'rear', 'left', 'right' (in coordinate units).
+    Front setback = bottom boundary, Rear setback = top boundary (architectural convention).
+    Left setback = left boundary, Right setback = right boundary.
+    """
+    if setbacks:
+        left = float(setbacks.get('left', 0))
+        right = float(setbacks.get('right', 0))
+        front = float(setbacks.get('front', 0))
+        rear = float(setbacks.get('rear', 0))
+        # Rooms are generated only within the buildable area
+        return [[left, front], [W - right, front], [left, H - rear], [W - right, H - rear], "Room"]
     return [[0,0],[W,0],[0,H],[W,H],"Room"]
 
 def splitRoom(coord,axis,ratio):
@@ -345,15 +358,24 @@ def getProp(room):
         return x1/x2
 def fitness(inputG,gene,trees):
     score=0
+    setbacks = inputG.get("setbacks", None)
     tree=genTree(gene,inputG["rooms"],trees)
-    rooms=GenerateRooms(GenCoord(inputG["width"],inputG["height"]),tree)
+    rooms=GenerateRooms(GenCoord(inputG["width"],inputG["height"], setbacks),tree)
     rooms_dict=RoomtoDict(rooms)
     for connection in inputG["connections"]:
         if(CheckAjdacent(rooms_dict[connection[0]],rooms_dict[connection[2]],DOOR_LENGTH)):
             score+=ADJACENCY_REWARD 
 
+    # Use buildable area for percentage calculations when setbacks are applied
+    if setbacks:
+        buildable_w = inputG["width"] - float(setbacks.get('left', 0)) - float(setbacks.get('right', 0))
+        buildable_h = inputG["height"] - float(setbacks.get('front', 0)) - float(setbacks.get('rear', 0))
+    else:
+        buildable_w = inputG["width"]
+        buildable_h = inputG["height"]
+
     for room in rooms:
-        pArea=getPercentageArea(inputG["width"],inputG["height"],room)
+        pArea=getPercentageArea(buildable_w, buildable_h, room)
         expected=inputG["percents"][room[4].split('-')[0]]
 
         deviation=abs((pArea-expected)/expected)
@@ -627,8 +649,9 @@ def getRoomCenters(rooms):
 
 
 def geneToJsonMap(inputG,gene,trees,Rooms):
+    setbacks = inputG.get("setbacks", None)
     tree=genTree(gene,Rooms,trees)
-    rooms=GenerateRooms(GenCoord(inputG["width"],inputG["height"]),tree)
+    rooms=GenerateRooms(GenCoord(inputG["width"],inputG["height"], setbacks),tree)
     rooms_dict=RoomtoDict(rooms)
     doors=[]
     for connection in inputG["connections"]:
@@ -642,6 +665,16 @@ def geneToJsonMap(inputG,gene,trees,Rooms):
     room_centers = getRoomCenters(rooms)
     for center in room_centers: 
         jsonlines.append(center)
+    
+    # Add plot boundary walls (full plot outline at 0,0 to W,H)
+    # These always exist regardless of setbacks - they represent the plot boundary
+    W = inputG["width"]
+    H = inputG["height"]
+    jsonlines.append({"x1": 0, "y1": 0, "x2": W, "y2": 0, "type": "Wall"})  # Top
+    jsonlines.append({"x1": W, "y1": 0, "x2": W, "y2": H, "type": "Wall"})  # Right
+    jsonlines.append({"x1": W, "y1": H, "x2": 0, "y2": H, "type": "Wall"})  # Bottom
+    jsonlines.append({"x1": 0, "y1": H, "x2": 0, "y2": 0, "type": "Wall"})  # Left
+    
     return jsonlines,rooms
 
 
@@ -735,7 +768,7 @@ def InsertDoorConnections(connections,doors):
             connections.append({"x1":newLines[2][0][0],"y1":newLines[2][0][1],"x2":newLines[2][1][0],"y2":newLines[2][1][1],"type":"Wall"})
     return connections
 
-def GA_driver(connects=None, width=1000, height=1000, kitchen_p=0.7, living_p=0.8, drawing_p=0.8, car_p=1.2, bath_p=0.6, bed_p=0.8, gar_p=1.0, kitchen_per=15, living_per=25, drawing_per=20, car_per=10, bath_per=5, bed_per=15, gar_per=10, room_tags=None, max_generations=50, population_size=20, mutation_rate=0.1, crossover_rate=0.7):
+def GA_driver(connects=None, width=1000, height=1000, kitchen_p=0.7, living_p=0.8, drawing_p=0.8, car_p=1.2, bath_p=0.6, bed_p=0.8, gar_p=1.0, kitchen_per=15, living_per=25, drawing_per=20, car_per=10, bath_per=5, bed_per=15, gar_per=10, room_tags=None, max_generations=50, population_size=20, mutation_rate=0.1, crossover_rate=0.7, setbacks=None):
     try:
         # Input validation
         if not connects or len(connects) == 0:
@@ -753,6 +786,11 @@ def GA_driver(connects=None, width=1000, height=1000, kitchen_p=0.7, living_p=0.
             
         print(f"Processing {len(Roms)} rooms: {Roms}")
         print(f"Processing {len(conns)} connections")
+        if setbacks:
+            print(f"[Compliance] Setbacks applied - Front: {setbacks.get('front', 0):.1f}, Rear: {setbacks.get('rear', 0):.1f}, Left: {setbacks.get('left', 0):.1f}, Right: {setbacks.get('right', 0):.1f}")
+            buildable_w = width - float(setbacks.get('left', 0)) - float(setbacks.get('right', 0))
+            buildable_h = height - float(setbacks.get('front', 0)) - float(setbacks.get('rear', 0))
+            print(f"[Compliance] Buildable area: {buildable_w:.1f} x {buildable_h:.1f} (out of {width} x {height})")
         
         inputG={
         "width":width,
@@ -776,7 +814,8 @@ def GA_driver(connects=None, width=1000, height=1000, kitchen_p=0.7, living_p=0.
             "carporch":float(car_p),
             "garden":float(gar_p),
             "drawingroom":float(drawing_p)
-        }
+        },
+        "setbacks": setbacks
         }
         
         # Generate all possible binary trees

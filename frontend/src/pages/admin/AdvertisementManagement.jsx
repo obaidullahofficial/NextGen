@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { FiEye } from 'react-icons/fi';
 import advertisementAPI from '../../services/advertisementAPI';
 
 const AdvertisementManagement = () => {
   const [pendingAds, setPendingAds] = useState([]);
   const [allAds, setAllAds] = useState([]);
-  const [activeTab, setActiveTab] = useState('pending');
+  const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({});
   const [totalPendingCount, setTotalPendingCount] = useState(0);
+  const [totalAllAdsCount, setTotalAllAdsCount] = useState(0);
   
   const [selectedAd, setSelectedAd] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
@@ -57,6 +59,7 @@ const AdvertisementManagement = () => {
       if (result.success) {
         setAllAds(result.data || []);
         setPagination(result.pagination || {});
+        setTotalAllAdsCount(result.pagination?.total_count || 0);
       } else {
         setError(result.error || 'Failed to load advertisements');
       }
@@ -270,6 +273,19 @@ const AdvertisementManagement = () => {
         <div className="flex gap-2 mb-6 border-b border-gray-200">
           <button
             className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+              activeTab === 'all'
+                ? 'border-[#ED7600] text-[#ED7600] bg-[#ED7600]/10'
+                : 'border-transparent text-gray-600 hover:text-[#ED7600] hover:bg-[#ED7600]/10'
+            }`}
+            onClick={() => {
+              setActiveTab('all');
+              setPage(1);
+            }}
+          >
+            All Advertisements ({totalAllAdsCount})
+          </button>
+          <button
+            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
               activeTab === 'pending'
                 ? 'border-[#ED7600] text-[#ED7600] bg-[#ED7600]/10'
                 : 'border-transparent text-gray-600 hover:text-[#ED7600] hover:bg-[#ED7600]/10'
@@ -280,19 +296,6 @@ const AdvertisementManagement = () => {
             }}
           >
             Pending Approval ({totalPendingCount})
-          </button>
-          <button
-            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
-              activeTab === 'all'
-                ? 'border-[#ED7600] text-[#ED7600] bg-[#ED7600]/10'
-                : 'border-transparent text-gray-600 hover:text-[#ED7600] hover:bg-[#ED7600]/10'
-            }`}
-            onClick={() => {
-              setActiveTab('all');
-              setPage(1);
-            }}
-          >
-            All Advertisements
           </button>
         </div>
 
@@ -390,83 +393,95 @@ const AdvertisementManagement = () => {
                 <p className="text-gray-500">No advertisements found</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-x-auto shadow-md rounded-lg">
+                <table className="min-w-max w-full bg-white">
                   <thead>
-                    <tr className="bg-[#2F3D57] text-white">
-                      <th className="px-6 py-4 text-left font-semibold">Title</th>
-                      <th className="px-6 py-4 text-left font-semibold">User</th>
-                      <th className="px-6 py-4 text-left font-semibold">Society</th>
-                      <th className="px-6 py-4 text-left font-semibold">Plan</th>
-                      <th className="px-6 py-4 text-left font-semibold">Price</th>
-                      <th className="px-6 py-4 text-left font-semibold">Payment</th>
-                      <th className="px-6 py-4 text-left font-semibold">Status</th>
-                      <th className="px-6 py-4 text-left font-semibold">Dates</th>
-                      <th className="px-6 py-4 text-left font-semibold">Stats</th>
-                      <th className="px-6 py-4 text-left font-semibold">Actions</th>
+                    <tr className="bg-gradient-to-r from-[#2F3D57] to-[#1e2a3a] text-white">
+                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[180px]">Title</th>
+                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[150px]">User</th>
+                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[120px]">Society</th>
+                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[100px]">Plan</th>
+                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[90px]">Price</th>
+                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[100px]">Payment</th>
+                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[100px]">Status</th>
+                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[140px]">Dates</th>
+                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[80px]">Views</th>
+                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[120px]">Actions</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-gray-200">
                     {allAds.map(ad => (
-                      <tr key={ad._id} className="border-b border-gray-200 hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div>
-                            <div className="font-medium text-gray-900">{ad.title}</div>
-                            {ad.link_url && <div className="text-xs text-gray-500 truncate max-w-xs">{ad.link_url}</div>}
+                      <tr key={ad._id} className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 transition-all duration-200">
+                        <td className="px-4 py-4">
+                          <div className="max-w-[180px]">
+                            <div className="font-semibold text-gray-900 text-sm truncate" title={ad.title}>{ad.title}</div>
+                            {ad.link_url && <div className="text-xs text-blue-600 hover:text-blue-800 truncate mt-1" title={ad.link_url}>{ad.link_url}</div>}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-gray-700">{ad.user_email}</td>
-                        <td className="px-6 py-4 text-gray-700">{ad.society_name || ad.society_id || 'N/A'}</td>
-                        <td className="px-6 py-4 text-gray-700">{ad.plan_name}</td>
-                        <td className="px-6 py-4 text-[#ED7600] font-bold">Rs {ad.price}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            ad.payment_status === 'paid' ? 'bg-green-500 text-white' :
-                            ad.payment_status === 'pending' ? 'bg-yellow-500 text-white' :
-                            ad.payment_status === 'failed' ? 'bg-red-500 text-white' :
-                            'bg-gray-500 text-white'
+                        <td className="px-4 py-4 text-sm text-gray-600 max-w-[150px] truncate" title={ad.user_email}>{ad.user_email}</td>
+                        <td className="px-4 py-4 text-sm text-gray-700 font-medium truncate max-w-[120px]" title={ad.society_name || ad.society_id}>{ad.society_name || ad.society_id || 'N/A'}</td>
+                        <td className="px-4 py-4">
+                          <span className="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded-full whitespace-nowrap">{ad.plan_name}</span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-[#ED7600] font-bold text-sm whitespace-nowrap">Rs {ad.price}</span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wide shadow-sm whitespace-nowrap ${
+                            ad.payment_status === 'paid' ? 'bg-green-100 text-green-700 border border-green-200' :
+                            ad.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                            ad.payment_status === 'failed' ? 'bg-red-100 text-red-700 border border-red-200' :
+                            'bg-gray-100 text-gray-700 border border-gray-200'
                           }`}>
                             {ad.payment_status || 'pending'}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            ad.status === 'active' ? 'bg-green-500 text-white' :
-                            ad.status === 'pending' ? 'bg-[#ED7600] text-white' :
-                            ad.status === 'rejected' ? 'bg-red-500 text-white' :
-                            'bg-gray-500 text-white'
+                        <td className="px-4 py-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wide shadow-sm whitespace-nowrap ${
+                            ad.status === 'active' ? 'bg-green-100 text-green-700 border border-green-200' :
+                            ad.status === 'pending' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                            ad.status === 'rejected' ? 'bg-red-100 text-red-700 border border-red-200' :
+                            ad.status === 'expired' ? 'bg-gray-100 text-gray-700 border border-gray-200' :
+                            'bg-gray-100 text-gray-600 border border-gray-200'
                           }`}>
                             {ad.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-700">
-                            <div>{formatDate(ad.start_date)}</div>
-                            <div>{formatDate(ad.end_date)}</div>
+                        <td className="px-4 py-4">
+                          <div className="text-xs text-gray-600 space-y-1 whitespace-nowrap">
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-gray-500">Start:</span>
+                              <span className="font-medium">{formatDate(ad.start_date)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-gray-500">End:</span>
+                              <span className="font-medium">{formatDate(ad.end_date)}</span>
+                            </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-3 text-sm text-gray-600">
-                            <span title="Views">👁 {ad.impressions || 0}</span>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-1.5 text-gray-700 whitespace-nowrap">
+                            <FiEye className="text-blue-500" size={16} />
+                            <span className="font-semibold text-sm">{ad.impressions || 0}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
+                        <td className="px-4 py-4">
+                          <div className="flex gap-2 whitespace-nowrap">
                             <button
                               onClick={() => openEditModal(ad)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all hover:scale-105 shadow-sm hover:shadow"
                               title="Edit Advertisement"
                             >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                               </svg>
                             </button>
                             <button
                               onClick={() => openDeleteModal(ad)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all hover:scale-105 shadow-sm hover:shadow"
                               title="Delete Advertisement"
                             >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
                             </button>
@@ -482,19 +497,19 @@ const AdvertisementManagement = () => {
 
           {/* Pagination */}
           {pagination.total_pages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
               <button
-                className="px-4 py-2 bg-[#2F3D57] text-white rounded-lg hover:bg-[#1e2a3a] disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium shadow"
+                className="px-6 py-2.5 bg-gradient-to-r from-[#2F3D57] to-[#1e2a3a] text-white rounded-lg hover:from-[#1e2a3a] hover:to-[#0f1419] disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
-                Previous
+                ← Previous
               </button>
-              <span className="text-gray-700 font-medium">
+              <span className="text-gray-700 font-semibold text-base bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
                 Page {page} of {pagination.total_pages}
               </span>
               <button
-                className="px-4 py-2 bg-[#2F3D57] text-white rounded-lg hover:bg-[#1e2a3a] disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium shadow"
+                className="px-6 py-2.5 bg-gradient-to-r from-[#2F3D57] to-[#1e2a3a] text-white rounded-lg hover:from-[#1e2a3a] hover:to-[#0f1419] disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 onClick={() => setPage(p => Math.min(pagination.total_pages, p + 1))}
                 disabled={page === pagination.total_pages}
               >

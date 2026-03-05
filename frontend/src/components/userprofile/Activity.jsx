@@ -142,31 +142,32 @@ const Activity = () => {
   }
 
   return (
-    <div className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-extrabold text-gray-800 tracking-tight">
-              Activity Dashboard
-            </h2>
-            <p className="text-gray-600 mt-2">
-              Track your progress and recent activities
-            </p>
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="w-full space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-extrabold text-gray-800 tracking-tight">
+                Activity Dashboard
+              </h2>
+              <p className="text-gray-600 mt-2">
+                Track your progress and recent activities
+              </p>
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-2 bg-[#ED7600] text-white px-4 py-2 rounded-lg hover:bg-[#d46000] transition-colors disabled:opacity-50"
+            >
+              <FiRefreshCw className={refreshing ? 'animate-spin' : ''} />
+              Refresh
+            </button>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-2 bg-[#ED7600] text-white px-4 py-2 rounded-lg hover:bg-[#d46000] transition-colors disabled:opacity-50"
-          >
-            <FiRefreshCw className={refreshing ? 'animate-spin' : ''} />
-            Refresh
-          </button>
-        </div>
 
-        {/* Progress Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+          {/* Progress Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-2xl font-bold text-gray-800">
@@ -302,7 +303,7 @@ const Activity = () => {
 
         {/* Monthly Activity Summary */}
         {progressSummary && (
-          <div className="mt-8 bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-4">This Month's Summary</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-blue-50 rounded-lg">
@@ -333,6 +334,7 @@ const Activity = () => {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

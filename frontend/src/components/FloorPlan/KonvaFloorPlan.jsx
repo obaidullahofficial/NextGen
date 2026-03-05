@@ -12,7 +12,8 @@ const KonvaFloorPlan = forwardRef(({
   onWindowsChange,
   isEditable = false,
   showWalls = true,
-  showAllocatedArea = true 
+  showAllocatedArea = true,
+  setbacks = null  // { front, rear, left, right } in feet — optional
 }, ref) => {
   const [rooms, setRooms] = useState([]);
   const [walls, setWalls] = useState([]);
@@ -69,15 +70,29 @@ const KonvaFloorPlan = forwardRef(({
     const minMargin = 40;
     const plotWidth = floorPlanData?.plotWidth || 1000;
     const plotHeight = floorPlanData?.plotHeight || 1000;
+    // Actual dimensions in feet for display purposes
+    const actualLength = floorPlanData?.actualLength || 55;
+    const actualWidth = floorPlanData?.actualWidth || 25;
     
-    // Calculate scale to fit within canvas with minimum margins
-    const scaleX = (width - minMargin * 2) / plotWidth;
-    const scaleY = (height - minMargin * 2) / plotHeight;
-    const scale = Math.min(scaleX, scaleY);
+    // Available canvas area after margins
+    const availableWidth = width - minMargin * 2;
+    const availableHeight = height - minMargin * 2;
     
-    // Scaled dimensions of the plot
-    const scaledWidth = plotWidth * scale;
-    const scaledHeight = plotHeight * scale;
+    // Fit actual plot dimensions (feet) into available canvas area, maintaining real aspect ratio
+    // actualLength = horizontal (x-axis), actualWidth = vertical (y-axis)
+    const scaleToFit = Math.min(availableWidth / actualLength, availableHeight / actualWidth);
+    
+    // Pixel dimensions of the plot preview — proportional to real feet
+    const scaledWidth = actualLength * scaleToFit;
+    const scaledHeight = actualWidth * scaleToFit;
+    
+    // Coordinate-to-pixel scale factors (different for x and y axes)
+    // Converts 0-1000 backend coordinates to proportionally correct pixels
+    const coordScaleX = scaledWidth / plotWidth;
+    const coordScaleY = scaledHeight / plotHeight;
+    
+    // General scale factor for stroke widths and other non-directional sizes
+    const scale = Math.min(coordScaleX, coordScaleY);
     
     // Center offsets
     const offsetX = (width - scaledWidth) / 2;
@@ -87,12 +102,25 @@ const KonvaFloorPlan = forwardRef(({
       offsetX,
       offsetY,
       scale,
+      coordScaleX,
+      coordScaleY,
       scaledWidth,
       scaledHeight,
       plotWidth,
-      plotHeight
+      plotHeight,
+      actualLength,
+      actualWidth,
+      scaleToFit
     };
-  }, [width, height, floorPlanData?.plotWidth, floorPlanData?.plotHeight]);
+  }, [width, height, floorPlanData?.plotWidth, floorPlanData?.plotHeight, floorPlanData?.actualLength, floorPlanData?.actualWidth]);
+
+  // Update total floor area based on actual plot dimensions
+  useEffect(() => {
+    const actualLength = floorPlanData?.actualLength || 55;
+    const actualWidth = floorPlanData?.actualWidth || 25;
+    const realTotalArea = actualLength * actualWidth;
+    setTotalFloorArea(realTotalArea);
+  }, [floorPlanData?.actualLength, floorPlanData?.actualWidth]);
 
   // Helper function to check and constrain room within allocated area
   const constrainRoomToBoundary = useCallback((x, y, roomWidth, roomHeight, showWarning = true) => {
@@ -386,16 +414,16 @@ const KonvaFloorPlan = forwardRef(({
     }
     
     if (floorPlanData) {
-      // Use centered layout props
-      const { offsetX, offsetY, scale } = layoutProps;
+      // Use centered layout props with separate x/y coordinate scales
+      const { offsetX, offsetY, scale, coordScaleX, coordScaleY } = layoutProps;
       
-      // Convert rooms data with proper scaling and centering
+      // Convert rooms data with proportional scaling (different for x and y)
       const roomsData = (floorPlanData.rooms || []).map((room, index) => ({
         id: room.id || `room-${index}`,
-        x: (room.x || 0) * scale + offsetX,
-        y: (room.y || 0) * scale + offsetY,
-        width: (room.width || 100) * scale,
-        height: (room.height || 100) * scale,
+        x: (room.x || 0) * coordScaleX + offsetX,
+        y: (room.y || 0) * coordScaleY + offsetY,
+        width: (room.width || 100) * coordScaleX,
+        height: (room.height || 100) * coordScaleY,
         fill: getRoomColor(room.type || room.tag),
         stroke: '#333',
         strokeWidth: 2,
@@ -407,19 +435,21 @@ const KonvaFloorPlan = forwardRef(({
         originalY: room.y || 0,
         originalWidth: room.width || 100,
         originalHeight: room.height || 100,
+        coordScaleX: coordScaleX,
+        coordScaleY: coordScaleY,
         scale: scale
       }));
 
-      // Convert walls data with proper scaling
+      // Convert walls data with proportional scaling
       const wallsData = (floorPlanData.mapData || [])
         .filter(item => item.type === 'Wall')
         .map((wall, index) => ({
           id: wall.id || `wall-${index}`,
           points: [
-            (wall.x1 || 0) * scale + offsetX, 
-            (wall.y1 || 0) * scale + offsetY, 
-            (wall.x2 || 0) * scale + offsetX, 
-            (wall.y2 || 0) * scale + offsetY
+            (wall.x1 || 0) * coordScaleX + offsetX, 
+            (wall.y1 || 0) * coordScaleY + offsetY, 
+            (wall.x2 || 0) * coordScaleX + offsetX, 
+            (wall.y2 || 0) * coordScaleY + offsetY
           ],
           stroke: '#000000',
           strokeWidth: Math.max(1, 4 * scale),
@@ -436,10 +466,10 @@ const KonvaFloorPlan = forwardRef(({
           .map((door, index) => ({
             id: door.id || `door-${index}`,
             points: [
-              (door.x1 || 0) * scale + offsetX, 
-              (door.y1 || 0) * scale + offsetY, 
-              (door.x2 || 0) * scale + offsetX, 
-              (door.y2 || 0) * scale + offsetY
+              (door.x1 || 0) * coordScaleX + offsetX, 
+              (door.y1 || 0) * coordScaleY + offsetY, 
+              (door.x2 || 0) * coordScaleX + offsetX, 
+              (door.y2 || 0) * coordScaleY + offsetY
             ],
             stroke: '#8B4513',
             strokeWidth: Math.max(6, 4 * scale),
@@ -454,10 +484,10 @@ const KonvaFloorPlan = forwardRef(({
         const directDoors = floorPlanData.doors.map((door, index) => ({
           id: door.id || `direct-door-${index}`,
           points: [
-            (door.x1 || 0) * scale + offsetX, 
-            (door.y1 || 0) * scale + offsetY, 
-            (door.x2 || 0) * scale + offsetX, 
-            (door.y2 || 0) * scale + offsetY
+            (door.x1 || 0) * coordScaleX + offsetX, 
+            (door.y1 || 0) * coordScaleY + offsetY, 
+            (door.x2 || 0) * coordScaleX + offsetX, 
+            (door.y2 || 0) * coordScaleY + offsetY
           ],
           stroke: '#8B4513',
           strokeWidth: Math.max(6, 4 * scale),
@@ -507,10 +537,10 @@ const KonvaFloorPlan = forwardRef(({
           .map((window, index) => ({
             id: window.id || `window-${index}`,
             points: [
-              (window.x1 || 0) * scale + offsetX, 
-              (window.y1 || 0) * scale + offsetY, 
-              (window.x2 || 0) * scale + offsetX, 
-              (window.y2 || 0) * scale + offsetY
+              (window.x1 || 0) * coordScaleX + offsetX, 
+              (window.y1 || 0) * coordScaleY + offsetY, 
+              (window.x2 || 0) * coordScaleX + offsetX, 
+              (window.y2 || 0) * coordScaleY + offsetY
             ],
             stroke: '#87CEEB',
             strokeWidth: Math.max(5, 3 * scale),
@@ -524,10 +554,10 @@ const KonvaFloorPlan = forwardRef(({
         const directWindows = floorPlanData.windows.map((window, index) => ({
           id: window.id || `direct-window-${index}`,
           points: [
-            (window.x1 || 0) * scale + offsetX, 
-            (window.y1 || 0) * scale + offsetY, 
-            (window.x2 || 0) * scale + offsetX, 
-            (window.y2 || 0) * scale + offsetY
+            (window.x1 || 0) * coordScaleX + offsetX, 
+            (window.y1 || 0) * coordScaleY + offsetY, 
+            (window.x2 || 0) * coordScaleX + offsetX, 
+            (window.y2 || 0) * coordScaleY + offsetY
           ],
           stroke: '#87CEEB',
           strokeWidth: Math.max(5, 3 * scale),
@@ -733,15 +763,16 @@ const KonvaFloorPlan = forwardRef(({
       if (!room) return prevRooms;
       
       const { offsetX, offsetY } = layoutProps;
-      const scale = room.scale || 1; // Fallback for newly created rooms
+      const coordScaleX = room.coordScaleX || room.scale || 1;
+      const coordScaleY = room.coordScaleY || room.scale || 1;
       
       // Apply snap to grid but allow free movement (no boundary constraints for overlapping)
       const snappedX = snapToGridCoordinate(newX);
       const snappedY = snapToGridCoordinate(newY);
 
-      // Convert back to original coordinates for backend
-      const originalX = (snappedX - offsetX) / scale;
-      const originalY = (snappedY - offsetY) / scale;
+      // Convert back to original coordinates for backend (using per-axis scales)
+      const originalX = (snappedX - offsetX) / coordScaleX;
+      const originalY = (snappedY - offsetY) / coordScaleY;
 
       // Send update to parent component with original coordinates (in setTimeout to avoid render issues)
       if (onRoomUpdate) {
@@ -749,8 +780,8 @@ const KonvaFloorPlan = forwardRef(({
           onRoomUpdate(roomId, {
             x: originalX,
             y: originalY,
-            width: room.originalWidth || room.width / scale,
-            height: room.originalHeight || room.height / scale
+            width: room.originalWidth || room.width / coordScaleX,
+            height: room.originalHeight || room.height / coordScaleY
           });
         }, 0);
       }
@@ -779,7 +810,7 @@ const KonvaFloorPlan = forwardRef(({
       
       return prevRooms.map(r => 
         r.id === roomId 
-          ? { ...r, x: finalX, y: finalY, originalX, originalY, scale }
+          ? { ...r, x: finalX, y: finalY, originalX, originalY, coordScaleX, coordScaleY }
           : r
       );
     });
@@ -1125,10 +1156,12 @@ const KonvaFloorPlan = forwardRef(({
     setSelectedDoor(null);
   }, []);
 
-  // Calculate area from room dimensions
-  const calculateRoomArea = useCallback((width, height, scale = 1) => {
-    const actualWidth = width / scale;
-    const actualHeight = height / scale;
+  // Calculate area from room dimensions (supports separate x/y scales)
+  const calculateRoomArea = useCallback((width, height, scaleOrScaleX = 1, scaleY = null) => {
+    const sX = scaleOrScaleX;
+    const sY = scaleY !== null ? scaleY : scaleOrScaleX;
+    const actualWidth = width / sX;
+    const actualHeight = height / sY;
     return actualWidth * actualHeight;
   }, []);
 
@@ -1265,8 +1298,8 @@ const KonvaFloorPlan = forwardRef(({
       r.id === roomId 
         ? { 
             ...r, 
-            width: newWidth * (r.scale || 1), 
-            height: newHeight * (r.scale || 1),
+            width: newWidth * (r.coordScaleX || r.scale || 1), 
+            height: newHeight * (r.coordScaleY || r.scale || 1),
             originalWidth: newWidth,
             originalHeight: newHeight
           }
@@ -1314,7 +1347,7 @@ const KonvaFloorPlan = forwardRef(({
 
     rooms.forEach(room => {
       if (!newPercentages[room.id]) {
-        const roomArea = calculateRoomArea(room.width, room.height, room.scale || 1);
+        const roomArea = calculateRoomArea(room.width, room.height, room.coordScaleX || room.scale || 1, room.coordScaleY || room.scale || 1);
         const percentage = calculateAreaPercentage(roomArea);
         newPercentages[room.id] = percentage;
         hasChanges = true;
@@ -1700,15 +1733,16 @@ const KonvaFloorPlan = forwardRef(({
       const room = prevRooms.find(r => r.id === roomId);
       if (!room) return prevRooms;
 
-      // Use scale fallback for newly created rooms
-      const scale = room.scale || 1;
+      // Use per-axis scale factors for correct coordinate conversion
+      const cScaleX = room.coordScaleX || room.scale || 1;
+      const cScaleY = room.coordScaleY || room.scale || 1;
       const { offsetX, offsetY } = layoutProps;
 
       // Convert back to original coordinates for backend
-      const originalWidth = room.width / scale;
-      const originalHeight = room.height / scale;
-      const originalX = (room.x - offsetX) / scale;
-      const originalY = (room.y - offsetY) / scale;
+      const originalWidth = room.width / cScaleX;
+      const originalHeight = room.height / cScaleY;
+      const originalX = (room.x - offsetX) / cScaleX;
+      const originalY = (room.y - offsetY) / cScaleY;
 
       // Notify parent component with original coordinates (in setTimeout to avoid render issues)
       if (onRoomUpdate) {
@@ -2184,50 +2218,48 @@ const KonvaFloorPlan = forwardRef(({
             </>
           )}
 
-          {/* Plot boundary - always visible */}
-          <Rect
-            x={2}
-            y={2}
-            width={width - 4}
-            height={height - 4}
-            fill="transparent"
-            stroke="#000000"
-            strokeWidth={3}
-          />
+          {/* Plot boundary - always visible, positioned outside boundary walls */}
+          {floorPlanData ? (() => {
+            // Use actual plot boundaries from layoutProps for rectangular plot
+            const { offsetX, offsetY, scaledWidth, scaledHeight } = layoutProps;
+            const wallThickness = 10; // Same as boundary wall thickness
+            
+            return (
+              <Rect
+                x={offsetX - wallThickness / 2}
+                y={offsetY - wallThickness / 2}
+                width={scaledWidth + wallThickness}
+                height={scaledHeight + wallThickness}
+                fill="transparent"
+                stroke="#000000"
+                strokeWidth={3}
+              />
+            );
+          })() : (
+            /* Fallback to canvas dimensions if no floor plan data */
+            <Rect
+              x={2}
+              y={2}
+              width={width - 4}
+              height={height - 4}
+              fill="transparent"
+              stroke="#000000"
+              strokeWidth={3}
+            />
+          )}
 
           {/* Allocated buildable area - blue bordered indicator */}
           {showAllocatedArea && floorPlanData && (() => {
-            // Calculate actual boundary based on room positions
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            
-            if (rooms && rooms.length > 0) {
-              rooms.forEach(room => {
-                if (room && typeof room.x === 'number' && typeof room.y === 'number' && 
-                    typeof room.width === 'number' && typeof room.height === 'number') {
-                  minX = Math.min(minX, room.x);
-                  minY = Math.min(minY, room.y);
-                  maxX = Math.max(maxX, room.x + room.width);
-                  maxY = Math.max(maxY, room.y + room.height);
-                }
-              });
-            }
-            
-            if (minX === Infinity) {
-              const { offsetX, offsetY, scaledWidth, scaledHeight } = layoutProps;
-              minX = offsetX;
-              minY = offsetY;
-              maxX = offsetX + scaledWidth;
-              maxY = offsetY + scaledHeight;
-            }
-            
+            // Use actual plot boundaries from layoutProps - represents the buildable area
+            const { offsetX, offsetY, scaledWidth, scaledHeight } = layoutProps;
             const padding = 10;
             
             return (
               <Rect
-                x={minX - padding}
-                y={minY - padding}
-                width={(maxX - minX) + (padding * 2)}
-                height={(maxY - minY) + (padding * 2)}
+                x={offsetX - padding}
+                y={offsetY - padding}
+                width={scaledWidth + (padding * 2)}
+                height={scaledHeight + (padding * 2)}
                 fill="rgba(33, 150, 243, 0.05)"
                 stroke="#2196F3"
                 strokeWidth={2}
@@ -2239,46 +2271,24 @@ const KonvaFloorPlan = forwardRef(({
 
           {/* Boundary Wall - thick grey walls around the plot */}
           {floorPlanData && (() => {
-            // Calculate actual boundary based on room positions
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            // Use actual plot boundaries from layoutProps - not room positions
+            const { offsetX, offsetY, scaledWidth, scaledHeight } = layoutProps;
             
-            // Calculate bounds from actual room positions
-            if (rooms && rooms.length > 0) {
-              rooms.forEach(room => {
-                if (room && typeof room.x === 'number' && typeof room.y === 'number' && 
-                    typeof room.width === 'number' && typeof room.height === 'number') {
-                  minX = Math.min(minX, room.x);
-                  minY = Math.min(minY, room.y);
-                  maxX = Math.max(maxX, room.x + room.width);
-                  maxY = Math.max(maxY, room.y + room.height);
-                }
-              });
-            }
-            
-            // If no valid rooms, use layout props as fallback
-            if (minX === Infinity) {
-              const { offsetX, offsetY, scaledWidth, scaledHeight } = layoutProps;
-              minX = offsetX;
-              minY = offsetY;
-              maxX = offsetX + scaledWidth;
-              maxY = offsetY + scaledHeight;
-            }
+            // Fixed plot boundary dimensions
+            const plotX = offsetX;
+            const plotY = offsetY;
+            const plotWidth = scaledWidth;
+            const plotHeight = scaledHeight;
             
             const wallThickness = 10;
-            const padding = 5;
-            
-            const bx = minX - padding;
-            const by = minY - padding;
-            const bw = (maxX - minX) + (padding * 2);
-            const bh = (maxY - minY) + (padding * 2);
             
             return (
               <>
                 {/* Top boundary wall */}
                 <Rect
-                  x={bx - wallThickness / 2}
-                  y={by - wallThickness / 2}
-                  width={bw + wallThickness}
+                  x={plotX - wallThickness / 2}
+                  y={plotY - wallThickness / 2}
+                  width={plotWidth + wallThickness}
                   height={wallThickness}
                   fill="#808080"
                   stroke="#000000"
@@ -2287,9 +2297,9 @@ const KonvaFloorPlan = forwardRef(({
                 />
                 {/* Bottom boundary wall */}
                 <Rect
-                  x={bx - wallThickness / 2}
-                  y={by + bh - wallThickness / 2}
-                  width={bw + wallThickness}
+                  x={plotX - wallThickness / 2}
+                  y={plotY + plotHeight - wallThickness / 2}
+                  width={plotWidth + wallThickness}
                   height={wallThickness}
                   fill="#808080"
                   stroke="#000000"
@@ -2298,10 +2308,10 @@ const KonvaFloorPlan = forwardRef(({
                 />
                 {/* Left boundary wall */}
                 <Rect
-                  x={bx - wallThickness / 2}
-                  y={by - wallThickness / 2}
+                  x={plotX - wallThickness / 2}
+                  y={plotY - wallThickness / 2}
                   width={wallThickness}
-                  height={bh + wallThickness}
+                  height={plotHeight + wallThickness}
                   fill="#808080"
                   stroke="#000000"
                   strokeWidth={0.5}
@@ -2309,15 +2319,117 @@ const KonvaFloorPlan = forwardRef(({
                 />
                 {/* Right boundary wall */}
                 <Rect
-                  x={bx + bw - wallThickness / 2}
-                  y={by - wallThickness / 2}
+                  x={plotX + plotWidth - wallThickness / 2}
+                  y={plotY - wallThickness / 2}
                   width={wallThickness}
-                  height={bh + wallThickness}
+                  height={plotHeight + wallThickness}
                   fill="#808080"
                   stroke="#000000"
                   strokeWidth={0.5}
                   listening={false}
                 />
+              </>
+            );
+          })()}
+
+          {/* Setback zone overlay — inner buildable boundary + dimension labels */}
+          {setbacks && floorPlanData && (() => {
+            const { offsetX, offsetY, scaledWidth, scaledHeight, scaleToFit } = layoutProps;
+
+            // Convert setback feet → canvas pixels
+            const frontPx = (parseFloat(setbacks.front) || 0) * scaleToFit;
+            const rearPx  = (parseFloat(setbacks.rear)  || 0) * scaleToFit;
+            const leftPx  = (parseFloat(setbacks.left)  || 0) * scaleToFit;
+            const rightPx = (parseFloat(setbacks.right) || 0) * scaleToFit;
+
+            // Inner buildable area bounds
+            const buildX = offsetX + leftPx;
+            const buildY = offsetY + rearPx;
+            const buildW = scaledWidth  - leftPx - rightPx;
+            const buildH = scaledHeight - frontPx - rearPx;
+
+            const hasAnySetback = frontPx > 2 || rearPx > 2 || leftPx > 2 || rightPx > 2;
+            if (!hasAnySetback || buildW <= 0 || buildH <= 0) return null;
+
+            const labelColor = '#E65100';
+            const fontSize   = Math.max(9, Math.min(12, scaleToFit * 1.8));
+
+            return (
+              <>
+                {/* Inner buildable-area boundary (dashed orange) */}
+                <Rect
+                  x={buildX}
+                  y={buildY}
+                  width={buildW}
+                  height={buildH}
+                  fill="transparent"
+                  stroke="#E65100"
+                  strokeWidth={1.5}
+                  dash={[6, 4]}
+                  listening={false}
+                />
+
+                {/* Rear setback label — top zone, centred */}
+                {rearPx > 8 && (
+                  <Text
+                    x={offsetX}
+                    y={offsetY + rearPx / 2 - fontSize / 2}
+                    width={scaledWidth}
+                    text={`Rear: ${setbacks.rear}ft`}
+                    fontSize={fontSize}
+                    fontFamily="Arial"
+                    fontStyle="bold"
+                    fill={labelColor}
+                    align="center"
+                    listening={false}
+                  />
+                )}
+
+                {/* Front setback label — bottom zone, centred */}
+                {frontPx > 8 && (
+                  <Text
+                    x={offsetX}
+                    y={offsetY + scaledHeight - frontPx / 2 - fontSize / 2}
+                    width={scaledWidth}
+                    text={`Front: ${setbacks.front}ft`}
+                    fontSize={fontSize}
+                    fontFamily="Arial"
+                    fontStyle="bold"
+                    fill={labelColor}
+                    align="center"
+                    listening={false}
+                  />
+                )}
+
+                {/* Left setback label — left zone, rotated -90° */}
+                {leftPx > 8 && (
+                  <Text
+                    x={offsetX + leftPx / 2}
+                    y={offsetY + scaledHeight / 2 + 30}
+                    text={`Left: ${setbacks.left}ft`}
+                    fontSize={fontSize}
+                    fontFamily="Arial"
+                    fontStyle="bold"
+                    fill={labelColor}
+                    rotation={-90}
+                    listening={false}
+                  />
+                )}
+
+                {/* Right setback label — right zone, rotated 90° */}
+                {rightPx > 8 && (
+                  <Text
+                    x={offsetX + scaledWidth - rightPx / 2}
+                    y={offsetY + scaledHeight / 2 - 30}
+                    text={`Right: ${setbacks.right}ft`}
+                    fontSize={fontSize}
+                    fontFamily="Arial"
+                    fontStyle="bold"
+                    fill={labelColor}
+                    rotation={90}
+                    listening={false}
+                  />
+                )}
               </>
             );
           })()}
@@ -2394,7 +2506,7 @@ const KonvaFloorPlan = forwardRef(({
               <Text
                 x={room.x}
                 y={room.y + renderHeight / 2}
-                text={formatAreaText(convertToSquareFeet(renderWidth * renderHeight))}
+                text={formatAreaText(((renderWidth / layoutProps.scaledWidth) * layoutProps.actualLength) * ((renderHeight / layoutProps.scaledHeight) * layoutProps.actualWidth))}
                 fontSize={Math.min(14, Math.max(9, Math.min(renderWidth, renderHeight) / 10))}
                 fontFamily="Arial"
                 fontStyle="bold"
@@ -2406,11 +2518,11 @@ const KonvaFloorPlan = forwardRef(({
                 listening={false}
               />
 
-              {/* Room dimensions - below area */}
+              {/* Room dimensions - below area (internal room dimensions) */}
               <Text
                 x={room.x}
                 y={room.y + renderHeight / 2}
-                text={`${Math.round(renderWidth/25)}'×${Math.round(renderHeight/25)}'`}
+                text={`${Math.round((renderWidth / layoutProps.scaledWidth) * layoutProps.actualLength)}'×${Math.round((renderHeight / layoutProps.scaledHeight) * layoutProps.actualWidth)}'`}
                 fontSize={Math.min(10, Math.max(7, Math.min(renderWidth, renderHeight) / 15))}
                 fontFamily="Arial"
                 fill="#6b7280"
@@ -3154,8 +3266,8 @@ const KonvaFloorPlan = forwardRef(({
                     const roomId = `new-room-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                     const roomCount = rooms.filter(r => r.type && r.type.startsWith(roomType.key)).length + 1;
                     
-                    // Use centered layout props
-                    const { offsetX, offsetY, scale } = layoutProps;
+                    // Use centered layout props with per-axis scales
+                    const { offsetX, offsetY, scale, coordScaleX, coordScaleY } = layoutProps;
                     
                     // Define backend (original) dimensions first
                     const backendWidth = 150;
@@ -3165,10 +3277,10 @@ const KonvaFloorPlan = forwardRef(({
                     
                     const newRoom = {
                       id: roomId,
-                      x: backendX * scale + offsetX,
-                      y: backendY * scale + offsetY,
-                      width: backendWidth * scale,
-                      height: backendHeight * scale,
+                      x: backendX * coordScaleX + offsetX,
+                      y: backendY * coordScaleY + offsetY,
+                      width: backendWidth * coordScaleX,
+                      height: backendHeight * coordScaleY,
                       fill: getRoomColor(roomType.key),
                       stroke: '#333',
                       strokeWidth: 2,
@@ -3180,6 +3292,8 @@ const KonvaFloorPlan = forwardRef(({
                       originalY: backendY,
                       originalWidth: backendWidth,
                       originalHeight: backendHeight,
+                      coordScaleX: coordScaleX,
+                      coordScaleY: coordScaleY,
                       scale: scale
                     };
                     

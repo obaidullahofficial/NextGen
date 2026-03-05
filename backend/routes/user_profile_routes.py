@@ -35,16 +35,27 @@ def get_user_profile():
         if profile:
             # Add email from user table to response (not stored in profile)
             profile['email'] = current_user_email
+            # Add verification status from user table
+            profile['is_verified'] = user.get('is_verified', False)
+            profile['verified'] = user.get('verified', False)
+            profile['email_verified'] = user.get('email_verified', False)
             return jsonify({
                 "success": True,
                 "data": profile,
                 "message": "Profile retrieved successfully"
             }), 200
         else:
+            # No profile exists yet, but return basic user info with verification status
+            basic_profile = {
+                'email': current_user_email,
+                'is_verified': user.get('is_verified', False),
+                'verified': user.get('verified', False), 
+                'email_verified': user.get('email_verified', False)
+            }
             return jsonify({
                 "success": True,
-                "data": None,
-                "message": "Profile not found"
+                "data": basic_profile,
+                "message": "No profile found, but user data available"
             }), 200
     
     except Exception as e:

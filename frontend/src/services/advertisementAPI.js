@@ -126,9 +126,10 @@ class AdvertisementAPI {
   }
 
   // Get active advertisements (public)
-  async getActiveAdvertisements() {
+  async getActiveAdvertisements(limit = 20) {
     try {
-      const response = await fetch(`${API_BASE_URL}/advertisements/active`, {
+      const params = limit ? `?limit=${limit}` : '';
+      const response = await fetch(`${API_BASE_URL}/advertisements/active${params}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });

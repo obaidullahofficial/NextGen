@@ -1051,6 +1051,7 @@ const FloorPlanCustomization = () => {
                     floorPlanData={floorPlanData}
                     className="w-full h-full"
                     isVisible={viewMode === '3d'}
+                    setbacks={location.state?.setbacks || null}
                   />
                 </React.Suspense>
               </div>

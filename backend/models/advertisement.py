@@ -183,7 +183,7 @@ class Advertisement:
         except Exception as e:
             raise Exception(f"Error fetching pending advertisements: {str(e)}")
 
-    def get_active_advertisements(self):
+    def get_active_advertisements(self, limit=None):
         """Get active advertisements for display"""
         try:
             now = datetime.utcnow()
@@ -193,8 +193,12 @@ class Advertisement:
                 "end_date": {"$gte": now}
             }
             
+            cursor = self.collection.find(query).sort("created_at", -1)
+            if limit:
+                cursor = cursor.limit(limit)
+            
             ads = []
-            for ad in self.collection.find(query).sort("created_at", -1):
+            for ad in cursor:
                 ad['_id'] = str(ad['_id'])
                 if 'plan_id' in ad and isinstance(ad['plan_id'], ObjectId):
                     ad['plan_id'] = str(ad['plan_id'])

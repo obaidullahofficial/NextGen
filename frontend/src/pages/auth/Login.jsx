@@ -108,8 +108,8 @@ const Login = () => {
                 // Handle Google auth errors
                 if (result.error?.includes('registration_pending')) {
                     showPopup(
-                        'Registration Pending',
-                        'Your society registration request is still being processed. Please wait for admin approval.',
+                        'Society Registration Pending',
+                        'Your society registration request is still being processed by admin. Please wait for approval to access your dashboard. Regular users are not affected by this.',
                         'warning'
                     );
                 } else if (result.error?.includes('registration_rejected')) {
@@ -422,8 +422,8 @@ const Login = () => {
             // Handle specific error types for society users
             if (error.message?.includes('registration_pending')) {
                 showPopup(
-                    'Registration Pending',
-                    'Your society registration request is still being processed. Please wait for admin approval before you can access your dashboard. You will get access to the portal once approved.',
+                    'Society Registration Pending',
+                    'Your society registration request is still being processed by the administrator. Please wait for approval before you can access your dashboard. You will receive email notification once approved.',
                     'warning'
                 );
             } else if (error.message?.includes('registration_rejected')) {

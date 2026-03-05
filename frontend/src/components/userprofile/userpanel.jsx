@@ -7,24 +7,32 @@ import Activity from './Activity';
 
 //const UserPanel = ({ activeTab, personalInfo, approvalRequests, history }) 
 const UserPanel = ({ activeTab,  approvalRequests,  }) => {
-  switch (activeTab) {
-    case 'personalInfo':
-      return <PersonalInfoForm />;
-    case 'approvalRequests':
-      return <Activity />;
-    case 'progress':
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'personalInfo':
+        return <PersonalInfoForm />;
+      case 'approvalRequests':
+        return <Activity />;
+      case 'progress':
         return <MyProgress />;
-         case 'approvalRequest':
+      case 'approvalRequest':
         return <ApprovalRequestForm />;
-    case 'settings':
-      return (
-        <div className="p-8">
-          <h2 className="text-xl font-bold mb-4">Settings</h2>
-        </div>
-      );
-    default:
-      return <div className="p-8">Select a tab</div>;
-  }
+      case 'settings':
+        return (
+          <div className="p-8">
+            <h2 className="text-xl font-bold mb-4">Settings</h2>
+          </div>
+        );
+      default:
+        return <div className="p-8">Select a tab</div>;
+    }
+  };
+
+  return (
+    <div className="h-full w-full">
+      {renderContent()}
+    </div>
+  );
 };
 
 export default UserPanel;

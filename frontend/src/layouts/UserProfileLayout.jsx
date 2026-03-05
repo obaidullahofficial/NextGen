@@ -22,19 +22,20 @@ const UserProfileLayout = () => {
   const history = { generated: 0, purchased: 0 };
 
   return (
-    <div className="flex flex-col lg:flex-row w-full h-screen overflow-hidden bg-gray-50">
-      <div className="lg:w-64 h-full">
+    <div className="flex w-full h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Sidebar Navigation */}
+      <aside className="w-80 min-w-[280px] h-full overflow-y-auto border-r border-gray-200 bg-white shadow-xl flex-shrink-0">
         <UserProfile activeTab={activeTab} setActiveTab={setActiveTab} />
-      </div>
-      <main className="flex-1 h-full flex flex-col overflow-hidden bg-white w-full lg:w-auto">
-        <div className="flex-1 overflow-auto">
-          <UserPanel
-            activeTab={activeTab}
-            personalInfo={personalInfo}
-            approvalRequests={approvalRequests}
-            history={history}
-          />
-        </div>
+      </aside>
+      
+      {/* Main Content Area */}
+      <main className="flex-1 min-w-0 h-full overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50">
+        <UserPanel
+          activeTab={activeTab}
+          personalInfo={personalInfo}
+          approvalRequests={approvalRequests}
+          history={history}
+        />
       </main>
     </div>
   );

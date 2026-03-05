@@ -165,10 +165,13 @@ const ApprovalRequestForm = () => {
   };
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto">
-      <h2 className="text-3xl font-bold text-gray-800 mb-8 border-b pb-4">
-        Floor Plan Approval Request
-      </h2>
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="w-full space-y-6">
+          <div className="bg-white p-8 rounded-xl shadow-lg">
+            <h2 className="text-3xl font-bold text-gray-800 mb-8 border-b pb-4">
+              Floor Plan Approval Request
+            </h2>
 
       {/* Error Message (success is shown via modal) */}
       {message.text && message.type === 'error' && (
@@ -339,6 +342,9 @@ const ApprovalRequestForm = () => {
           </div>
         </div>
       )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

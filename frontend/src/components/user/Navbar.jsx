@@ -50,7 +50,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="flex items-center justify-between p-4 md:p-6 md:px-8 bg-[#2F3D57] shadow-sm relative">
+    <nav className="flex items-center justify-between p-4 md:p-6 md:px-8 bg-[#2F3D57] shadow-sm relative z-[1000]">
       <div className="flex items-center space-x-3">
         <img src={logo} alt="Logo" className="h-8 w-8 md:h-10 md:w-10" />
         <div className="text-xl md:text-2xl font-bold text-white">NextGenArchitect</div>
@@ -128,7 +128,7 @@ const Navbar = () => {
 
             {/* Dropdown Menu */}
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200">
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-2 z-[9999] border border-gray-200">
                 {/* User Info */}
                 <div className="px-4 py-3 border-b border-gray-200">
                   <p className="text-sm font-semibold text-gray-800">
@@ -214,7 +214,7 @@ const Navbar = () => {
 
       {/* Mobile Navigation Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-[#2F3D57] shadow-lg z-50 border-t border-gray-600">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-[#2F3D57] shadow-lg z-[9999] border-t border-gray-600">
           <div className="flex flex-col p-4 space-y-2">
             <Link 
               to="/" 

@@ -8,8 +8,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [showSessionExpiredPopup, setShowSessionExpiredPopup] = useState(false);
   
-  // Session timeout duration (30 minutes in milliseconds)
-  const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+  // Session timeout duration (2 hours in milliseconds)
+  const SESSION_TIMEOUT = 120 * 60 * 1000; // 2 hours
 
   // Check if session has expired
   const isSessionExpired = () => {
@@ -23,7 +23,10 @@ export const AuthProvider = ({ children }) => {
     const sessionAge = currentTime - parseInt(loginTime);
     const remainingTime = SESSION_TIMEOUT - sessionAge;
     
-    console.log(`Session check: Age=${Math.floor(sessionAge/60000)} mins, Remaining=${Math.floor(remainingTime/60000)} mins, Timeout=${Math.floor(SESSION_TIMEOUT/60000)} mins`);
+    // Only log session checks every 10 minutes or when close to expiring
+    if (sessionAge % (10 * 60 * 1000) < 1000 || remainingTime < 5 * 60 * 1000) {
+      console.log(`Session check: Age=${Math.floor(sessionAge/60000)} mins, Remaining=${Math.floor(remainingTime/60000)} mins, Timeout=${Math.floor(SESSION_TIMEOUT/60000)} mins`);
+    }
     
     return sessionAge > SESSION_TIMEOUT;
   };

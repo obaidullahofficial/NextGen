@@ -162,9 +162,53 @@ const FloorPlanGenerator = () => {
       const height = '1000';
 
       // Calculate total plot area using actual dimensions from compliance for area validation
-      const actualWidth = parseFloat(complianceRules.plot_dimension_x) || 1000;
-      const actualHeight = parseFloat(complianceRules.plot_dimension_y) || 1000;
+      const actualWidth = parseFloat(complianceRules.plot_dimension_x) || parseFloat(plotData?.plot_dimension_x) || 1000;
+      const actualHeight = parseFloat(complianceRules.plot_dimension_y) || parseFloat(plotData?.plot_dimension_y) || 1000;
       const totalPlotArea = actualWidth * actualHeight;
+      
+      // Set plot size and dimensions in UI based on plot data
+      const marlaSize = plotData?.marla_size || complianceRules?.marla_size;
+      if (marlaSize) {
+        // Extract numeric value from marla size (e.g., "5 Marla" -> 5, "1 Kanal" -> 20)
+        const marlaMatch = marlaSize.match(/(\d+)\s*Marla/i);
+        const kanalMatch = marlaSize.match(/(\d+)\s*Kanal/i);
+        
+        let marlaNumber = null;
+        if (marlaMatch) {
+          marlaNumber = parseInt(marlaMatch[1]);
+        } else if (kanalMatch) {
+          marlaNumber = parseInt(kanalMatch[1]) * 20; // 1 Kanal = 20 Marla
+        }
+        
+        // Check against allPlotSizes defined later in the component
+        const plotSizeConfig = {
+          5: { marla: 5, label: '5 Marla', sqFt: 1361.25 },
+          7: { marla: 7, label: '7 Marla', sqFt: 1905.75 },
+          10: { marla: 10, label: '10 Marla', sqFt: 2722.5 },
+          20: { marla: 20, label: '1 Kanal', sqFt: 5445 }
+        };
+        
+        if (marlaNumber && plotSizeConfig[marlaNumber]) {
+          // Plot size exists in available sizes
+          setSelectedPlotSize(marlaNumber);
+          setIsCustomPlot(false);
+          setPlotDimensions({ 
+            length: actualWidth, 
+            width: actualHeight 
+          });
+          console.log('[FloorPlanGenerator] Set plot size to:', marlaNumber, 'Marla with dimensions:', actualWidth, 'x', actualHeight);
+        } else {
+          // Custom plot size
+          setIsCustomPlot(true);
+          setCustomDimensions({ 
+            length: actualWidth, 
+            width: actualHeight 
+          });
+          const marlaEquivalent = (totalPlotArea / 225).toFixed(2);
+          setDimensionError(`Area: ${totalPlotArea.toFixed(0)} sq ft (${marlaEquivalent} Marla)`);
+          console.log('[FloorPlanGenerator] Set custom plot with dimensions:', actualWidth, 'x', actualHeight);
+        }
+      }
       const maxGroundCoverage = parseFloat(complianceRules.max_ground_coverage) || 75;
       const maxAllowedArea = (totalPlotArea * maxGroundCoverage) / 100;
 
@@ -618,27 +662,27 @@ const FloorPlanGenerator = () => {
     }));
   };
 
-  // Plot size configurations (1 marla = 272.25 sq ft = 25.29 sq meters)
+  // Plot size configurations (1 marla = 272.25 sq ft)
   const allPlotSizes = {
-    5: { marla: 5, label: '5 Marla', sqFt: 1361.25, sqMeters: 126.45, commonDimensions: [
-      { length: 25, width: 45 },
-      { length: 30, width: 37.5 },
-      { length: 22.5, width: 50 }
+    5: { marla: 5, label: '5 Marla', sqFt: 1361.25, commonDimensions: [
+      { length: 55, width: 25 },
+      { length: 54, width: 25.2 },
+      { length: 50, width: 27 }
     ]},
-    7: { marla: 7, label: '7 Marla', sqFt: 1905.75, sqMeters: 177.03, commonDimensions: [
-      { length: 35, width: 45 },
-      { length: 30, width: 52.5 },
-      { length: 37.5, width: 42 }
+    7: { marla: 7, label: '7 Marla', sqFt: 1905.75, commonDimensions: [
+      { length: 65, width: 30 },
+      { length: 55, width: 35 },
+      { length: 58, width: 33 }
     ]},
-    10: { marla: 10, label: '10 Marla', sqFt: 2722.5, sqMeters: 252.9, commonDimensions: [
-      { length: 45, width: 50 },
-      { length: 40, width: 56.25 },
-      { length: 37.5, width: 60 }
+    10: { marla: 10, label: '10 Marla', sqFt: 2722.5, commonDimensions: [
+      { length: 78, width: 35 },
+      { length: 68, width: 40 },
+      { length: 60, width: 45 }
     ]},
-    20: { marla: 20, label: '1 Kanal', sqFt: 5445, sqMeters: 505.8, commonDimensions: [
-      { length: 60, width: 75 },
-      { length: 50, width: 90 },
-      { length: 67.5, width: 66.7 }
+    20: { marla: 20, label: '1 Kanal', sqFt: 5445, commonDimensions: [
+      { length: 99, width: 55 },
+      { length: 90, width: 60 },
+      { length: 84, width: 65 }
     ]}
   };
 
@@ -675,28 +719,74 @@ const FloorPlanGenerator = () => {
     const available = Object.keys(plotSizes);
     return available.length > 0 ? parseInt(available[0]) : 10;
   });
-  const [plotDimensions, setPlotDimensions] = useState({ length: 45, width: 50 });
+  const [plotDimensions, setPlotDimensions] = useState({ length: 55, width: 25 });
   const [dimensionError, setDimensionError] = useState('');
+  const [isCustomPlot, setIsCustomPlot] = useState(false);
+  const [customDimensions, setCustomDimensions] = useState({ length: 26, width: 26 }); // 676 sq ft (3.01 Marla)
 
-  // Calculate opposite dimension based on area constraint
-  const calculateOppositeDimension = (knownDimension, value, plotSize) => {
-    const maxArea = plotSizes[plotSize].sqMeters;
-    const oppositeDimension = maxArea / value;
-    return Math.round(oppositeDimension * 10) / 10; // Round to 1 decimal place
-  };
-
-  // Handle dimension changes with area validation
-  const handleDimensionChange = (dimension, value) => {
+  // Custom plot dimension handling with minimum area constraint (3 Marla = 675 sq ft)
+  const handleCustomDimensionChange = (dimension, value) => {
     const numValue = parseFloat(value);
     if (isNaN(numValue) || numValue <= 0) {
       setDimensionError('Please enter a valid positive number');
       return;
     }
 
-    const maxArea = plotSizes[selectedPlotSize].sqMeters;
+    const minArea = 675; // 3 Marla minimum
+    const oppositeDim = dimension === 'length' ? 'width' : 'length';
+    const currentOppositeDimension = dimension === 'length' ? customDimensions.width : customDimensions.length;
+    const proposedArea = numValue * currentOppositeDimension;
+    
+    if (proposedArea >= minArea) {
+      // Area is acceptable, allow the change without auto-adjustment
+      setCustomDimensions({
+        ...customDimensions,
+        [dimension]: numValue
+      });
+      
+      const totalArea = numValue * currentOppositeDimension;
+      const marlaEquivalent = (totalArea / 225).toFixed(2);
+      setDimensionError(`Area: ${totalArea.toFixed(0)} sq ft (${marlaEquivalent} Marla)`);
+    } else {
+      // Area would be too small, auto-calculate opposite dimension to meet minimum
+      const calculatedValue = Math.ceil(minArea / numValue * 10) / 10; // Round up to 1 decimal
+      
+      setCustomDimensions({
+        [dimension]: numValue,
+        [oppositeDim]: calculatedValue
+      });
+      
+      const totalArea = numValue * calculatedValue;
+      const marlaEquivalent = (totalArea / 225).toFixed(2);
+      setDimensionError(`Auto-adjusted ${oppositeDim} to ${calculatedValue}ft to meet minimum 3 Marla (${totalArea.toFixed(0)} sq ft / ${marlaEquivalent} Marla)`);
+    }
+  };
+
+  // Calculate opposite dimension based on area constraint (in sq ft)
+  const calculateOppositeDimension = (knownDimension, value, plotSize) => {
+    const maxArea = plotSizes[plotSize].sqFt;
+    const oppositeDimension = maxArea / value;
+    return Math.round(oppositeDimension * 10) / 10; // Round to 1 decimal place
+  };
+
+  // Handle dimension changes with area validation
+  const handleDimensionChange = (dimension, value) => {
+    if (isCustomPlot) {
+      handleCustomDimensionChange(dimension, value);
+      return;
+    }
+
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue <= 0) {
+      setDimensionError('Please enter a valid positive number');
+      return;
+    }
+
+    const maxArea = plotSizes[selectedPlotSize].sqFt;
+    const currentDimensions = isCustomPlot ? customDimensions : plotDimensions;
     const currentArea = dimension === 'length' 
-      ? numValue * plotDimensions.width 
-      : plotDimensions.length * numValue;
+      ? numValue * currentDimensions.width 
+      : currentDimensions.length * numValue;
 
     if (currentArea > maxArea) {
       // Auto-calculate the opposite dimension to fit within area limit
@@ -709,7 +799,7 @@ const FloorPlanGenerator = () => {
         [oppositeDim]: calculatedValue
       });
       
-      setDimensionError(`Adjusted ${oppositeDim} to ${calculatedValue}m to fit ${selectedPlotSize} marla limit`);
+      setDimensionError(`Adjusted ${oppositeDim} to ${calculatedValue}ft to fit ${selectedPlotSize} marla limit`);
     } else {
       setPlotDimensions({
         ...plotDimensions,
@@ -720,11 +810,18 @@ const FloorPlanGenerator = () => {
   };
 
   // Handle plot size change
-  const handlePlotSizeChange = (marlaSize) => {
-    setSelectedPlotSize(marlaSize);
-    const defaultDimensions = plotSizes[marlaSize].commonDimensions[0];
-    setPlotDimensions(defaultDimensions);
-    setDimensionError('');
+  const handlePlotSizeChange = (value) => {
+    if (value === 'custom') {
+      setIsCustomPlot(true);
+      setDimensionError(`Area: ${customDimensions.length * customDimensions.width} sq ft (${(customDimensions.length * customDimensions.width / 225).toFixed(2)} Marla)`);
+    } else {
+      const marlaSize = parseInt(value);
+      setIsCustomPlot(false);
+      setSelectedPlotSize(marlaSize);
+      const defaultDimensions = plotSizes[marlaSize].commonDimensions[0];
+      setPlotDimensions(defaultDimensions);
+      setDimensionError('');
+    }
   };
 
   // Helper function to create a simplified floor plan preview
@@ -908,7 +1005,7 @@ const FloorPlanGenerator = () => {
         planId: currentPlan.id,
         rooms: currentPlan.rooms,
         constraints: formData.roomConnections,
-        plotDimensions: formData.plotDimensions
+        plotDimensions: { width: 1000, height: 1000 }  // Use coordinate system dimensions
       };
 
       console.log('Sending updates to backend:', updateData);
@@ -955,11 +1052,21 @@ const FloorPlanGenerator = () => {
 
     // Navigate to customization page with floor plan data
     // Pass through isCreatingTemplate flag if we're in template creation mode
+    // Build setbacks from compliance rules if available
+    const cr = location.state?.complianceRules;
+    const setbacks = cr ? {
+      front: parseFloat(cr.front_setback) || 0,
+      rear:  parseFloat(cr.rear_setback)  || 0,
+      left:  parseFloat(cr.side_setback_left)  || 0,
+      right: parseFloat(cr.side_setback_right) || 0
+    } : null;
+
     navigate('/floor-plan/customize', {
       state: {
         floorPlan: currentPlan,
         returnPath: '/floor-plan/generate',
-        isCreatingTemplate: isCreatingTemplate  // Pass through template flag
+        isCreatingTemplate: isCreatingTemplate,
+        setbacks
       }
     });
   };
@@ -1041,10 +1148,10 @@ const FloorPlanGenerator = () => {
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, canvasWidth, canvasHeight);
       
-      // Calculate scaling
+      // Calculate scaling - use 1000x1000 coordinate system (floor plan data uses this)
       const margin = 80;
-      const plotWidth = parseFloat(formData.plotWidth) || 1000;
-      const plotHeight = parseFloat(formData.plotHeight) || 1000;
+      const plotWidth = 1000;
+      const plotHeight = 1000;
       const scaleX = (canvasWidth - 2 * margin) / plotWidth;
       const scaleY = (canvasHeight - 2 * margin) / plotHeight;
       const scale = Math.min(scaleX, scaleY);
@@ -1304,7 +1411,7 @@ const FloorPlanGenerator = () => {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
     }
-  }, [generatedPlans, currentPlanIndex, formData.plotWidth, formData.plotHeight]);
+  }, [generatedPlans, currentPlanIndex]);
 
   const generateFloorPlans = async (useGenAIFlag) => {
     const selectedRooms = getSelectedRooms();
@@ -1320,43 +1427,58 @@ const FloorPlanGenerator = () => {
       // Use user-defined connections or create simple chain connections
       let connects = [];
       
+      // Always create base chain connections between all rooms so every room is connected
+      for (let i = 0; i < roomTags.length - 1; i++) {
+        connects.push({
+          from_tag: roomTags[i],
+          to_tag: roomTags[i + 1]
+        });
+      }
+
+      // Add living room as a central hub if it exists
+      const livingRoomIndex = roomTags.findIndex(tag => tag.startsWith('livingroom'));
+      if (livingRoomIndex !== -1 && roomTags.length > 2) {
+        // Connect living room to other major rooms
+        roomTags.forEach((tag, index) => {
+          if (index !== livingRoomIndex && (tag.startsWith('kitchen') || tag.startsWith('drawingroom'))) {
+            connects.push({
+              from_tag: roomTags[livingRoomIndex],
+              to_tag: tag
+            });
+          }
+        });
+      }
+      
+      // Add compliance/user-defined connections on top of the base chain
+      // (these are additional required connections, e.g. BEDROOM 1 → BATHROOM 1)
       if (formData.roomConnections.length > 0) {
-        // Use user-defined connections
-        connects = formData.roomConnections
+        const complianceConnects = formData.roomConnections
           .filter(conn => conn.from && conn.to && conn.from !== conn.to)
           .map(conn => ({
             from_tag: conn.from,
             to_tag: conn.to
           }));
-      } else {
-        // Fallback to simple chain connections between rooms
-        for (let i = 0; i < roomTags.length - 1; i++) {
-          connects.push({
-            from_tag: roomTags[i],
-            to_tag: roomTags[i + 1]
-          });
-        }
-
-        // Add living room as a central hub if it exists
-        const livingRoomIndex = roomTags.findIndex(tag => tag.startsWith('livingroom'));
-        if (livingRoomIndex !== -1 && roomTags.length > 2) {
-          // Connect living room to other major rooms
-          roomTags.forEach((tag, index) => {
-            if (index !== livingRoomIndex && (tag.startsWith('kitchen') || tag.startsWith('drawingroom'))) {
-              connects.push({
-                from_tag: roomTags[livingRoomIndex],
-                to_tag: tag
-              });
-            }
-          });
-        }
+        
+        // Merge: add compliance connections that don't already exist
+        complianceConnects.forEach(cc => {
+          const alreadyExists = connects.some(
+            c => (c.from_tag === cc.from_tag && c.to_tag === cc.to_tag) ||
+                 (c.from_tag === cc.to_tag && c.to_tag === cc.from_tag)
+          );
+          if (!alreadyExists) {
+            connects.push(cc);
+          }
+        });
       }
 
-      // Safely parse numeric inputs
-      const parsedWidth = parseInt(formData.plotDimensions.width, 10);
-      const parsedHeight = parseInt(formData.plotDimensions.height, 10);
-      const width = Number.isNaN(parsedWidth) ? 1000 : parsedWidth;
-      const height = Number.isNaN(parsedHeight) ? 1000 : parsedHeight;
+      // Parse user-input plot dimensions (for display purposes)
+      const currentDimensions = isCustomPlot ? customDimensions : plotDimensions;
+      const actualPlotLength = parseFloat(currentDimensions.length) || 55;
+      const actualPlotWidth = parseFloat(currentDimensions.width) || 25;
+      
+      // Use 1000x1000 coordinate system for backend generation (GA algorithm expects larger values)
+      const width = 1000;
+      const height = 1000;
 
       // Calculate area percentages for each individual room
       const roomAreaMap = {};
@@ -1395,6 +1517,15 @@ const FloorPlanGenerator = () => {
         }
       });
 
+      // Build setback data from compliance rules if available
+      const complianceRules = location.state?.complianceRules;
+      const setbacks = complianceRules ? {
+        front: parseFloat(complianceRules.front_setback) || 0,
+        rear: parseFloat(complianceRules.rear_setback) || 0,
+        left: parseFloat(complianceRules.side_setback_left) || 0,
+        right: parseFloat(complianceRules.side_setback_right) || 0
+      } : null;
+
       const backendData = {
         width,
         height,
@@ -1419,7 +1550,14 @@ const FloorPlanGenerator = () => {
         // Genetic Algorithm Parameters
         population_size: gaParams.populationSize,
         mutation_rate: gaParams.mutationRate,
-        crossover_rate: gaParams.crossoverRate
+        crossover_rate: gaParams.crossoverRate,
+        // Compliance setbacks and actual dimensions (for proper scaling)
+        ...(setbacks && { setbacks }),
+        ...(complianceRules && {
+          actual_plot_width: parseFloat(complianceRules.plot_dimension_x) || actualPlotLength,
+          actual_plot_height: parseFloat(complianceRules.plot_dimension_y) || actualPlotWidth,
+          max_ground_coverage: parseFloat(complianceRules.max_ground_coverage) || 100
+        })
       };
 
       console.log('Room configuration:', formData.roomConfiguration);
@@ -1496,8 +1634,10 @@ const FloorPlanGenerator = () => {
             fitness: Math.random() * 100, // Placeholder fitness score
             rooms: transformedRooms,
             mapData: plan, // Store original map data for visualization
-            plotWidth: parseFloat(formData.plotWidth) || 1000,
-            plotHeight: parseFloat(formData.plotHeight) || 1000
+            plotWidth: 1000,  // Coordinate system for rendering
+            plotHeight: 1000, // Coordinate system for rendering
+            actualLength: actualPlotLength,  // User's length input (vertical dimension)
+            actualWidth: actualPlotWidth     // User's width input (horizontal dimension)
           };
         });
 
@@ -1614,9 +1754,30 @@ const FloorPlanGenerator = () => {
                             <div className="w-5 h-5 bg-green-500 text-white rounded-full flex items-center justify-center text-xs">✓</div>
                             <span className="font-medium text-green-800 text-sm">Compliance Applied</span>
                           </div>
-                          <p className="text-xs text-green-700">
+                          <p className="text-xs text-green-700 mb-2">
                             {location.state.complianceRules.plot_dimension_x}×{location.state.complianceRules.plot_dimension_y} ft • {location.state.complianceRules.max_ground_coverage}% coverage
                           </p>
+                          {/* Setback Details */}
+                          {(location.state.complianceRules.front_setback > 0 || location.state.complianceRules.rear_setback > 0 || location.state.complianceRules.side_setback_left > 0 || location.state.complianceRules.side_setback_right > 0) && (
+                            <div className="grid grid-cols-4 gap-1.5 mt-1">
+                              <div className="bg-white/80 border border-green-200 rounded px-1.5 py-1 text-center">
+                                <p className="text-[10px] text-green-600 font-medium">Front</p>
+                                <p className="text-xs font-bold text-green-800">{location.state.complianceRules.front_setback}′</p>
+                              </div>
+                              <div className="bg-white/80 border border-green-200 rounded px-1.5 py-1 text-center">
+                                <p className="text-[10px] text-green-600 font-medium">Rear</p>
+                                <p className="text-xs font-bold text-green-800">{location.state.complianceRules.rear_setback}′</p>
+                              </div>
+                              <div className="bg-white/80 border border-green-200 rounded px-1.5 py-1 text-center">
+                                <p className="text-[10px] text-green-600 font-medium">Left</p>
+                                <p className="text-xs font-bold text-green-800">{location.state.complianceRules.side_setback_left}′</p>
+                              </div>
+                              <div className="bg-white/80 border border-green-200 rounded px-1.5 py-1 text-center">
+                                <p className="text-[10px] text-green-600 font-medium">Right</p>
+                                <p className="text-xs font-bold text-green-800">{location.state.complianceRules.side_setback_right}′</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                       
@@ -1633,8 +1794,8 @@ const FloorPlanGenerator = () => {
                           </div>
                         ) : (
                           <select
-                            value={selectedPlotSize}
-                            onChange={(e) => handlePlotSizeChange(parseInt(e.target.value))}
+                            value={isCustomPlot ? 'custom' : selectedPlotSize}
+                            onChange={(e) => handlePlotSizeChange(e.target.value)}
                             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ED7600]/20 focus:border-[#ED7600] transition-all text-sm bg-white"
                           >
                             {Object.entries(plotSizes).map(([marla, info]) => (
@@ -1642,6 +1803,7 @@ const FloorPlanGenerator = () => {
                                 {info.label || `${marla} Marla`} ({info.sqFt.toLocaleString()} sq ft)
                               </option>
                             ))}
+                            <option value="custom">Custom Plot Size (Min 3 Marla)</option>
                           </select>
                         )}
                       </div>
@@ -1651,8 +1813,12 @@ const FloorPlanGenerator = () => {
                         <div className="flex justify-center">
                           <svg width="160" height="100" viewBox="0 0 160 100" className="border border-gray-300 rounded bg-white">
                             <rect x="15" y="15" width="130" height="70" fill="#f0f9ff" stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="4,4"/>
-                            <text x="80" y="45" textAnchor="middle" fontSize="11" fill="#1f2937" fontWeight="bold">{selectedPlotSize} Marla</text>
-                            <text x="80" y="60" textAnchor="middle" fontSize="9" fill="#6b7280">{plotDimensions.length}m × {plotDimensions.width}m</text>
+                            <text x="80" y="45" textAnchor="middle" fontSize="11" fill="#1f2937" fontWeight="bold">
+                              {isCustomPlot ? 'Custom' : `${selectedPlotSize} Marla`}
+                            </text>
+                            <text x="80" y="60" textAnchor="middle" fontSize="9" fill="#6b7280">
+                              {isCustomPlot ? `${customDimensions.length}ft × ${customDimensions.width}ft` : `${plotDimensions.length}ft × ${plotDimensions.width}ft`}
+                            </text>
                           </svg>
                         </div>
                       </div>
@@ -1660,23 +1826,23 @@ const FloorPlanGenerator = () => {
                       {/* Dimension Inputs - Compact Grid */}
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Length (m)</label>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Length - X Axis (ft)</label>
                           <input
                             type="number"
                             step="0.1"
                             min="1"
-                            value={plotDimensions.length}
+                            value={isCustomPlot ? customDimensions.length : plotDimensions.length}
                             onChange={(e) => handleDimensionChange('length', e.target.value)}
                             className="w-full px-2.5 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#ED7600] text-sm"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Width (m)</label>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Width - Y Axis (ft)</label>
                           <input
                             type="number"
                             step="0.1"
                             min="1"
-                            value={plotDimensions.width}
+                            value={isCustomPlot ? customDimensions.width : plotDimensions.width}
                             onChange={(e) => handleDimensionChange('width', e.target.value)}
                             className="w-full px-2.5 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#ED7600] text-sm"
                           />
@@ -2017,6 +2183,16 @@ const FloorPlanGenerator = () => {
                           width={Math.min(800, window.innerWidth - 350)}
                           height={Math.min(500, window.innerHeight - 160)}
                           isEditable={false}
+                          setbacks={(() => {
+                            const cr = location.state?.complianceRules;
+                            if (!cr) return null;
+                            const front = parseFloat(cr.front_setback);
+                            const rear  = parseFloat(cr.rear_setback);
+                            const left  = parseFloat(cr.side_setback_left);
+                            const right = parseFloat(cr.side_setback_right);
+                            if (!front && !rear && !left && !right) return null;
+                            return { front: front || 0, rear: rear || 0, left: left || 0, right: right || 0 };
+                          })()}
                           onPlanUpdate={(updatedPlan) => {
                             setGeneratedPlans(prev => {
                               const newPlans = [...prev];
@@ -2039,8 +2215,10 @@ const FloorPlanGenerator = () => {
                           <span className="text-[9px] text-gray-500 ml-1">fitness</span>
                         </div>
                         <div className="bg-gray-100 rounded px-2 py-1 text-center">
-                          <span className="text-xs font-bold text-green-600">{generatedPlans[currentPlanIndex]?.rooms?.reduce((sum, r) => sum + (r.width * r.height), 0)?.toFixed(0) || 0}</span>
-                          <span className="text-[9px] text-gray-500 ml-1">sq units</span>
+                          <span className="text-xs font-bold text-green-600">
+                            {generatedPlans[currentPlanIndex]?.actualLength || (isCustomPlot ? customDimensions.length : plotDimensions.length)}×{generatedPlans[currentPlanIndex]?.actualWidth || (isCustomPlot ? customDimensions.width : plotDimensions.width)}
+                          </span>
+                          <span className="text-[9px] text-gray-500 ml-1">ft</span>
                         </div>
                       </div>
                     </div>

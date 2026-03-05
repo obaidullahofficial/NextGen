@@ -54,75 +54,79 @@ const UserProfile = ({ activeTab, setActiveTab }) => {
 
       {/* Sidebar */}
       <aside className={`
-        w-full h-screen bg-[#2F3D57] text-white flex flex-col sticky top-0 overflow-y-auto
+        w-full h-screen bg-gradient-to-b from-[#1e293b] to-[#2F3D57] text-white flex flex-col sticky top-0 overflow-y-auto
         fixed lg:sticky left-0 z-40
         transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        shadow-2xl
       `}>
-      <div className="p-6 border-b border-gray-700">
-        <div className="flex items-center space-x-3">
-          <img src={logo} alt="Logo" className="h-8 w-8" />
-          <div className="text-xl font-bold text-white">NextGenArchitect</div>
+      <div className="p-8 border-b border-gray-600">
+        <div className="flex items-center space-x-4">
+          <img src={logo} alt="Logo" className="h-10 w-10 rounded-lg shadow-lg" />
+          <div>
+            <div className="text-xl font-bold text-white">NextGenArchitect</div>
+          </div>
         </div>
-        <div className="text-sm text-gray-300 mt-2">User Profile</div>
       </div>
-      <nav className="flex flex-col mt-6 space-y-1 flex-1">
+      <nav className="flex flex-col mt-8 space-y-2 flex-1 px-4">
         {/* Your navigation buttons */}
         <button
           onClick={() => handleTabClick('personalInfo')}
-          className={`flex items-center px-6 py-3 text-left w-full hover:bg-[#ED7600] hover:text-white transition-colors ${
-            activeTab === 'personalInfo' ? 'bg-[#ED7600] text-white font-semibold' : 'text-gray-300'
+          className={`flex items-center px-6 py-4 text-left w-full rounded-xl mb-2 transition-all duration-200 shadow-md ${
+            activeTab === 'personalInfo' 
+              ? 'bg-gradient-to-r from-[#ED7600] to-[#f59e0b] text-white font-semibold shadow-lg transform scale-105' 
+              : 'text-gray-300 hover:bg-slate-700 hover:text-white hover:shadow-lg'
           }`}
         >
-          <FiUser className="mr-3 text-lg" />
-          Personal Information
+          <FiUser className="mr-4 text-xl" />
+          <span className="font-medium">Personal Information</span>
         </button>
-
-                {/* Activity Button */}
 
         <button
           onClick={() => handleTabClick('approvalRequests')}
-          className={`flex items-center px-6 py-3 text-left w-full hover:bg-[#ED7600] hover:text-white transition-colors ${
-            activeTab === 'approvalRequests' ? 'bg-[#ED7600] text-white font-semibold' : 'text-gray-300'
+          className={`flex items-center px-6 py-4 text-left w-full rounded-xl mb-2 transition-all duration-200 shadow-md ${
+            activeTab === 'approvalRequests' 
+              ? 'bg-gradient-to-r from-[#ED7600] to-[#f59e0b] text-white font-semibold shadow-lg transform scale-105' 
+              : 'text-gray-300 hover:bg-slate-700 hover:text-white hover:shadow-lg'
           }`}
         >
-          <FiCheckSquare className="mr-3 text-lg" />
-          Activity    
+          <FiCheckSquare className="mr-4 text-xl" />
+          <span className="font-medium">Activity</span>
         </button>
-
-               {/*  My Progress Button  */}
                
         <button
           onClick={() => handleTabClick('progress')}
-          className={`flex items-center px-6 py-3 text-left w-full hover:bg-[#ED7600] hover:text-white transition-colors ${
-            activeTab === 'progress' ? 'bg-[#ED7600] text-white font-semibold' : 'text-gray-300'
+          className={`flex items-center px-6 py-4 text-left w-full rounded-xl mb-2 transition-all duration-200 shadow-md ${
+            activeTab === 'progress' 
+              ? 'bg-gradient-to-r from-[#ED7600] to-[#f59e0b] text-white font-semibold shadow-lg transform scale-105' 
+              : 'text-gray-300 hover:bg-slate-700 hover:text-white hover:shadow-lg'
           }`}
         >
-          <FiClipboard className="mr-3 text-lg" />
-          My Progress
+          <FiClipboard className="mr-4 text-xl" />
+          <span className="font-medium">My Progress</span>
         </button>
 
-        {/*  Approval Request Button */}
         <button
-
           onClick={() => handleTabClick('approvalRequest')}
-          className={`flex items-center px-6 py-3 text-left w-full hover:bg-[#ED7600] hover:text-white transition-colors ${
-            activeTab === 'approvalRequest' ? 'bg-[#ED7600] text-white font-semibold' : 'text-gray-300'
+          className={`flex items-center px-6 py-4 text-left w-full rounded-xl mb-2 transition-all duration-200 shadow-md ${
+            activeTab === 'approvalRequest' 
+              ? 'bg-gradient-to-r from-[#ED7600] to-[#f59e0b] text-white font-semibold shadow-lg transform scale-105' 
+              : 'text-gray-300 hover:bg-slate-700 hover:text-white hover:shadow-lg'
           }`}
         >
-          <FiSend className="mr-3 text-lg" />
-          Approval Request
+          <FiSend className="mr-4 text-xl" />
+          <span className="font-medium">Approval Request</span>
         </button>
 
         {/* Bottom-aligned items */}
-        <div className="mt-auto">
-          <div className="border-t border-gray-700"></div>
+        <div className="mt-auto mb-6">
+          <div className="border-t border-gray-600 mb-6 mx-2"></div>
           <button
             onClick={handleLogout}
-            className="flex items-center px-6 py-3 text-left w-full text-gray-300 hover:bg-red-600 hover:text-white transition-colors"
+            className="flex items-center px-6 py-4 text-left w-full rounded-xl transition-all duration-200 text-red-300 hover:bg-gradient-to-r hover:from-red-600 hover:to-red-700 hover:text-white hover:shadow-lg transform hover:scale-105"
           >
-            <FiLogOut className="mr-3 text-lg" />
-            Logout
+            <FiLogOut className="mr-4 text-xl" />
+            <span className="font-medium">Logout</span>
           </button>
         </div>
       </nav>

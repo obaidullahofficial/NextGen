@@ -39,6 +39,11 @@ def generate_floorplan():
         height = int(data.get('height', 1000))
         connects = data.get('connects', [])
         
+        # Extract setback data for compliance-based generation
+        setbacks = data.get('setbacks', None)
+        actual_plot_width = float(data.get('actual_plot_width', 0))
+        actual_plot_height = float(data.get('actual_plot_height', 0))
+        
         # Room proportions (aspect ratios) - matching GA_driver parameter names
         kitchen_p = float(data.get('kitchen_p', 0.7))
         living_p = float(data.get('living_p', 0.8))
@@ -96,6 +101,17 @@ def generate_floorplan():
                 }
             }
             
+            # Add setback information for GenAI to use
+            if setbacks and actual_plot_width > 0 and actual_plot_height > 0:
+                scale_x = width / actual_plot_width
+                scale_y = height / actual_plot_height
+                inputG["setbacks"] = {
+                    'front': float(setbacks.get('front', 0)) * scale_y,
+                    'rear': float(setbacks.get('rear', 0)) * scale_y,
+                    'left': float(setbacks.get('left', 0)) * scale_x,
+                    'right': float(setbacks.get('right', 0)) * scale_x
+                }
+            
             # Request 4-5 floorplans from GenAI
             num_plans = data.get('num_plans', 5)  # Allow user to specify how many
             result = genai_generate_floorplans(inputG, n=num_plans)
@@ -119,6 +135,21 @@ def generate_floorplan():
         # Original GA-based generation
         print("Using Genetic Algorithm for floor plan generation...")
         
+        # Calculate scaled setbacks if compliance setbacks are provided
+        scaled_setbacks = None
+        if setbacks and actual_plot_width > 0 and actual_plot_height > 0:
+            # Scale setbacks from actual feet to the 1000x1000 coordinate system
+            scale_x = width / actual_plot_width
+            scale_y = height / actual_plot_height
+            scaled_setbacks = {
+                'front': float(setbacks.get('front', 0)) * scale_y,
+                'rear': float(setbacks.get('rear', 0)) * scale_y,
+                'left': float(setbacks.get('left', 0)) * scale_x,
+                'right': float(setbacks.get('right', 0)) * scale_x
+            }
+            print(f"[Compliance] Actual setbacks (ft): front={setbacks.get('front')}, rear={setbacks.get('rear')}, left={setbacks.get('left')}, right={setbacks.get('right')}")
+            print(f"[Compliance] Scaled setbacks (px): front={scaled_setbacks['front']:.1f}, rear={scaled_setbacks['rear']:.1f}, left={scaled_setbacks['left']:.1f}, right={scaled_setbacks['right']:.1f}")
+        
         # Call the AI algorithm
         result = GA_driver(
             connects=connects,
@@ -137,7 +168,8 @@ def generate_floorplan():
             car_per=car_per,
             bath_per=bath_per,
             bed_per=bed_per,
-            gar_per=gar_per
+            gar_per=gar_per,
+            setbacks=scaled_setbacks
         )
         
         if 'error' in result:

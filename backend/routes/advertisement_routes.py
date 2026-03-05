@@ -183,7 +183,8 @@ def reject_advertisement(ad_id):
 def get_active_advertisements():
     """Get active advertisements for public display"""
     try:
-        result = AdvertisementController.get_active_advertisements()
+        limit = request.args.get('limit', type=int, default=None)
+        result = AdvertisementController.get_active_advertisements(limit)
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
