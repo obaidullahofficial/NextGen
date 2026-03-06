@@ -8,6 +8,7 @@ pip install python-dotenv
 pip install numpy
 pip install stripe
 pip install requests
+pip install --upgrade werkzeug
 <<<<<<< HEAD
 pip install google-genai
 =======

@@ -165,6 +165,17 @@ const FloorPlanGenerator = () => {
     loadImportedPlan();
   }, [location.state]);
 
+  // Restore state when returning from the customization page
+  useEffect(() => {
+    const returnedPlans = location.state?.returnedPlans;
+    const returnedIndex = location.state?.returnedPlanIndex;
+    if (returnedPlans && returnedPlans.length > 0) {
+      setGeneratedPlans(returnedPlans);
+      setCurrentPlanIndex(returnedIndex ?? 0);
+      setCurrentStep(3);
+    }
+  }, [location.state]);
+
   // Apply compliance rules if coming from plot detail
   useEffect(() => {
     const plotData = location.state?.plotData;
@@ -1082,6 +1093,8 @@ const FloorPlanGenerator = () => {
     navigate('/floor-plan/customize', {
       state: {
         floorPlan: currentPlan,
+        allPlans: generatedPlans,         // pass all plans so customization can return them
+        currentPlanIndex: currentPlanIndex, // pass index so we restore the right slot
         returnPath: '/floor-plan/generate',
         isCreatingTemplate: isCreatingTemplate,
         setbacks

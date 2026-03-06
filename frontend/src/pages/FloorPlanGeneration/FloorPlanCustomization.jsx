@@ -828,7 +828,28 @@ const FloorPlanCustomization = () => {
       );
       if (!confirm) return;
     }
-    navigate('/floor-plan/generate');
+
+    // Rebuild the allPlans array with the edited plan substituted in
+    const allPlans   = location.state?.allPlans || [];
+    const planIndex  = location.state?.currentPlanIndex ?? 0;
+    let returnedPlans = allPlans.length > 0 ? [...allPlans] : [];
+    if (floorPlanData) {
+      if (returnedPlans.length > planIndex) {
+        returnedPlans[planIndex] = floorPlanData;
+      } else {
+        returnedPlans = [floorPlanData];
+      }
+    }
+
+    navigate('/floor-plan/generate', {
+      state: {
+        // Restore generator state
+        returnedPlans,
+        returnedPlanIndex: planIndex,
+        // Preserve original navigation state so compliance rules etc. still work
+        ...location.state
+      }
+    });
   };
 
   // Export floor plan
