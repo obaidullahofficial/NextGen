@@ -10,6 +10,7 @@ const KonvaFloorPlan = forwardRef(({
   onWallsChange,
   onDoorsChange,
   onWindowsChange,
+  onStairsChange,
   isEditable = false,
   showWalls = true,
   showAllocatedArea = true,
@@ -19,10 +20,12 @@ const KonvaFloorPlan = forwardRef(({
   const [walls, setWalls] = useState([]);
   const [doors, setDoors] = useState([]);
   const [windows, setWindows] = useState([]);
+  const [stairs, setStairs] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedDoor, setSelectedDoor] = useState(null);
   const [selectedWall, setSelectedWall] = useState(null);
   const [selectedWindow, setSelectedWindow] = useState(null);
+  const [selectedStairs, setSelectedStairs] = useState(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragType, setDragType] = useState(null); // 'room', 'door', 'wall'
@@ -44,6 +47,7 @@ const KonvaFloorPlan = forwardRef(({
   const [roomTypeDistribution, setRoomTypeDistribution] = useState({}); // Room type -> total percentage
   const stageRef = useRef();
   const [resizingRoom, setResizingRoom] = useState(null); // Track which room is being resized
+  const [resizingStairs, setResizingStairs] = useState(null); // Track which stairs is being resized
   const [resizeHandle, setResizeHandle] = useState(null); // Track which handle is being used
   const resizeThrottleRef = useRef(null); // Throttle resize updates
   const isUserInteracting = useRef(false); // Flag to prevent updates during user interaction
@@ -75,6 +79,8 @@ const KonvaFloorPlan = forwardRef(({
     const actualLength = floorPlanData?.actualLength || 55;
     const actualWidth = floorPlanData?.actualWidth || 25;
     
+    console.log('📐 layoutProps calculation:', { plotWidth, plotHeight, actualLength, actualWidth, canvasWidth: width, canvasHeight: height });
+    
     // Available canvas area after margins
     const availableWidth = width - minMargin * 2;
     const availableHeight = height - minMargin * 2;
@@ -91,6 +97,8 @@ const KonvaFloorPlan = forwardRef(({
     // Converts 0-1000 backend coordinates to proportionally correct pixels
     const coordScaleX = scaledWidth / plotWidth;
     const coordScaleY = scaledHeight / plotHeight;
+    
+    console.log('📐 Calculated scales:', { coordScaleX, coordScaleY, scaledWidth, scaledHeight });
     
     // General scale factor for stroke widths and other non-directional sizes
     const scale = Math.min(coordScaleX, coordScaleY);
@@ -342,10 +350,17 @@ const KonvaFloorPlan = forwardRef(({
         onWindowsChange(updatedWindows);
       }
       setSelectedWindow(null);
+    } else if (type === 'stairs') {
+      const updatedStairs = stairs.filter(s => s.id !== id);
+      setStairs(updatedStairs);
+      if (onStairsChange) {
+        onStairsChange(updatedStairs);
+      }
+      setSelectedStairs(null);
     }
     
     setContextMenu({ visible: false, x: 0, y: 0, type: null, id: null });
-  }, [contextMenu, doors, walls, windows, rooms, roomPercentages, onDoorsChange, onWallsChange, onWindowsChange, onRoomsChange]);
+  }, [contextMenu, doors, walls, windows, rooms, stairs, roomPercentages, onDoorsChange, onWallsChange, onWindowsChange, onRoomsChange]);
 
   // Close context menu on outside click
   useEffect(() => {
@@ -391,6 +406,13 @@ const KonvaFloorPlan = forwardRef(({
             onWindowsChange(updatedWindows);
           }
           setSelectedWindow(null);
+        } else if (selectedStairs) {
+          const updatedStairs = stairs.filter(s => s.id !== selectedStairs);
+          setStairs(updatedStairs);
+          if (onStairsChange) {
+            onStairsChange(updatedStairs);
+          }
+          setSelectedStairs(null);
         }
       }
       
@@ -400,12 +422,13 @@ const KonvaFloorPlan = forwardRef(({
         setSelectedDoor(null);
         setSelectedWall(null);
         setSelectedWindow(null);
+        setSelectedStairs(null);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isEditable, selectedRoom, selectedDoor, selectedWall, selectedWindow, rooms, doors, walls, windows]);
+  }, [isEditable, selectedRoom, selectedDoor, selectedWall, selectedWindow, selectedStairs, rooms, doors, walls, windows, stairs]);
 
   // Convert backend data to Konva-friendly format
   useEffect(() => {
@@ -418,28 +441,42 @@ const KonvaFloorPlan = forwardRef(({
       // Use centered layout props with separate x/y coordinate scales
       const { offsetX, offsetY, scale, coordScaleX, coordScaleY } = layoutProps;
       
+      console.log('🔧 KonvaFloorPlan: Converting backend data to Konva coordinates');
+      console.log('   Layout props:', { offsetX, offsetY, coordScaleX, coordScaleY });
+      
       // Convert rooms data with proportional scaling (different for x and y)
-      const roomsData = (floorPlanData.rooms || []).map((room, index) => ({
-        id: room.id || `room-${index}`,
-        x: (room.x || 0) * coordScaleX + offsetX,
-        y: (room.y || 0) * coordScaleY + offsetY,
-        width: (room.width || 100) * coordScaleX,
-        height: (room.height || 100) * coordScaleY,
-        fill: getRoomColor(room.type || room.tag),
-        stroke: '#333',
-        strokeWidth: 2,
-        draggable: isEditable,
-        type: room.type || room.tag || 'Room',
-        tag: room.tag || `room-${index}`,
-        name: getRoomName(room.type || room.tag),
-        originalX: room.x || 0,
-        originalY: room.y || 0,
-        originalWidth: room.width || 100,
-        originalHeight: room.height || 100,
-        coordScaleX: coordScaleX,
-        coordScaleY: coordScaleY,
-        scale: scale
-      }));
+      const roomsData = (floorPlanData.rooms || []).map((room, index) => {
+        const konvaRoom = {
+          id: room.id || `room-${index}`,
+          x: (room.x || 0) * coordScaleX + offsetX,
+          y: (room.y || 0) * coordScaleY + offsetY,
+          width: (room.width || 100) * coordScaleX,
+          height: (room.height || 100) * coordScaleY,
+          fill: getRoomColor(room.type || room.tag),
+          stroke: '#333',
+          strokeWidth: 2,
+          draggable: isEditable,
+          type: room.type || room.tag || 'Room',
+          tag: room.tag || `room-${index}`,
+          name: getRoomName(room.type || room.tag),
+          originalX: room.x || 0,
+          originalY: room.y || 0,
+          originalWidth: room.width || 100,
+          originalHeight: room.height || 100,
+          coordScaleX: coordScaleX,
+          coordScaleY: coordScaleY,
+          scale: scale
+        };
+        
+        if (index === 0) {
+          console.log(`   Sample room conversion:`, {
+            backend: { x: room.x, y: room.y, width: room.width, height: room.height },
+            konva: { x: konvaRoom.x, y: konvaRoom.y, width: konvaRoom.width, height: konvaRoom.height }
+          });
+        }
+        
+        return konvaRoom;
+      });
 
       // Convert walls data with proportional scaling
       const wallsData = (floorPlanData.mapData || [])
@@ -644,6 +681,54 @@ const KonvaFloorPlan = forwardRef(({
         // Combine: windows from floorPlanData (excluding manual ones) + manual windows
         return [...floorPlanOnlyWindows, ...manualWindows];
       });
+
+      // Convert stairs data with proper scaling
+      let stairsData = [];
+      
+      console.log('🪜 KonvaFloorPlan: Loading stairs from backend data');
+      
+      // Check mapData for stairs
+      if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData)) {
+        const mapStairs = floorPlanData.mapData
+          .filter(item => item.type === 'Stairs' || item.type === 'stairs')
+          .map((stair, index) => {
+            const konvaStair = {
+              id: stair.id || `stairs-${index}`,
+              x: (stair.x || 0) * coordScaleX + offsetX,
+              y: (stair.y || 0) * coordScaleY + offsetY,
+              width: (stair.width || 80) * coordScaleX,
+              height: (stair.height || 120) * coordScaleY,
+              direction: stair.direction || 'up'
+            };
+            
+            console.log(`   Stairs ${stair.id}:`, {
+              backend: { x: stair.x, y: stair.y, width: stair.width, height: stair.height },
+              konva: { x: konvaStair.x, y: konvaStair.y, width: konvaStair.width, height: konvaStair.height }
+            });
+            
+            return konvaStair;
+          });
+        stairsData = [...stairsData, ...mapStairs];
+        console.log(`   Found ${mapStairs.length} stairs in mapData`);
+      }
+      
+      // Check direct stairs array (for backward compatibility)
+      if (floorPlanData.stairs && Array.isArray(floorPlanData.stairs)) {
+        const directStairs = floorPlanData.stairs.map((stair, index) => ({
+          id: stair.id || `direct-stairs-${index}`,
+          x: (stair.x || 0) * coordScaleX + offsetX,
+          y: (stair.y || 0) * coordScaleY + offsetY,
+          width: (stair.width || 80) * coordScaleX,
+          height: (stair.height || 120) * coordScaleY,
+          direction: stair.direction || 'up'
+        }));
+        stairsData = [...stairsData, ...directStairs];
+        console.log(`   Found ${directStairs.length} stairs in direct stairs array`);
+      }
+
+      // Set stairs directly - no merging needed since floorPlanData is the source of truth
+      console.log(`   Total stairs loaded: ${stairsData.length}`);
+      setStairs(stairsData);
     }
   }, [floorPlanData, isEditable, layoutProps]);
 
@@ -1150,19 +1235,26 @@ const KonvaFloorPlan = forwardRef(({
   }, [doors, doorColor, doorWidth, onDoorsChange]);
 
   // Add new wall
-  const addNewWall = useCallback(() => {
-    const newWall = {
-      id: `new-wall-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      points: [300, 300, 400, 300], // Default horizontal wall
-      stroke: '#000000',
-      strokeWidth: 4,
-      lineCap: 'round'
+  const addStairs = useCallback(() => {
+    const newStairs = {
+      id: `new-stairs-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      x: 300,
+      y: 300,
+      width: 80,
+      height: 120,
+      direction: 'up' // 'up' or 'down'
     };
-    setWalls(prev => [...prev, newWall]);
-    setSelectedWall(newWall.id);
+    const updatedStairs = [...stairs, newStairs];
+    setStairs(updatedStairs);
+    if (onStairsChange) {
+      onStairsChange(updatedStairs);
+    }
+    setSelectedStairs(newStairs.id);
     setSelectedRoom(null);
     setSelectedDoor(null);
-  }, []);
+    setSelectedWall(null);
+    setSelectedWindow(null);
+  }, [stairs, onStairsChange]);
 
   // Calculate area from room dimensions (supports separate x/y scales)
   const calculateRoomArea = useCallback((width, height, scaleOrScaleX = 1, scaleY = null) => {
@@ -1661,77 +1753,126 @@ const KonvaFloorPlan = forwardRef(({
       }
     }
     
-    // Handle resizing with throttling
-    if (!resizingRoom || !resizeHandle) return;
-    
-    // Throttle to only update every 16ms (60fps)
-    if (resizeThrottleRef.current) {
-      return;
+    // Handle room resizing with throttling
+    if (resizingRoom && resizeHandle) {
+      // Throttle to only update every 16ms (60fps)
+      if (resizeThrottleRef.current) {
+        return;
+      }
+      
+      resizeThrottleRef.current = setTimeout(() => {
+        resizeThrottleRef.current = null;
+      }, 16);
+      
+      const stage = e.target.getStage();
+      const pointerPos = stage.getPointerPosition();
+      if (!pointerPos) return;
+
+      const room = rooms.find(r => r.id === resizingRoom);
+      if (!room) return;
+
+      let newX = room.x;
+      let newY = room.y;
+      let newWidth = room.width;
+      let newHeight = room.height;
+
+      // Handle all resize directions
+      switch (resizeHandle) {
+        case 'br': // Bottom-right
+          newWidth = pointerPos.x - room.x;
+          newHeight = pointerPos.y - room.y;
+          break;
+        case 'r': // Right
+          newWidth = pointerPos.x - room.x;
+          break;
+        case 'b': // Bottom
+          newHeight = pointerPos.y - room.y;
+          break;
+        case 't': // Top
+          newHeight = room.height + (room.y - pointerPos.y);
+          newY = pointerPos.y;
+          break;
+        case 'l': // Left
+          newWidth = room.width + (room.x - pointerPos.x);
+          newX = pointerPos.x;
+          break;
+        case 'tl': // Top-left
+          newWidth = room.width + (room.x - pointerPos.x);
+          newHeight = room.height + (room.y - pointerPos.y);
+          newX = pointerPos.x;
+          newY = pointerPos.y;
+          break;
+        case 'tr': // Top-right
+          newWidth = pointerPos.x - room.x;
+          newHeight = room.height + (room.y - pointerPos.y);
+          newY = pointerPos.y;
+          break;
+        case 'bl': // Bottom-left
+          newWidth = room.width + (room.x - pointerPos.x);
+          newHeight = pointerPos.y - room.y;
+          newX = pointerPos.x;
+          break;
+        default:
+          break;
+      }
+
+      // Use the position-aware resize function for edges that change position
+      if (['t', 'l', 'tl', 'tr', 'bl'].includes(resizeHandle)) {
+        handleResizeWithPosition(resizingRoom, newX, newY, newWidth, newHeight);
+      } else {
+        handleResize(resizingRoom, newWidth, newHeight);
+      }
     }
     
-    resizeThrottleRef.current = setTimeout(() => {
-      resizeThrottleRef.current = null;
-    }, 16);
-    
-    const stage = e.target.getStage();
-    const pointerPos = stage.getPointerPosition();
-    if (!pointerPos) return;
+    // Handle stairs resizing with throttling
+    if (resizingStairs && resizeHandle) {
+      // Throttle to only update every 16ms (60fps)
+      if (resizeThrottleRef.current) {
+        return;
+      }
+      
+      resizeThrottleRef.current = setTimeout(() => {
+        resizeThrottleRef.current = null;
+      }, 16);
+      
+      const stage = e.target.getStage();
+      const pointerPos = stage.getPointerPosition();
+      if (!pointerPos) return;
 
-    const room = rooms.find(r => r.id === resizingRoom);
-    if (!room) return;
+      const stair = stairs.find(s => s.id === resizingStairs);
+      if (!stair) return;
 
-    let newX = room.x;
-    let newY = room.y;
-    let newWidth = room.width;
-    let newHeight = room.height;
+      let newWidth = stair.width;
+      let newHeight = stair.height;
 
-    // Handle all resize directions
-    switch (resizeHandle) {
-      case 'br': // Bottom-right
-        newWidth = pointerPos.x - room.x;
-        newHeight = pointerPos.y - room.y;
-        break;
-      case 'r': // Right
-        newWidth = pointerPos.x - room.x;
-        break;
-      case 'b': // Bottom
-        newHeight = pointerPos.y - room.y;
-        break;
-      case 't': // Top
-        newHeight = room.height + (room.y - pointerPos.y);
-        newY = pointerPos.y;
-        break;
-      case 'l': // Left
-        newWidth = room.width + (room.x - pointerPos.x);
-        newX = pointerPos.x;
-        break;
-      case 'tl': // Top-left
-        newWidth = room.width + (room.x - pointerPos.x);
-        newHeight = room.height + (room.y - pointerPos.y);
-        newX = pointerPos.x;
-        newY = pointerPos.y;
-        break;
-      case 'tr': // Top-right
-        newWidth = pointerPos.x - room.x;
-        newHeight = room.height + (room.y - pointerPos.y);
-        newY = pointerPos.y;
-        break;
-      case 'bl': // Bottom-left
-        newWidth = room.width + (room.x - pointerPos.x);
-        newHeight = pointerPos.y - room.y;
-        newX = pointerPos.x;
-        break;
-      default:
-        break;
+      // Handle resize directions (bottom-right corner only for simplicity)
+      switch (resizeHandle) {
+        case 'br': // Bottom-right
+          newWidth = Math.max(40, pointerPos.x - stair.x);
+          newHeight = Math.max(60, pointerPos.y - stair.y);
+          break;
+        case 'r': // Right
+          newWidth = Math.max(40, pointerPos.x - stair.x);
+          break;
+        case 'b': // Bottom
+          newHeight = Math.max(60, pointerPos.y - stair.y);
+          break;
+        default:
+          break;
+      }
+
+      // Update stairs dimensions
+      const updatedStairs = stairs.map(s =>
+        s.id === resizingStairs
+          ? { ...s, width: newWidth, height: newHeight }
+          : s
+      );
+      setStairs(updatedStairs);
+      if (onStairsChange) {
+        onStairsChange(updatedStairs);
+      }
     }
-
-    // Use the position-aware resize function for edges that change position
-    if (['t', 'l', 'tl', 'tr', 'bl'].includes(resizeHandle)) {
-      handleResizeWithPosition(resizingRoom, newX, newY, newWidth, newHeight);
-    } else {
-      handleResize(resizingRoom, newWidth, newHeight);
-    }
-  }, [isEditable, isCreating, newElementStart, resizingRoom, resizeHandle, rooms, handleResize, handleResizeWithPosition]);
+  }, [isEditable, isCreating, newElementStart, resizingRoom, resizingStairs, resizeHandle, rooms, stairs, handleResize, handleResizeWithPosition]);
 
   // Handle room resize end - notify parent after resize is complete
   const handleResizeEnd = useCallback((roomId) => {
@@ -1786,7 +1927,11 @@ const KonvaFloorPlan = forwardRef(({
       setResizeHandle(null);
       isUserInteracting.current = false; // Clear flag after resize ends
     }
-  }, [resizingRoom, handleResizeEnd]);
+    if (resizingStairs) {
+      setResizingStairs(null);
+      setResizeHandle(null);
+    }
+  }, [resizingRoom, resizingStairs, handleResizeEnd]);
 
   // Handle room selection
   const handleRoomClick = useCallback((e, roomId) => {
@@ -2000,13 +2145,13 @@ const KonvaFloorPlan = forwardRef(({
                 🚪 Add Door
               </button>
               
-              {/* Quick Add Wall */}
+              {/* Quick Add Stairs */}
               <button
-                onClick={addNewWall}
-                className="w-full px-2 py-1.5 text-xs rounded border bg-slate-50 border-slate-300 text-slate-800 hover:bg-slate-100 transition-colors"
-                title="Add wall at center"
+                onClick={addStairs}
+                className="w-full px-2 py-1.5 text-xs rounded border bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors"
+                title="Add stairs at center"
               >
-                🧱 Add Wall
+                🪜 Add Stairs
               </button>
               
               {/* Quick Add Window */}
@@ -2880,6 +3025,173 @@ const KonvaFloorPlan = forwardRef(({
                       }
                     }}
                     style={{ cursor: 'pointer' }}
+                  />
+                </>
+              )}
+            </Group>
+          ))}
+
+          {/* Stairs - render on top of walls */}
+          {stairs.map(stair => (
+            <Group key={stair.id}>
+              {/* Stairs rectangle background */}
+              <Rect
+                x={stair.x}
+                y={stair.y}
+                width={stair.width}
+                height={stair.height}
+                fill="#f59e0b"
+                stroke={selectedStairs === stair.id ? '#2196F3' : '#d97706'}
+                strokeWidth={selectedStairs === stair.id ? 3 : 2}
+                draggable={isEditable && !resizingStairs}
+                onDragStart={(e) => {
+                  if (resizingStairs) {
+                    e.target.stopDrag();
+                  }
+                }}
+                onDragEnd={(e) => {
+                  const updatedStairs = stairs.map(s => 
+                    s.id === stair.id 
+                      ? { ...s, x: e.target.x(), y: e.target.y() }
+                      : s
+                  );
+                  setStairs(updatedStairs);
+                  if (onStairsChange) {
+                    onStairsChange(updatedStairs);
+                  }
+                }}
+                onClick={(e) => {
+                  e.cancelBubble = true;
+                  setSelectedStairs(stair.id);
+                  setSelectedRoom(null);
+                  setSelectedDoor(null);
+                  setSelectedWall(null);
+                  setSelectedWindow(null);
+                }}
+                onContextMenu={(e) => handleContextMenu(e, 'stairs', stair.id)}
+                style={{ cursor: isEditable ? 'move' : 'default' }}
+              />
+              {/* Stair steps lines */}
+              {Array.from({ length: 8 }, (_, i) => (
+                <Line
+                  key={`step-${i}`}
+                  points={[
+                    stair.x,
+                    stair.y + (i + 1) * (stair.height / 9),
+                    stair.x + stair.width,
+                    stair.y + (i + 1) * (stair.height / 9)
+                  ]}
+                  stroke="#92400e"
+                  strokeWidth={1.5}
+                  listening={false}
+                />
+              ))}
+              {/* Direction arrow */}
+              <Text
+                x={stair.x}
+                y={stair.y + stair.height / 2 - 10}
+                text={stair.direction === 'up' ? '↑' : '↓'}
+                fontSize={24}
+                fill="#78350f"
+                align="center"
+                verticalAlign="middle"
+                width={stair.width}
+                listening={false}
+              />
+              {/* Stairs label */}
+              <Text
+                x={stair.x}
+                y={stair.y + stair.height / 2 + 12}
+                text="STAIRS"
+                fontSize={10}
+                fontFamily="Arial"
+                fontStyle="bold"
+                fill="#78350f"
+                align="center"
+                verticalAlign="middle"
+                width={stair.width}
+                listening={false}
+              />
+              
+              {/* Resize handles for selected stairs */}
+              {selectedStairs === stair.id && isEditable && (
+                <>
+                  {/* Bottom-right corner handle */}
+                  <Rect
+                    x={stair.x + stair.width - 4}
+                    y={stair.y + stair.height - 4}
+                    width={8}
+                    height={8}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={1}
+                    onMouseDown={(e) => {
+                      e.cancelBubble = true;
+                      setResizingStairs(stair.id);
+                      setResizeHandle('br');
+                    }}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = 'nwse-resize';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!resizingStairs) {
+                        const container = e.target.getStage().container();
+                        container.style.cursor = 'default';
+                      }
+                    }}
+                  />
+                  
+                  {/* Right edge handle */}
+                  <Rect
+                    x={stair.x + stair.width - 4}
+                    y={stair.y + stair.height / 2 - 4}
+                    width={8}
+                    height={8}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={1}
+                    onMouseDown={(e) => {
+                      e.cancelBubble = true;
+                      setResizingStairs(stair.id);
+                      setResizeHandle('r');
+                    }}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = 'ew-resize';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!resizingStairs) {
+                        const container = e.target.getStage().container();
+                        container.style.cursor = 'default';
+                      }
+                    }}
+                  />
+                  
+                  {/* Bottom edge handle */}
+                  <Rect
+                    x={stair.x + stair.width / 2 - 4}
+                    y={stair.y + stair.height - 4}
+                    width={8}
+                    height={8}
+                    fill="#2196F3"
+                    stroke="#1976D2"
+                    strokeWidth={1}
+                    onMouseDown={(e) => {
+                      e.cancelBubble = true;
+                      setResizingStairs(stair.id);
+                      setResizeHandle('b');
+                    }}
+                    onMouseEnter={(e) => {
+                      const container = e.target.getStage().container();
+                      container.style.cursor = 'ns-resize';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!resizingStairs) {
+                        const container = e.target.getStage().container();
+                        container.style.cursor = 'default';
+                      }
+                    }}
                   />
                 </>
               )}

@@ -535,6 +535,14 @@ def update_floorplan():
         if 'room_data' in data:
             update_data['room_data'] = data['room_data']
             print(f"📊 Updating room_data with {len(data['room_data'])} rooms")
+        if 'constraints' in data:
+            update_data['constraints'] = data['constraints']
+        if 'width' in data or 'height' in data or 'dimensions' in data:
+            update_data['dimensions'] = data.get('dimensions', {
+                'width': data.get('width', 1000),
+                'height': data.get('height', 1000)
+            })
+            print(f"📐 Updating dimensions: {update_data['dimensions']}")
         
         # Update in database
         db = get_db()

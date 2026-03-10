@@ -380,6 +380,89 @@ const Door3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 2.4
   );
 });
 
+// Stairs Component for 3D visualization
+const Stairs3D = memo(({ position, width = 2, depth = 3, direction = 'up' }) => {
+  const numSteps = 12; // Number of steps
+  const stepHeight = 2.8 / numSteps; // Height to reach standard ceiling
+  const stepDepth = depth / numSteps;
+  const stepWidth = width;
+  
+  // Memoized materials
+  const materials = useMemo(() => ({
+    steps: { color: '#A9A9A9', roughness: 0.8 }, // Gray color matching 2D view
+    railing: { color: '#696969', roughness: 0.6, metalness: 0.3 }
+  }), []);
+  
+  return (
+    <group position={position}>
+      {/* Render individual steps */}
+      {Array.from({ length: numSteps }).map((_, index) => {
+        const stepY = index * stepHeight;
+        const stepZ = direction === 'up' 
+          ? (index * stepDepth) - (depth / 2) + (stepDepth / 2)
+          : -(index * stepDepth) + (depth / 2) - (stepDepth / 2);
+        
+        return (
+          <group key={index}>
+            {/* Step tread (horizontal part) */}
+            <mesh 
+              position={[0, stepY + stepHeight / 2, stepZ]} 
+              castShadow 
+              receiveShadow
+            >
+              <boxGeometry args={[stepWidth, stepHeight, stepDepth]} />
+              <meshStandardMaterial {...materials.steps} />
+            </mesh>
+            
+            {/* Step edge for visual detail */}
+            <mesh 
+              position={[0, stepY + stepHeight, stepZ + stepDepth / 2 + 0.005]} 
+              castShadow
+            >
+              <boxGeometry args={[stepWidth, 0.02, 0.01]} />
+              <meshStandardMaterial color="#808080" roughness={0.7} />
+            </mesh>
+          </group>
+        );
+      })}
+      
+      {/* Railings on both sides */}
+      {[-stepWidth / 2 - 0.05, stepWidth / 2 + 0.05].map((xPos, idx) => (
+        <group key={idx}>
+          {/* Railing posts */}
+          {[0, numSteps - 1].map((stepIdx) => {
+            const postY = stepIdx * stepHeight;
+            const postZ = direction === 'up'
+              ? (stepIdx * stepDepth) - (depth / 2) + (stepDepth / 2)
+              : -(stepIdx * stepDepth) + (depth / 2) - (stepDepth / 2);
+            
+            return (
+              <mesh
+                key={stepIdx}
+                position={[xPos, postY + stepHeight / 2, postZ]}
+                castShadow
+              >
+                <cylinderGeometry args={[0.03, 0.03, 2.8 - postY]} />
+                <meshStandardMaterial {...materials.railing} />
+              </mesh>
+            );
+          })}
+          
+          {/* Top railing */}
+          <mesh
+            position={[xPos, 2.5, 0]}
+            rotation={[0, 0, direction === 'up' ? -Math.atan2(2.8, depth) : Math.atan2(2.8, depth)]}
+            castShadow
+          >
+            <cylinderGeometry args={[0.025, 0.025, Math.sqrt(depth * depth + 2.8 * 2.8)]} />
+            <meshStandardMaterial {...materials.railing} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+});
+
 // Window Component with FIXED positioning - no longer floating above walls
 // Enhanced Window3D component with anti-flickering and proper sizing
 const Window3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 1.0, roomType = 'default', customColors }) => {
@@ -1229,6 +1312,7 @@ const analyzeFloorPlanData = (data) => {
   let walls = [];
   let doors = [];
   let windows = [];
+  let stairs = [];
   
   // First, check for direct rooms array (from 2D editor) - prioritize this
   if (data && data.rooms && Array.isArray(data.rooms) && data.rooms.length > 0) {
@@ -1385,6 +1469,20 @@ const analyzeFloorPlanData = (data) => {
           });
           console.log('ðŸªŸ Found window (rect format):', windows[windows.length - 1]);
         }
+      }
+      // Extract stairs data
+      else if (item.type === 'Stairs' || item.type === 'stairs') {
+        // Stairs are always in rectangle format
+        stairs.push({
+          id: item.id || `stairs-${stairs.length}`,
+          x: parseFloat(item.x || 0),
+          y: parseFloat(item.y || 0),
+          width: parseFloat(item.width || 100),
+          height: parseFloat(item.height || 150),
+          direction: item.direction || 'up', // Direction of stairs (up/down)
+          type: 'stairs'
+        });
+        console.log('ðŸª„ Found stairs:', stairs[stairs.length - 1]);
       }
       // Handle rooms without explicit type (legacy format) - only if no direct rooms
       else if (!item.type && item.x !== undefined && item.width !== undefined && rooms.length === 0) {
@@ -1610,7 +1708,7 @@ const analyzeFloorPlanData = (data) => {
   console.log('âœ… Final analysis:', { rooms: rooms.length, walls: walls.length, doors: doors.length });
   console.log('ðŸ  Room details:', rooms);
   console.log('ðŸ§± Wall details:', walls);
-  return { rooms, walls, doors, windows };
+  return { rooms, walls, doors, windows, stairs };
 };
 
 // Intelligent coordinate conversion with proper scaling - FIXED for accurate positioning
@@ -2626,10 +2724,11 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
     const result = analyzeFloorPlanData(floorPlanData);
     console.log('ðŸŽ¯ Analysis result - rooms for 3D:', result.rooms.length, result.rooms.map(r => ({ id: r.id, name: r.name, source: r.source })));
     console.log('ðŸªŸ Analysis result - windows for 3D:', result.windows?.length || 0);
+    console.log('ðŸª„ Analysis result - stairs for 3D:', result.stairs?.length || 0);
     return result;
   }, [floorPlanData]);
   
-  const { rooms, walls, doors, windows } = analysisData;
+  const { rooms, walls, doors, windows, stairs } = analysisData;
   
   // Notify parent component about analyzed rooms so ColorCustomizer uses same IDs
   useEffect(() => {
@@ -3055,6 +3154,29 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
             customColors={colors}
           />
         ))}
+      </group>
+      
+      {/* Render stairs - elevated on foundation */}
+      <group position={[0, foundationHeight, 0]}>
+        {stairs && stairs.map((stair) => {
+          const stairWorld = convertToWorld3D(stair.x, stair.y, stair.width, stair.height, bounds);
+          // Center the stairs in 3D space (2D x,y is top-left, but 3D position is center)
+          const position = [
+            stairWorld.x + stairWorld.width / 2,
+            0,
+            stairWorld.z + stairWorld.height / 2
+          ];
+          
+          return (
+            <Stairs3D
+              key={stair.id}
+              position={position}
+              width={stairWorld.width}
+              depth={stairWorld.height}
+              direction={stair.direction || 'up'}
+            />
+          );
+        })}
       </group>
       
       <Lighting3D sunSettings={sunSettings} />

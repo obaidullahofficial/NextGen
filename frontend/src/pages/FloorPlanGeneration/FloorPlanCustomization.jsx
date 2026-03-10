@@ -53,8 +53,54 @@ const FloorPlanCustomization = () => {
           setFloorPlanData(floorPlan);
           setIsFirstSave(true); // This is a new floorplan
         } else {
-          console.log('✅ Floor plan already has ID:', floorPlan._id || floorPlan.id);
-          setFloorPlanData(floorPlan);
+          console.log('✅ Loading existing floor plan with ID:', floorPlan._id || floorPlan.id);
+          
+          // CRITICAL FIX: Flatten floor_plan_data to top level
+          // The backend stores dimensions inside floor_plan_data, but KonvaFloorPlan expects them at top level
+          const normalizedData = {
+            ...floorPlan,
+            // Extract from floor_plan_data if it exists
+            plotWidth: floorPlan.plotWidth || floorPlan.floor_plan_data?.plotWidth || 1000,
+            plotHeight: floorPlan.plotHeight || floorPlan.floor_plan_data?.plotHeight || 1000,
+            actualLength: floorPlan.actualLength || floorPlan.floor_plan_data?.actualLength || 55,
+            actualWidth: floorPlan.actualWidth || floorPlan.floor_plan_data?.actualWidth || 25,
+            rooms: floorPlan.rooms || floorPlan.floor_plan_data?.rooms || floorPlan.room_data || [],
+            mapData: floorPlan.mapData || floorPlan.floor_plan_data?.mapData || [],
+            walls: floorPlan.walls || floorPlan.floor_plan_data?.walls || [],
+            doors: floorPlan.doors || floorPlan.floor_plan_data?.doors || [],
+            windows: floorPlan.windows || floorPlan.floor_plan_data?.windows || []
+          };
+          
+          console.log('📊 Floor plan dimensions:', {
+            plotWidth: normalizedData.plotWidth,
+            plotHeight: normalizedData.plotHeight,
+            actualLength: normalizedData.actualLength,
+            actualWidth: normalizedData.actualWidth
+          });
+          
+          // CRITICAL VALIDATION: Check if dimension values are reasonable
+          if (!normalizedData.plotWidth || !normalizedData.plotHeight) {
+            console.warn('⚠️ WARNING: plotWidth or plotHeight missing! Using defaults.');
+          }
+          if (!normalizedData.actualLength || !normalizedData.actualWidth) {
+            console.warn('⚠️ WARNING: actualLength or actualWidth missing! Using defaults.');
+          }
+          
+          console.log('🏠 Rooms count:', normalizedData.rooms?.length || 0);
+          console.log('📦 MapData items:', normalizedData.mapData?.length || 0);
+          
+          if (normalizedData.rooms && normalizedData.rooms.length > 0) {
+            console.log('🏠 First room data (backend coords):', normalizedData.rooms[0]);
+          }
+          
+          const stairsInMapData = (normalizedData.mapData || []).filter(item => 
+            item.type === 'Stairs' || item.type === 'stairs'
+          );
+          if (stairsInMapData.length > 0) {
+            console.log('🪜 Stairs loaded from database:', stairsInMapData);
+          }
+          
+          setFloorPlanData(normalizedData);
           setIsFirstSave(false); // This is an existing floorplan
         }
         
@@ -71,17 +117,25 @@ const FloorPlanCustomization = () => {
     initializeFloorPlan();
   }, [location.state, navigate]);
 
-  // Handle room updates
+  // Handle room updates (called during drag/resize with BACKEND coordinates)
   const handleRoomUpdate = useCallback((roomId, newProperties) => {
+    console.log(`🔄 handleRoomUpdate for ${roomId}:`, newProperties);
+    
     setFloorPlanData(prevData => {
       if (!prevData) return prevData;
       
       const updatedData = { ...prevData };
-      updatedData.rooms = updatedData.rooms.map(room => 
-        room.id === roomId || `room-${room.id}` === roomId || room.tag === roomId
-          ? { ...room, ...newProperties }
-          : room
-      );
+      updatedData.rooms = updatedData.rooms.map(room => {
+        if (room.id === roomId || `room-${room.id}` === roomId || room.tag === roomId) {
+          const updated = { ...room, ...newProperties };
+          console.log(`   Updated room ${roomId} in floorPlanData:`, {
+            old: { x: room.x, y: room.y, w: room.width, h: room.height },
+            new: { x: updated.x, y: updated.y, w: updated.width, h: updated.height }
+          });
+          return updated;
+        }
+        return room;
+      });
       
       return updatedData;
     });
@@ -119,39 +173,39 @@ const FloorPlanCustomization = () => {
 
   // Handle rooms change (add/remove)
   const handleRoomsChange = useCallback((updatedRooms) => {
+    console.log('🏠 handleRoomsChange called with', updatedRooms.length, 'rooms');
+    
     setFloorPlanData(prevData => {
       if (!prevData) return prevData;
       
       const { offsetX, offsetY, coordScaleX, coordScaleY } = getLayoutProps(prevData);
       
-      // Convert Konva rooms back to backend format
+      console.log('🔧 Coordinate conversion factors:', { offsetX, offsetY, coordScaleX, coordScaleY });
+      
+      // Convert ALL Konva rooms back to backend format
+      // IMPORTANT: Always convert current x/y/width/height back to backend coords
+      // because they are in Konva canvas coordinates after any drag/resize operation
       const backendRooms = updatedRooms.map(room => {
-        // For newly created rooms, convert Konva coordinates back to backend coordinates
-        if (room.id && (room.id.toString().startsWith('new-room-') || room.id.toString().startsWith('created-room-'))) {
-          return {
-            id: room.id,
-            x: (room.x - offsetX) / coordScaleX,
-            y: (room.y - offsetY) / coordScaleY,
-            width: room.width / coordScaleX,
-            height: room.height / coordScaleY,
-            type: room.type,
-            tag: room.tag,
-            name: room.name
-          };
-        }
-        
-        // For existing rooms from backend, use original coordinates
-        return {
+        const backendRoom = {
           id: room.id,
-          x: room.originalX !== undefined ? room.originalX : room.x,
-          y: room.originalY !== undefined ? room.originalY : room.y,
-          width: room.originalWidth !== undefined ? room.originalWidth : room.width,
-          height: room.originalHeight !== undefined ? room.originalHeight : room.height,
+          x: (room.x - offsetX) / coordScaleX,
+          y: (room.y - offsetY) / coordScaleY,
+          width: room.width / coordScaleX,
+          height: room.height / coordScaleY,
           type: room.type,
           tag: room.tag,
           name: room.name
         };
+        
+        console.log(`  Room ${room.id}:`, {
+          konva: { x: room.x, y: room.y, width: room.width, height: room.height },
+          backend: { x: backendRoom.x, y: backendRoom.y, width: backendRoom.width, height: backendRoom.height }
+        });
+        
+        return backendRoom;
       });
+      
+      console.log('✅ Converted all rooms to backend coordinates');
       
       return {
         ...prevData,
@@ -264,6 +318,63 @@ const FloorPlanCustomization = () => {
           ...nonWindowMapData,
           ...backendWindows
         ]
+      };
+    });
+    
+    setHasUnsavedChanges(true);
+  }, [getLayoutProps]);
+
+  // Handle stairs changes from Konva editor
+  const handleStairsChange = useCallback((updatedStairs) => {
+    console.log('🪜 handleStairsChange called with', updatedStairs.length, 'stairs');
+    console.log('   Raw Konva stairs:', updatedStairs.map(s => ({ id: s.id, x: s.x, y: s.y, w: s.width, h: s.height })));
+    
+    setFloorPlanData(prevData => {
+      if (!prevData) return prevData;
+      
+      const { offsetX, offsetY, coordScaleX, coordScaleY } = getLayoutProps(prevData);
+      
+      // Convert ALL Konva stairs to backend format using correct per-axis scales
+      const backendStairs = updatedStairs.map(stair => {
+        const converted = {
+          type: 'Stairs',
+          id: stair.id,
+          x: (stair.x - offsetX) / coordScaleX,
+          y: (stair.y - offsetY) / coordScaleY,
+          width: stair.width / coordScaleX,
+          height: stair.height / coordScaleY,
+          direction: stair.direction || 'up'
+        };
+        
+        console.log(`   Converting ${stair.id}:`, {
+          konva: { x: stair.x, y: stair.y, w: stair.width, h: stair.height },
+          backend: { x: converted.x.toFixed(1), y: converted.y.toFixed(1), w: converted.width.toFixed(1), h: converted.height.toFixed(1) }
+        });
+        
+        return converted;
+      });
+      
+      console.log('🪜 Converted stairs to backend format:', backendStairs);
+      
+      // Keep only non-stairs items from mapData
+      const nonStairsMapData = (prevData.mapData || []).filter(item => 
+        item.type !== 'Stairs' && item.type !== 'stairs'
+      );
+      
+      const newMapData = [
+        ...nonStairsMapData,
+        ...backendStairs
+      ];
+      
+      console.log('📦 Updated mapData:', {
+        total: newMapData.length,
+        stairs: backendStairs.length,
+        other: nonStairsMapData.length
+      });
+      
+      return {
+        ...prevData,
+        mapData: newMapData
       };
     });
     
@@ -658,6 +769,63 @@ const FloorPlanCustomization = () => {
         ctx.fill();
       });
       
+      // Draw stairs - check multiple data sources
+      let stairsData = [];
+      
+      // Method 1: Check mapData for stairs
+      if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData)) {
+        const mapStairs = floorPlanData.mapData.filter(item => 
+          item.type === 'Stairs' || item.type === 'stairs'
+        );
+        stairsData = [...stairsData, ...mapStairs];
+      }
+      
+      // Method 2: Check direct stairs array (floorPlanData.stairs)
+      if (floorPlanData.stairs && Array.isArray(floorPlanData.stairs)) {
+        stairsData = [...stairsData, ...floorPlanData.stairs];
+      }
+      
+      // Draw stairs
+      stairsData.forEach(stair => {
+        const stairX = sx(stair.x || 0);
+        const stairY = sy(stair.y || 0);
+        const stairWidth = (stair.width || 80) * scale;
+        const stairHeight = (stair.height || 120) * scale;
+        
+        // Draw stairs background rectangle (light gray fill)
+        ctx.fillStyle = '#D3D3D3';
+        ctx.fillRect(stairX, stairY, stairWidth, stairHeight);
+        
+        // Draw stairs border
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(stairX, stairY, stairWidth, stairHeight);
+        
+        // Draw stair steps (horizontal lines)
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        const numSteps = 8;
+        for (let i = 1; i <= numSteps; i++) {
+          const stepY = stairY + (i * stairHeight / (numSteps + 1));
+          ctx.beginPath();
+          ctx.moveTo(stairX, stepY);
+          ctx.lineTo(stairX + stairWidth, stepY);
+          ctx.stroke();
+        }
+        
+        // Draw direction arrow
+        const arrowText = stair.direction === 'down' ? '↓' : '↑';
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(arrowText, stairX + stairWidth / 2, stairY + stairHeight / 2 - 10);
+        
+        // Draw STAIRS label
+        ctx.font = 'bold 10px Arial';
+        ctx.fillText('STAIRS', stairX + stairWidth / 2, stairY + stairHeight / 2 + 10);
+      });
+      
       // Convert to grayscale (ensure pure black and white)
       const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
       const data = imageData.data;
@@ -741,19 +909,80 @@ const FloorPlanCustomization = () => {
           mapData: floorPlanData.mapData || [],
           walls: floorPlanData.walls || [],
           doors: floorPlanData.doors || [],
-          plotDimensions: floorPlanData.plotDimensions || { width: 1000, height: 1000 }
+          windows: floorPlanData.windows || [],
+          plotDimensions: floorPlanData.plotDimensions || { width: 1000, height: 1000 },
+          plotWidth: floorPlanData.plotWidth || 1000,
+          plotHeight: floorPlanData.plotHeight || 1000,
+          actualLength: floorPlanData.actualLength || 55,
+          actualWidth: floorPlanData.actualWidth || 25,
+          totalPlotArea: floorPlanData.totalPlotArea,
+          allocatedArea: floorPlanData.allocatedArea,
+          utilizationPercentage: floorPlanData.utilizationPercentage,
         },
-        room_data: floorPlanData.rooms || floorPlanData.room_data || [], // Include room data for room count
+        room_data: floorPlanData.rooms || floorPlanData.room_data || [],
         constraints: floorPlanData.constraints || {},
-        dimensions: floorPlanData.dimensions || floorPlanData.plotDimensions || { width: 1000, height: 1000 }
+        dimensions: floorPlanData.dimensions || floorPlanData.plotDimensions || { width: 1000, height: 1000 },
+        width: floorPlanData.plotWidth || floorPlanData.dimensions?.width || 1000,
+        height: floorPlanData.plotHeight || floorPlanData.dimensions?.height || 1000
       };
+      
+      // DEBUG: Log what coordinates are actually being saved
+      console.log('💾 Rooms data being saved (should be backend coords 0-1000):');
+      (floorPlanData.rooms || []).forEach((room, index) => {
+        if (index < 3) { // Log first 3 rooms
+          console.log(`   ${room.name || room.type}: x=${room.x?.toFixed(1)}, y=${room.y?.toFixed(1)}, w=${room.width?.toFixed(1)}, h=${room.height?.toFixed(1)}`);
+          
+          // VALIDATION: Check if coordinates look like Konva coords (> 1000)
+          if (room.x > 1500 || room.y > 1500 || room.width > 1500 || room.height > 1500) {
+            console.error(`   ❌ ERROR: Room ${room.name || room.type} has KONVA coordinates, not backend coordinates!`);
+            console.error(`      This will cause double-conversion on reload.`);
+          }
+        }
+      });
+      
+      const stairsBeingSaved = (floorPlanData.mapData || []).filter(item => item.type === 'Stairs' || item.type === 'stairs');
+      console.log(`💾 Stairs data being saved: ${stairsBeingSaved.length} stairs`);
+      stairsBeingSaved.forEach((stair, index) => {
+        console.log(`   Stairs ${stair.id}: x=${stair.x?.toFixed(1)}, y=${stair.y?.toFixed(1)}, w=${stair.width?.toFixed(1)}, h=${stair.height?.toFixed(1)}`);
+        
+        // VALIDATION: Check if coordinates look like Konva coords
+        if (stair.x > 1500 || stair.y > 1500 || stair.width > 1500 || stair.height > 1500) {
+          console.error(`   ❌ ERROR: Stairs ${stair.id} has KONVA coordinates, not backend coordinates!`);
+        }
+      });
 
       console.log('💾 Preparing to save floor plan:', {
         isFirstSave,
         hasId: !!floorPlanData._id,
         roomCount: saveData.room_data?.length || 0,
+        mapDataCount: saveData.floor_plan_data?.mapData?.length || 0,
+        stairsCount: saveData.floor_plan_data?.mapData?.filter(item => item.type === 'Stairs' || item.type === 'stairs').length || 0,
+        doorsCount: saveData.floor_plan_data?.mapData?.filter(item => item.type === 'Door').length || 0,
+        windowsCount: saveData.floor_plan_data?.mapData?.filter(item => item.type === 'Window').length || 0,
+        plotWidth: saveData.floor_plan_data?.plotWidth,
+        plotHeight: saveData.floor_plan_data?.plotHeight,
+        actualLength: saveData.floor_plan_data?.actualLength,
+        actualWidth: saveData.floor_plan_data?.actualWidth,
         projectName: finalName
       });
+      
+      // CRITICAL VALIDATION: Ensure we're not losing dimension data
+      if (!saveData.floor_plan_data.plotWidth || !saveData.floor_plan_data.plotHeight) {
+        console.error('❌ ERROR: plotWidth or plotHeight is missing from save data!');
+      }
+      if (!saveData.floor_plan_data.actualLength || !saveData.floor_plan_data.actualWidth) {
+        console.error('❌ ERROR: actualLength or actualWidth is missing from save data!');
+      }
+      
+      // Debug: Log stairs data specifically
+      const stairsInMapData = saveData.floor_plan_data?.mapData?.filter(item => 
+        item.type === 'Stairs' || item.type === 'stairs'
+      );
+      if (stairsInMapData && stairsInMapData.length > 0) {
+        console.log('🪜 Stairs being saved:', stairsInMapData);
+      } else {
+        console.warn('⚠️ No stairs found in mapData to save');
+      }
 
       // Determine API endpoint based on whether this is first save or update
       const apiEndpoint = (floorPlanData._id && !isFirstSave) ? '/api/floorplan/update' : '/api/floorplan/save';
@@ -1022,6 +1251,7 @@ const FloorPlanCustomization = () => {
                   onWallsChange={handleWallsChange}
                   onDoorsChange={handleDoorsChange}
                   onWindowsChange={handleWindowsChange}
+                  onStairsChange={handleStairsChange}
                 />
               </div>
               {/* 3D View - kept mounted to avoid WebGL shader recompilation errors */}
