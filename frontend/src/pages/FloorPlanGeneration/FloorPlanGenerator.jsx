@@ -1289,6 +1289,10 @@ const FloorPlanGenerator = () => {
       
       // Draw rooms (walls as rectangles)
       if (floorPlanData.rooms && Array.isArray(floorPlanData.rooms)) {
+        // Get actual plot dimensions for accurate conversion
+        const actualLength = floorPlanData.actualLength || plotWidth;
+        const actualWidth = floorPlanData.actualWidth || plotHeight;
+        
         floorPlanData.rooms.forEach(room => {
           const x = sx(room.x || 0);
           const y = sy(room.y || 0);
@@ -1311,10 +1315,26 @@ const FloorPlanGenerator = () => {
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           const label = room.name || room.type || 'Room';
-          const dimensions = `${Math.round(room.width)}' x ${Math.round(room.height)}'`;
-          ctx.fillText(label, x + w / 2, y + h / 2 - 8);
-          ctx.font = '10px Arial';
-          ctx.fillText(dimensions, x + w / 2, y + h / 2 + 8);
+          
+          // Convert to actual feet using plot dimensions (matching KonvaFloorPlan)
+          const roomWidthBackend = room.width || 0;
+          const roomHeightBackend = room.height || 0;
+          const widthInFeet = Math.round((roomWidthBackend / plotWidth) * actualLength);
+          const heightInFeet = Math.round((roomHeightBackend / plotHeight) * actualWidth);
+          const areaInSqFt = widthInFeet * heightInFeet;
+          
+          const dimensions = `${widthInFeet}' x ${heightInFeet}'`;
+          const areaText = `${areaInSqFt} sq ft`;
+          
+          // Draw room name
+          ctx.fillText(label, x + w / 2, y + h / 2 - 14);
+          // Draw area (matching Konva blue color in grayscale will be dark gray)
+          ctx.font = 'bold 10px Arial';
+          ctx.fillText(areaText, x + w / 2, y + h / 2);
+          // Draw dimensions
+          ctx.font = '9px Arial';
+          ctx.fillStyle = '#555555';
+          ctx.fillText(dimensions, x + w / 2, y + h / 2 + 12);
         });
       }
       

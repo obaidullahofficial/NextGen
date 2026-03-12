@@ -384,8 +384,11 @@ const Door3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 2.4
 const Stairs3D = memo(({ position, width = 2, depth = 3, direction = 'up' }) => {
   const numSteps = 12; // Number of steps
   const stepHeight = 2.8 / numSteps; // Height to reach standard ceiling
-  const stepDepth = depth / numSteps;
-  const stepWidth = width;
+  
+  // Determine if stairs are vertical (up/down) or horizontal (left/right)
+  const isVertical = direction === 'up' || direction === 'down';
+  const stepDepth = (isVertical ? depth : width) / numSteps;
+  const stepWidth = isVertical ? width : depth;
   
   // Memoized materials
   const materials = useMemo(() => ({
@@ -398,28 +401,40 @@ const Stairs3D = memo(({ position, width = 2, depth = 3, direction = 'up' }) => 
       {/* Render individual steps */}
       {Array.from({ length: numSteps }).map((_, index) => {
         const stepY = index * stepHeight;
-        const stepZ = direction === 'up' 
-          ? (index * stepDepth) - (depth / 2) + (stepDepth / 2)
-          : -(index * stepDepth) + (depth / 2) - (stepDepth / 2);
+        
+        // Calculate position based on direction
+        let stepX = 0, stepZ = 0;
+        if (direction === 'up') {
+          stepZ = (index * stepDepth) - (depth / 2) + (stepDepth / 2);
+        } else if (direction === 'down') {
+          stepZ = -(index * stepDepth) + (depth / 2) - (stepDepth / 2);
+        } else if (direction === 'right') {
+          stepX = (index * stepDepth) - (width / 2) + (stepDepth / 2);
+        } else { // left
+          stepX = -(index * stepDepth) + (width / 2) - (stepDepth / 2);
+        }
         
         return (
           <group key={index}>
             {/* Step tread (horizontal part) */}
             <mesh 
-              position={[0, stepY + stepHeight / 2, stepZ]} 
+              position={[stepX, stepY + stepHeight / 2, stepZ]} 
               castShadow 
               receiveShadow
             >
-              <boxGeometry args={[stepWidth, stepHeight, stepDepth]} />
+              <boxGeometry args={isVertical ? [stepWidth, stepHeight, stepDepth] : [stepDepth, stepHeight, stepWidth]} />
               <meshStandardMaterial {...materials.steps} />
             </mesh>
             
             {/* Step edge for visual detail */}
             <mesh 
-              position={[0, stepY + stepHeight, stepZ + stepDepth / 2 + 0.005]} 
+              position={isVertical 
+                ? [stepX, stepY + stepHeight, stepZ + stepDepth / 2 + 0.005]
+                : [stepX + stepDepth / 2 + 0.005, stepY + stepHeight, stepZ]
+              } 
               castShadow
             >
-              <boxGeometry args={[stepWidth, 0.02, 0.01]} />
+              <boxGeometry args={isVertical ? [stepWidth, 0.02, 0.01] : [0.01, 0.02, stepWidth]} />
               <meshStandardMaterial color="#808080" roughness={0.7} />
             </mesh>
           </group>
@@ -427,19 +442,34 @@ const Stairs3D = memo(({ position, width = 2, depth = 3, direction = 'up' }) => 
       })}
       
       {/* Railings on both sides */}
-      {[-stepWidth / 2 - 0.05, stepWidth / 2 + 0.05].map((xPos, idx) => (
+      {(isVertical 
+        ? [-stepWidth / 2 - 0.05, stepWidth / 2 + 0.05]
+        : [0, 0] // Will use Z positions for horizontal stairs
+      ).map((pos, idx) => (
         <group key={idx}>
           {/* Railing posts */}
           {[0, numSteps - 1].map((stepIdx) => {
             const postY = stepIdx * stepHeight;
-            const postZ = direction === 'up'
-              ? (stepIdx * stepDepth) - (depth / 2) + (stepDepth / 2)
-              : -(stepIdx * stepDepth) + (depth / 2) - (stepDepth / 2);
+            let postX = 0, postZ = 0;
+            
+            if (direction === 'up') {
+              postX = pos;
+              postZ = (stepIdx * stepDepth) - (depth / 2) + (stepDepth / 2);
+            } else if (direction === 'down') {
+              postX = pos;
+              postZ = -(stepIdx * stepDepth) + (depth / 2) - (stepDepth / 2);
+            } else if (direction === 'right') {
+              postX = (stepIdx * stepDepth) - (width / 2) + (stepDepth / 2);
+              postZ = idx === 0 ? -stepWidth / 2 - 0.05 : stepWidth / 2 + 0.05;
+            } else { // left
+              postX = -(stepIdx * stepDepth) + (width / 2) - (stepDepth / 2);
+              postZ = idx === 0 ? -stepWidth / 2 - 0.05 : stepWidth / 2 + 0.05;
+            }
             
             return (
               <mesh
                 key={stepIdx}
-                position={[xPos, postY + stepHeight / 2, postZ]}
+                position={[postX, postY + stepHeight / 2, postZ]}
                 castShadow
               >
                 <cylinderGeometry args={[0.03, 0.03, 2.8 - postY]} />
@@ -450,11 +480,19 @@ const Stairs3D = memo(({ position, width = 2, depth = 3, direction = 'up' }) => 
           
           {/* Top railing */}
           <mesh
-            position={[xPos, 2.5, 0]}
-            rotation={[0, 0, direction === 'up' ? -Math.atan2(2.8, depth) : Math.atan2(2.8, depth)]}
+            position={isVertical 
+              ? [pos, 2.5, 0]
+              : [0, 2.5, idx === 0 ? -stepWidth / 2 - 0.05 : stepWidth / 2 + 0.05]
+            }
+            rotation={
+              direction === 'up' ? [0, 0, -Math.atan2(2.8, depth)] :
+              direction === 'down' ? [0, 0, Math.atan2(2.8, depth)] :
+              direction === 'right' ? [Math.atan2(2.8, width), 0, 0] :
+              [-Math.atan2(2.8, width), 0, 0] // left
+            }
             castShadow
           >
-            <cylinderGeometry args={[0.025, 0.025, Math.sqrt(depth * depth + 2.8 * 2.8)]} />
+            <cylinderGeometry args={[0.025, 0.025, Math.sqrt((isVertical ? depth : width) * (isVertical ? depth : width) + 2.8 * 2.8)]} />
             <meshStandardMaterial {...materials.railing} />
           </mesh>
         </group>

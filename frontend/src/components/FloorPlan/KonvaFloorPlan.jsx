@@ -360,7 +360,39 @@ const KonvaFloorPlan = forwardRef(({
     }
     
     setContextMenu({ visible: false, x: 0, y: 0, type: null, id: null });
-  }, [contextMenu, doors, walls, windows, rooms, stairs, roomPercentages, onDoorsChange, onWallsChange, onWindowsChange, onRoomsChange]);
+  }, [contextMenu, doors, walls, windows, rooms, stairs, roomPercentages, onDoorsChange, onWallsChange, onWindowsChange, onRoomsChange, onStairsChange]);
+
+  // Handle rotate stairs from context menu
+  const handleRotateStairs = useCallback((newDirection) => {
+    if (!contextMenu.visible || contextMenu.type !== 'stairs') return;
+    
+    const { id } = contextMenu;
+    const updatedStairs = stairs.map(stair => {
+      if (stair.id === id) {
+        const currentDirection = stair.direction;
+        const isCurrentVertical = currentDirection === 'up' || currentDirection === 'down';
+        const isNewVertical = newDirection === 'up' || newDirection === 'down';
+        
+        // Swap width and height if changing orientation (vertical <-> horizontal)
+        const shouldSwap = isCurrentVertical !== isNewVertical;
+        
+        return {
+          ...stair,
+          width: shouldSwap ? stair.height : stair.width,
+          height: shouldSwap ? stair.width : stair.height,
+          direction: newDirection
+        };
+      }
+      return stair;
+    });
+    
+    setStairs(updatedStairs);
+    if (onStairsChange) {
+      onStairsChange(updatedStairs);
+    }
+    
+    setContextMenu({ visible: false, x: 0, y: 0, type: null, id: null });
+  }, [contextMenu, stairs, onStairsChange]);
 
   // Close context menu on outside click
   useEffect(() => {
@@ -1234,7 +1266,7 @@ const KonvaFloorPlan = forwardRef(({
     }
   }, [doors, doorColor, doorWidth, onDoorsChange]);
 
-  // Add new wall
+  // Add new stairs
   const addStairs = useCallback(() => {
     const newStairs = {
       id: `new-stairs-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -1242,7 +1274,7 @@ const KonvaFloorPlan = forwardRef(({
       y: 300,
       width: 80,
       height: 120,
-      direction: 'up' // 'up' or 'down'
+      direction: 'up' // 'up', 'down', 'left', or 'right'
     };
     const updatedStairs = [...stairs, newStairs];
     setStairs(updatedStairs);
@@ -3072,25 +3104,39 @@ const KonvaFloorPlan = forwardRef(({
                 style={{ cursor: isEditable ? 'move' : 'default' }}
               />
               {/* Stair steps lines */}
-              {Array.from({ length: 8 }, (_, i) => (
-                <Line
-                  key={`step-${i}`}
-                  points={[
-                    stair.x,
-                    stair.y + (i + 1) * (stair.height / 9),
-                    stair.x + stair.width,
-                    stair.y + (i + 1) * (stair.height / 9)
-                  ]}
-                  stroke="#92400e"
-                  strokeWidth={1.5}
-                  listening={false}
-                />
-              ))}
+              {Array.from({ length: 8 }, (_, i) => {
+                const isVertical = stair.direction === 'up' || stair.direction === 'down';
+                return (
+                  <Line
+                    key={`step-${i}`}
+                    points={isVertical ? [
+                      // Horizontal lines for up/down stairs
+                      stair.x,
+                      stair.y + (i + 1) * (stair.height / 9),
+                      stair.x + stair.width,
+                      stair.y + (i + 1) * (stair.height / 9)
+                    ] : [
+                      // Vertical lines for left/right stairs
+                      stair.x + (i + 1) * (stair.width / 9),
+                      stair.y,
+                      stair.x + (i + 1) * (stair.width / 9),
+                      stair.y + stair.height
+                    ]}
+                    stroke="#92400e"
+                    strokeWidth={1.5}
+                    listening={false}
+                  />
+                );
+              })}
               {/* Direction arrow */}
               <Text
                 x={stair.x}
                 y={stair.y + stair.height / 2 - 10}
-                text={stair.direction === 'up' ? '↑' : '↓'}
+                text={
+                  stair.direction === 'up' ? '↑' : 
+                  stair.direction === 'down' ? '↓' :
+                  stair.direction === 'left' ? '←' : '→'
+                }
                 fontSize={24}
                 fill="#78350f"
                 align="center"
@@ -3444,10 +3490,55 @@ const KonvaFloorPlan = forwardRef(({
             borderRadius: '4px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
             zIndex: 1000,
-            minWidth: '120px'
+            minWidth: '150px'
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Direction options - only for stairs */}
+          {contextMenu.type === 'stairs' && (() => {
+            const currentStair = stairs.find(s => s.id === contextMenu.id);
+            const currentDirection = currentStair?.direction || 'up';
+            const allDirections = [
+              { value: 'up', label: 'Up', icon: '↑' },
+              { value: 'down', label: 'Down', icon: '↓' },
+              { value: 'left', label: 'Left', icon: '←' },
+              { value: 'right', label: 'Right', icon: '→' }
+            ];
+            const availableDirections = allDirections.filter(d => d.value !== currentDirection);
+            
+            return (
+              <>
+                {availableDirections.map((dir, index) => (
+                  <div
+                    key={dir.value}
+                    style={{
+                      padding: '8px 16px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '14px',
+                      color: '#1976d2',
+                      borderBottom: index < availableDirections.length - 1 ? '1px solid #f0f0f0' : 'none'
+                    }}
+                    onClick={() => handleRotateStairs(dir.value)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f5f5f5';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{dir.icon}</span>
+                    {dir.label}
+                  </div>
+                ))}
+                <div style={{ borderTop: '1px solid #e0e0e0', margin: '4px 0' }} />
+              </>
+            );
+          })()}
+          
+          {/* Delete option - for all types */}
           <div
             style={{
               padding: '8px 16px',

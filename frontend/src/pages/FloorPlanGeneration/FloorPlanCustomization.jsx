@@ -511,6 +511,10 @@ const FloorPlanCustomization = () => {
       
       // Draw rooms (walls as rectangles)
       if (floorPlanData.rooms && Array.isArray(floorPlanData.rooms)) {
+        // Get actual plot dimensions for accurate conversion
+        const actualLength = floorPlanData.actualLength || plotWidth;
+        const actualWidth = floorPlanData.actualWidth || plotHeight;
+        
         floorPlanData.rooms.forEach(room => {
           const x = sx(room.x || 0);
           const y = sy(room.y || 0);
@@ -533,13 +537,26 @@ const FloorPlanCustomization = () => {
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           const label = room.name || room.type || 'Room';
-          // Convert to feet (divide by 25 to match KonvaFloorPlan display)
-          const widthInFeet = Math.round(w / 25);
-          const heightInFeet = Math.round(h / 25);
+          
+          // Convert to actual feet using plot dimensions (matching KonvaFloorPlan)
+          const roomWidthBackend = room.width || 0;
+          const roomHeightBackend = room.height || 0;
+          const widthInFeet = Math.round((roomWidthBackend / plotWidth) * actualLength);
+          const heightInFeet = Math.round((roomHeightBackend / plotHeight) * actualWidth);
+          const areaInSqFt = widthInFeet * heightInFeet;
+          
           const dimensions = `${widthInFeet}' x ${heightInFeet}'`;
-          ctx.fillText(label, x + w / 2, y + h / 2 - 8);
-          ctx.font = '10px Arial';
-          ctx.fillText(dimensions, x + w / 2, y + h / 2 + 8);
+          const areaText = `${areaInSqFt} sq ft`;
+          
+          // Draw room name
+          ctx.fillText(label, x + w / 2, y + h / 2 - 14);
+          // Draw area (matching Konva blue color in grayscale will be dark gray)
+          ctx.font = 'bold 10px Arial';
+          ctx.fillText(areaText, x + w / 2, y + h / 2);
+          // Draw dimensions
+          ctx.font = '9px Arial';
+          ctx.fillStyle = '#555555';
+          ctx.fillText(dimensions, x + w / 2, y + h / 2 + 12);
         });
       }
       
@@ -791,6 +808,7 @@ const FloorPlanCustomization = () => {
         const stairY = sy(stair.y || 0);
         const stairWidth = (stair.width || 80) * scale;
         const stairHeight = (stair.height || 120) * scale;
+        const direction = stair.direction || 'up';
         
         // Draw stairs background rectangle (light gray fill)
         ctx.fillStyle = '#D3D3D3';
@@ -801,20 +819,47 @@ const FloorPlanCustomization = () => {
         ctx.lineWidth = 1.5;
         ctx.strokeRect(stairX, stairY, stairWidth, stairHeight);
         
-        // Draw stair steps (horizontal lines)
+        // Draw stair steps based on direction
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 1;
         const numSteps = 8;
+        const isVertical = direction === 'up' || direction === 'down';
+        
         for (let i = 1; i <= numSteps; i++) {
-          const stepY = stairY + (i * stairHeight / (numSteps + 1));
           ctx.beginPath();
-          ctx.moveTo(stairX, stepY);
-          ctx.lineTo(stairX + stairWidth, stepY);
+          if (isVertical) {
+            // Horizontal lines for up/down stairs
+            const stepY = stairY + (i * stairHeight / (numSteps + 1));
+            ctx.moveTo(stairX, stepY);
+            ctx.lineTo(stairX + stairWidth, stepY);
+          } else {
+            // Vertical lines for left/right stairs
+            const stepX = stairX + (i * stairWidth / (numSteps + 1));
+            ctx.moveTo(stepX, stairY);
+            ctx.lineTo(stepX, stairY + stairHeight);
+          }
           ctx.stroke();
         }
         
-        // Draw direction arrow
-        const arrowText = stair.direction === 'down' ? '↓' : '↑';
+        // Draw direction arrow - handle all four directions
+        let arrowText;
+        switch (direction) {
+          case 'up':
+            arrowText = '↑';
+            break;
+          case 'down':
+            arrowText = '↓';
+            break;
+          case 'left':
+            arrowText = '←';
+            break;
+          case 'right':
+            arrowText = '→';
+            break;
+          default:
+            arrowText = '↑';
+        }
+        
         ctx.fillStyle = '#000000';
         ctx.font = 'bold 20px Arial';
         ctx.textAlign = 'center';
