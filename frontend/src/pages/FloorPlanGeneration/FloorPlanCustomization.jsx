@@ -567,7 +567,7 @@ const FloorPlanCustomization = () => {
       let wallsData = [];
       
       // Method 1: Check mapData for walls  
-      if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData)) {
+      if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData) && (!floorPlanData.rooms || floorPlanData.rooms.length === 0)) {
         const mapWalls = floorPlanData.mapData.filter(item => {
           if (item.type !== 'Wall') return false;
           // VALIDATION: Skip walls with corrupted coordinates

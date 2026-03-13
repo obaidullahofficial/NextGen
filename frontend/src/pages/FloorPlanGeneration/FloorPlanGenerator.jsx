@@ -1339,7 +1339,7 @@ const FloorPlanGenerator = () => {
       }
       
       // Draw walls (internal) as rectangles
-      if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData)) {
+      if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData) && (!floorPlanData.rooms || floorPlanData.rooms.length === 0)) {
         const walls = floorPlanData.mapData.filter(item => item.type === 'Wall');
         
         walls.forEach(wall => {

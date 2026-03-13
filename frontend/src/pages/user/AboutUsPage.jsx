@@ -177,23 +177,6 @@ const AboutUsPage = () => {
   const [timelineRef, timelineVisible] = useScrollAnimation(0.2);
   const mousePosition = useMouseParallax();
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [stats, setStats] = useState({ users: 0, floorplans: 0, satisfaction: 95 });
-
-  // Fetch real stats from backend
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/public/stats');
-        const data = await response.json();
-        if (data.success && data.stats) {
-          setStats(data.stats);
-        }
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      }
-    };
-    fetchStats();
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -393,20 +376,6 @@ const AboutUsPage = () => {
               Transforming the way people design their dream homes through innovative{' '}
               <span className="text-[#ED7600] font-semibold">AI-powered</span> floor plan generation.
             </p>
-            
-            {/* Animated stats preview */}
-            <div className={`flex flex-wrap justify-center gap-8 md:gap-16 mb-12 ${heroVisible ? 'animate-slide-up' : 'opacity-0'}`} style={{animationDelay: '400ms'}}>
-              {[
-                { value: stats.users > 0 ? `${stats.users}+` : '0', label: 'Happy Users' },
-                { value: stats.floorplans > 0 ? `${stats.floorplans}+` : '0', label: 'Floor Plans' },
-                { value: `${stats.satisfaction}%`, label: 'Satisfaction' }
-              ].map((stat, i) => (
-                <div key={i} className="text-center group cursor-default">
-                  <div className="text-3xl md:text-4xl font-bold text-[#ED7600] group-hover:scale-110 transition-transform">{stat.value}</div>
-                  <div className="text-gray-400 text-sm">{stat.label}</div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -420,141 +389,39 @@ const AboutUsPage = () => {
         </div>
         
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-16 items-center">
-              <div className={storyVisible ? 'animate-slide-left' : 'opacity-0'}>
-                <div className="inline-flex items-center gap-3 bg-gradient-to-r from-[#ED7600]/20 to-[#ED7600]/5 px-5 py-2.5 rounded-full mb-8 group cursor-default hover:from-[#ED7600]/30 hover:to-[#ED7600]/10 transition-all duration-300">
-                  <FiHeart className="text-[#ED7600] group-hover:scale-125 transition-transform" />
-                  <span className="text-[#ED7600] font-semibold tracking-wide">Our Story</span>
-                  <FiZap className="text-[#ED7600] opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                
-                <h2 className="text-4xl md:text-5xl font-bold text-[#2F3D57] mb-8 leading-tight">
-                  How It All{' '}
-                  <span className="relative inline-block">
-                    <span className="text-[#ED7600]">Started</span>
-                    <svg className="absolute -bottom-2 left-0 w-full h-3" viewBox="0 0 100 12" fill="none">
-                      <path d="M2 10Q50 2 98 10" stroke="#ED7600" strokeWidth="3" strokeLinecap="round" strokeDasharray="100" strokeDashoffset="100" style={{animation: storyVisible ? 'dash 1s ease-out 0.5s forwards' : 'none'}}/>
-                    </svg>
-                  </span>
-                </h2>
-                
-                <div className="space-y-6 text-gray-600 leading-relaxed text-lg">
-                  {[
-                    "NextGenArchitect was born from a simple yet powerful idea: making professional architectural design accessible to everyone. We saw how difficult it was for ordinary homeowners to visualize and plan their dream homes without expensive consultations.",
-                    "Our founders, a team of passionate architects and tech enthusiasts, came together with a shared dream — to democratize the home design process. We believed that advanced AI technology could bridge the gap between imagination and reality.",
-                    "What started as a small project in 2024 has now grown into a comprehensive platform that connects housing societies, plot owners, and future homeowners with intelligent design solutions."
-                  ].map((text, idx) => (
-                    <p 
-                      key={idx} 
-                      className="relative pl-6 border-l-2 border-transparent hover:border-[#ED7600] hover:pl-8 transition-all duration-500 hover:text-gray-800"
-                      style={{ animationDelay: `${idx * 200}ms` }}
-                    >
-                      {text}
-                    </p>
-                  ))}
-                </div>
+          <div className="max-w-4xl mx-auto">
+            <div className={storyVisible ? 'animate-slide-up' : 'opacity-0'}>
+              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-[#ED7600]/20 to-[#ED7600]/5 px-5 py-2.5 rounded-full mb-8 group cursor-default hover:from-[#ED7600]/30 hover:to-[#ED7600]/10 transition-all duration-300">
+                <FiHeart className="text-[#ED7600] group-hover:scale-125 transition-transform" />
+                <span className="text-[#ED7600] font-semibold tracking-wide">Our Story</span>
+                <FiZap className="text-[#ED7600] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               
-              <div className={`relative ${storyVisible ? 'animate-slide-right' : 'opacity-0'}`}>
-                <TiltCard className="group">
-                  <div className="relative bg-gradient-to-br from-[#2F3D57] via-[#3d4f6f] to-[#1a2435] rounded-3xl p-10 text-white shadow-2xl overflow-hidden">
-                    {/* Animated background pattern */}
-                    <div className="absolute inset-0 opacity-10">
-                      <div className="absolute inset-0" style={{
-                        backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.3) 1px, transparent 0)`,
-                        backgroundSize: '30px 30px'
-                      }}></div>
-                    </div>
-                    
-                    {/* Glowing orb */}
-                    <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#ED7600] rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
-                    
-                    <div className="relative grid grid-cols-2 gap-8">
-                      {[
-                        { icon: FiUsers, value: 1000, suffix: '+', label: 'Happy Users', color: '#ED7600' },
-                        { icon: FiHome, value: 500, suffix: '+', label: 'Floor Plans Created', color: '#4ECDC4' },
-                        { icon: FiAward, value: 50, suffix: '+', label: 'Partner Societies', color: '#A855F7' },
-                        { icon: FiTarget, value: 98, suffix: '%', label: 'Satisfaction Rate', color: '#FFD93D' }
-                      ].map((stat, idx) => (
-                        <div 
-                          key={idx}
-                          className="group/stat relative text-center p-6 bg-white/5 rounded-2xl hover:bg-white/15 transition-all duration-500 transform hover:-translate-y-3 hover:shadow-2xl cursor-default overflow-hidden"
-                        >
-                          {/* Hover glow effect */}
-                          <div 
-                            className="absolute inset-0 opacity-0 group-hover/stat:opacity-20 transition-opacity duration-500 rounded-2xl"
-                            style={{ background: `radial-gradient(circle at center, ${stat.color}, transparent 70%)` }}
-                          ></div>
-                          
-                          <stat.icon 
-                            className="w-10 h-10 mx-auto mb-3 transition-all duration-500 group-hover/stat:scale-125 group-hover/stat:rotate-12" 
-                            style={{ color: stat.color }}
-                          />
-                          <div className="text-3xl font-bold mb-1">
-                            <AnimatedCounter end={stat.value} suffix={stat.suffix} />
-                          </div>
-                          <div className="text-sm text-gray-300 group-hover/stat:text-white transition-colors">{stat.label}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </TiltCard>
-                
-                {/* Decorative elements */}
-                <div className="absolute -top-6 -right-6 w-32 h-32 bg-gradient-to-br from-[#ED7600]/20 to-transparent rounded-full animate-float -z-10"></div>
-                <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-gradient-to-br from-[#4ECDC4]/20 to-transparent rounded-2xl animate-float-reverse -z-10 rotate-12"></div>
-                <div className="absolute top-1/2 -left-12 w-6 h-6 bg-[#A855F7]/30 rounded-full animate-bounce-subtle"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Timeline Section */}
-      <section ref={timelineRef} className="py-20 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 w-px h-full bg-gradient-to-b from-transparent via-[#ED7600]/30 to-transparent"></div>
-        </div>
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto">
-            <div className={`text-center mb-16 ${timelineVisible ? 'animate-slide-up' : 'opacity-0'}`}>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#2F3D57] mb-4">
-                Our <span className="text-[#ED7600]">Journey</span>
+              <h2 className="text-4xl md:text-5xl font-bold text-[#2F3D57] mb-8 leading-tight">
+                How It All{' '}
+                <span className="relative inline-block">
+                  <span className="text-[#ED7600]">Started</span>
+                  <svg className="absolute -bottom-2 left-0 w-full h-3" viewBox="0 0 100 12" fill="none">
+                    <path d="M2 10Q50 2 98 10" stroke="#ED7600" strokeWidth="3" strokeLinecap="round" strokeDasharray="100" strokeDashoffset="100" style={{animation: storyVisible ? 'dash 1s ease-out 0.5s forwards' : 'none'}}/>
+                  </svg>
+                </span>
               </h2>
-              <p className="text-gray-600">The milestones that shaped who we are today</p>
-            </div>
-            
-            <div className="space-y-12">
-              {[
-                { year: '2024', title: 'The Spark', desc: 'A vision was born to revolutionize home design with AI technology', icon: FiZap },
-                { year: '2025', title: 'Building Dreams', desc: 'Launched beta version, partnered with first 10 housing societies', icon: FiLayers },
-                { year: '2026', title: 'Scaling Heights', desc: `Reached ${stats.users}+ users and expanded AI capabilities`, icon: FiGlobe }
-              ].map((item, idx) => (
-                <div 
-                  key={idx}
-                  className={`flex items-center gap-8 ${idx % 2 === 0 ? 'flex-row' : 'flex-row-reverse'} ${timelineVisible ? 'animate-slide-up' : 'opacity-0'}`}
-                  style={{ animationDelay: `${idx * 200}ms` }}
-                >
-                  <div className={`flex-1 ${idx % 2 === 0 ? 'text-right' : 'text-left'}`}>
-                    <div className="inline-block bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group cursor-default">
-                      <div className="text-[#ED7600] font-bold text-lg mb-1">{item.year}</div>
-                      <h3 className="text-xl font-bold text-[#2F3D57] mb-2 group-hover:text-[#ED7600] transition-colors">{item.title}</h3>
-                      <p className="text-gray-600 text-sm">{item.desc}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="relative">
-                    <div className="w-14 h-14 bg-gradient-to-br from-[#ED7600] to-[#D56900] rounded-full flex items-center justify-center shadow-lg animate-glow">
-                      <item.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 border-2 border-[#ED7600]/20 rounded-full animate-ping" style={{animationDuration: '2s'}}></div>
-                  </div>
-                  
-                  <div className="flex-1"></div>
-                </div>
-              ))}
+              
+              <div className="space-y-6 text-gray-600 leading-relaxed text-lg">
+                {[
+                  "NextGenArchitect was created to solve a common problem: traditional home design can process be complicated, expensive, and out of reach for many. We realized that AI could simplify this journey for everyone.",
+                  "Our goal is to make professional design ideas accessible. By building a platform specifically tailored to housing societies and their rules, we are aiming to bridge the gap between abstract ideas and practical floor plans.",
+                  "Today, we continue to develop intuitive tools that let you easily design, refine, and visualize your future home without needing prior architectural knowledge."
+                ].map((text, idx) => (
+                  <p 
+                    key={idx} 
+                    className="relative pl-6 border-l-2 border-transparent hover:border-[#ED7600] hover:pl-8 transition-all duration-500 hover:text-gray-800"
+                    style={{ animationDelay: `${idx * 200}ms` }}
+                  >
+                    {text}
+                  </p>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -800,6 +667,49 @@ const AboutUsPage = () => {
         </div>
       </section>
 
+      {/* Platform Features Section */}
+      <section ref={timelineRef} className="py-20 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/2 w-px h-full bg-gradient-to-b from-transparent via-[#ED7600]/30 to-transparent"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-5xl mx-auto">
+            <div className={`text-center mb-16 ${timelineVisible ? 'animate-slide-up' : 'opacity-0'}`}>
+              <div className="inline-flex items-center gap-2 bg-[#ED7600]/10 px-4 py-2 rounded-full mb-6">
+                <FiLayers className="text-[#ED7600]" />
+                <span className="text-[#ED7600] font-medium">Why Choose Us</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#2F3D57] mb-4">
+                Platform <span className="text-[#ED7600]">Features</span>
+              </h2>
+              <p className="text-gray-600 text-lg">Everything you need to design your home intelligently</p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-8">
+              {[
+                { title: 'AI-Generated Floor Plans', desc: 'Instantly create optimized floor plans driven by powerful AI technology based on your specific requirements.', icon: FiZap },
+                { title: 'Plot-Based Design Suggestions', desc: 'Get smart design recommendations perfectly tailored to the exact dimensions and rules of your housing plot.', icon: FiTarget },
+                { title: 'Easy Home Planning', desc: 'A simple, intuitive interface that allows anyone to plan their home without needing prior architectural experience.', icon: FiHome },
+                { title: 'Support for Housing Societies', desc: 'Built-in tools that connect homeowners directly with trusted housing societies for seamless planning and approvals.', icon: FiUsers }
+              ].map((item, idx) => (
+                <div 
+                  key={idx}
+                  className={`bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group cursor-default border border-gray-100 ${timelineVisible ? 'animate-slide-up' : 'opacity-0'}`}
+                  style={{ animationDelay: `${idx * 150}ms` }}
+                >
+                  <div className="w-14 h-14 bg-[#ED7600]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#ED7600] group-hover:scale-110 transition-all duration-300">
+                    <item.icon className="w-7 h-7 text-[#ED7600] group-hover:text-white transition-colors" />
+                  </div>
+                  <h3 className="text-xl font-bold text-[#2F3D57] mb-3 group-hover:text-[#ED7600] transition-colors">{item.title}</h3>
+                  <p className="text-gray-600 leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section ref={ctaRef} className="py-24 md:py-32 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
         {/* Animated background */}
@@ -868,9 +778,9 @@ const AboutUsPage = () => {
             {/* Trust badges */}
             <div className={`mt-16 flex flex-wrap justify-center items-center gap-8 ${ctaVisible ? 'animate-slide-up' : 'opacity-0'}`} style={{animationDelay: '400ms'}}>
               {[
-                { icon: FiUsers, text: `${stats.users}+ Users` },
-                { icon: FiAward, text: 'Top Rated' },
-                { icon: FiTarget, text: `${stats.satisfaction}% Satisfaction` }
+                { icon: FiUsers, text: `AI-Powered` },
+                { icon: FiAward, text: 'Top Rated Design Tool' },
+                { icon: FiTarget, text: `Trusted by Homeowners` }
               ].map((badge, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-gray-500 hover:text-[#ED7600] transition-colors cursor-default">
                   <badge.icon className="w-5 h-5" />

@@ -38,9 +38,9 @@ const KonvaFloorPlan = forwardRef(({
   const [doorColor, setDoorColor] = useState('#8B4513');
   const [wallColor, setWallColor] = useState('#000000');
   const [windowColor, setWindowColor] = useState('#87CEEB');
-  const [doorWidth, setDoorWidth] = useState(6);
+  const [doorWidth, setDoorWidth] = useState(3);
   const [wallWidth, setWallWidth] = useState(4);
-  const [windowWidth, setWindowWidth] = useState(5);
+  const [windowWidth, setWindowWidth] = useState(3);
   const [totalFloorArea, setTotalFloorArea] = useState(10000); // Total area in square units
   const [roomPercentages, setRoomPercentages] = useState({}); // Room ID -> percentage mapping
   const [availablePercentage, setAvailablePercentage] = useState(100);
@@ -512,7 +512,7 @@ const KonvaFloorPlan = forwardRef(({
 
       // Convert walls data with proportional scaling
       const wallsData = (floorPlanData.mapData || [])
-        .filter(item => item.type === 'Wall')
+        .filter(item => item.type === 'Wall' && (!floorPlanData.rooms || floorPlanData.rooms.length === 0))
         .map((wall, index) => ({
           id: wall.id || `wall-${index}`,
           points: [
@@ -1247,7 +1247,7 @@ const KonvaFloorPlan = forwardRef(({
   const addNewDoor = useCallback(() => {
     const newDoor = {
       id: `new-door-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      points: [200, 200, 280, 200], // Default horizontal door
+      points: [200, 200, 240, 200], // Default horizontal door
       stroke: doorColor,
       strokeWidth: doorWidth,
       lineCap: 'round',
@@ -2191,7 +2191,7 @@ const KonvaFloorPlan = forwardRef(({
                 onClick={() => {
                   const newWindow = {
                     id: `new-window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                    points: [300, 200, 380, 200],
+                    points: [300, 200, 340, 200],
                     stroke: windowColor,
                     strokeWidth: windowWidth,
                     lineCap: 'round',

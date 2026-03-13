@@ -2081,11 +2081,66 @@ export const getRoomAccessories = (roomType, roomWidth, roomHeight) => {
 /* ═══════════════════════════════════════════════════════
    MAIN EXPORT – Render all accessories for a room
    ═══════════════════════════════════════════════════════ */
-export const RoomAccessories = ({ roomType, roomWidth, roomHeight }) => {
-  const accessories = useMemo(
-    () => getRoomAccessories(roomType, roomWidth, roomHeight),
-    [roomType, roomWidth, roomHeight]
-  );
+export const RoomAccessories = ({ roomType, roomWidth, roomHeight, roomDoors, roomId }) => {
+  const accessories = useMemo(() => {
+    let items = getRoomAccessories(roomType, roomWidth, roomHeight);
+    
+    // Ensure no furniture blocks the doors
+    if (roomDoors && roomDoors.length > 0 && roomId) {
+      const doorPositions = roomDoors.map(d => {
+        const rp = d.roomPositions?.find(p => p.roomId === roomId) || (d.roomId === roomId ? { wall: d.wall, wallPosition: d.wallPosition } : null);
+        if (!rp) return null;
+        
+        let dx = 0, dz = 0;
+        if (rp.wall === 'north') {
+          dx = rp.wallPosition || 0;
+          dz = -roomHeight / 2;
+        } else if (rp.wall === 'south') {
+          dx = rp.wallPosition || 0;
+          dz = roomHeight / 2;
+        } else if (rp.wall === 'east') {
+          dx = roomWidth / 2;
+          dz = rp.wallPosition || 0;
+        } else if (rp.wall === 'west') {
+          dx = -roomWidth / 2;
+          dz = rp.wallPosition || 0;
+        }
+        return { x: dx, z: dz };
+      }).filter(Boolean);
+
+      items = items.map(item => {
+        const [ix, iy, iz] = item.position;
+        // Check if item is too close to any door (e.g., within 1.5 meters)
+        let isNearDoor = false;
+        for (const dp of doorPositions) {
+          const dist = Math.hypot(ix - dp.x, iz - dp.z);
+          // 1.5m threshold ensures clear pathway around the door
+          if (dist < 1.5) {
+            isNearDoor = true;
+            break;
+          }
+        }
+
+        if (isNearDoor) {
+          // Relocate to the opposite side of the room to avoid the door
+          const mirroredItem = { ...item };
+          mirroredItem.position = [-ix, iy, -iz];
+          
+          if (mirroredItem.rotation) {
+            mirroredItem.rotation = [
+              mirroredItem.rotation[0],
+              mirroredItem.rotation[1] + Math.PI,
+              mirroredItem.rotation[2]
+            ];
+          }
+          return mirroredItem;
+        }
+        return item;
+      });
+    }
+    
+    return items;
+  }, [roomType, roomWidth, roomHeight, roomDoors, roomId]);
 
   return (
     <>

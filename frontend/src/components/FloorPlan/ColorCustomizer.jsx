@@ -5,7 +5,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
   const [showRoomColors, setShowRoomColors] = useState(false);
   const [showDoorColors, setShowDoorColors] = useState(false);
   const [colors, setColors] = useState({
-    walls: '#FAFAFA',
+    walls: '#3C3534',
     windows: '#87CEEB',
     ground: '#90EE90',
     foundation: '#D3D3D3',
@@ -98,7 +98,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
 
   const resetColors = () => {
     const defaultColors = {
-      walls: '#FAFAFA',
+      walls: '#3C3534',
       windows: '#87CEEB',
       ground: '#90EE90',
       foundation: '#D3D3D3',
@@ -112,8 +112,8 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
 
   const colorPresets = [
     {
-      name: 'Modern White',
-      colors: { walls: '#FAFAFA', windows: '#87CEEB', ground: '#90EE90', foundation: '#D3D3D3', doors: '#8B4513' }
+      name: 'Default Dark',
+      colors: { walls: '#3C3534', windows: '#87CEEB', ground: '#90EE90', foundation: '#D3D3D3', doors: '#8B4513' }
     },
     {
       name: 'Warm Beige',
