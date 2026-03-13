@@ -503,22 +503,46 @@ const Stairs3D = memo(({ position, width = 2, depth = 3, direction = 'up' }) => 
 
 // Window Component with FIXED positioning - no longer floating above walls
 // Enhanced Window3D component with anti-flickering and proper sizing
-const Window3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 1.0, roomType = 'default', customColors }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const Window3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 1.0, roomType = 'default', customColors, playerPosition, autoOpen = true, isOpen: externalIsOpen = false, onToggle }) => {
+  const [localIsOpen, setLocalIsOpen] = useState(externalIsOpen);
+  const [proximityOpen, setProximityOpen] = useState(false);
   const [openAngle, setOpenAngle] = useState(0);
   const leftPaneRef = useRef();
   const rightPaneRef = useRef();
   
-  const frameThickness = 0.08;
+  const frameThickness = 0.06; // Thin frame like doors
   const glassThickness = 0.01;
-  const frameDepth = 0.06;
+  const frameDepth = 0.08; // Match wall thickness exactly
   
-  const windowBottomHeight = 0.9;
-  const windowCenterY = windowBottomHeight + height / 2;
+  // Enhanced auto-open settings (same as doors)
+  const openDistance = 2.5; // Wider proximity for easier interaction
+  const closeDistance = 4.0; // Larger close distance to prevent flickering
   
-  // Smooth window opening animation
+  // Center window on wall (2.8m wall height) - same as door positioning
+  const wallHeight = 2.8;
+  const windowCenterY = wallHeight / 2; // 1.4m - center of wall
+  const windowBottomHeight = windowCenterY - height / 2; // Bottom of window
+  
+  // Smooth window opening animation with auto-open functionality (LIKE DOORS)
   useFrame((state, delta) => {
-    const targetAngle = isOpen ? Math.PI * 0.35 : 0; // 63 degrees when open
+    if (autoOpen && playerPosition && position) {
+      // Use horizontal-only distance (ignore Y) so player height doesn't affect detection
+      const dx = position[0] - playerPosition[0];
+      const dz = position[2] - playerPosition[2];
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      
+      if (distance <= openDistance && !proximityOpen) {
+        setProximityOpen(true);
+        setLocalIsOpen(true);
+        if (onToggle) onToggle(true);
+      } else if (distance > closeDistance && proximityOpen) {
+        setProximityOpen(false);
+        setLocalIsOpen(false);
+        if (onToggle) onToggle(false);
+      }
+    }
+    
+    const targetAngle = localIsOpen ? Math.PI * 0.35 : 0; // 63 degrees when open
     const newAngle = THREE.MathUtils.lerp(openAngle, targetAngle, delta * 6);
     setOpenAngle(newAngle);
     
@@ -530,82 +554,96 @@ const Window3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 1
     }
   });
   
+  // Update when external isOpen changes
+  useEffect(() => {
+    if (!proximityOpen) {
+      setLocalIsOpen(externalIsOpen);
+    }
+  }, [externalIsOpen, proximityOpen]);
+  
   const handleClick = (event) => {
     event.stopPropagation();
-    setIsOpen(!isOpen);
+    if (!proximityOpen) { // Only allow manual toggle if not auto-opened
+      const newState = !localIsOpen;
+      setLocalIsOpen(newState);
+      if (onToggle) onToggle(newState);
+    }
   };
   
   // Room-type specific styling with stable colors - memoized for performance
   const styling = useMemo(() => {
+    // Use brown/wood frame color like doors, not blue
+    const defaultStyling = {
+      frameColor: "#8B4513", // Brown wood frame like doors
+      glassColor: "#E0F4FF", // Light blue sky tint
+      glassOpacity: 0.3,
+      dividerColor: "#654321" // Darker brown for dividers
+    };
+    
     // If custom colors are provided, use them
     if (customColors?.windows) {
       return {
+        ...defaultStyling,
         frameColor: customColors.windows,
-        glassColor: customColors.windows,
-        glassOpacity: 0.3,
         dividerColor: customColors.windows
       };
     }
     
-    const getWindowStyling = (roomType) => {
-      const type = roomType.toLowerCase();
-      
-      if (type.includes('living') || type.includes('drawing')) {
-        return {
-          frameColor: "#87CEEB", // Sky blue frame
-          glassColor: "#E0F4FF", // Light blue sky tint
-          glassOpacity: 0.3, // More visible glass
-          dividerColor: "#5B9BD5" // Darker sky blue
-        };
-      } else if (type.includes('bedroom')) {
-        return {
-          frameColor: "#87CEEB", // Sky blue frame
-          glassColor: "#E0F4FF", // Light blue sky tint
-          glassOpacity: 0.3,
-          dividerColor: "#5B9BD5"
-        };
-      } else if (type.includes('kitchen')) {
-        return {
-          frameColor: "#87CEEB", // Sky blue frame
-          glassColor: "#E0F4FF", // Light blue sky tint
-          glassOpacity: 0.3,
-          dividerColor: "#5B9BD5"
-        };
-      } else {
-        return {
-          frameColor: "#87CEEB", // Sky blue frame
-          glassColor: "#E0F4FF", // Light blue sky tint
-          glassOpacity: 0.3,
-          dividerColor: "#5B9BD5"
-        };
-      }
-    };
-    
-    return getWindowStyling(roomType);
-  }, [roomType, customColors]);
+    return defaultStyling;
+  }, [customColors]);
   
   return (
     <group position={position} rotation={rotation}>
-      {/* Window Frame - Stable positioning to prevent flickering */}
-      <mesh position={[0, windowCenterY, 0]} castShadow receiveShadow>
-        <boxGeometry args={[width + frameThickness, height + frameThickness, frameDepth]} />
+      {/* Window Frame - Thin borders like doors, not a solid block */}
+      {/* Left frame post */}
+      <mesh position={[-width/2 - frameThickness/2, windowCenterY, 0]} castShadow receiveShadow>
+        <boxGeometry args={[frameThickness, height + frameThickness * 2, frameDepth]} />
         <meshStandardMaterial 
           color={styling.frameColor}
           roughness={0.7} 
           metalness={0.0}
-          side={THREE.DoubleSide}
+        />
+      </mesh>
+      
+      {/* Right frame post */}
+      <mesh position={[width/2 + frameThickness/2, windowCenterY, 0]} castShadow receiveShadow>
+        <boxGeometry args={[frameThickness, height + frameThickness * 2, frameDepth]} />
+        <meshStandardMaterial 
+          color={styling.frameColor}
+          roughness={0.7} 
+          metalness={0.0}
+        />
+      </mesh>
+      
+      {/* Top frame */}
+      <mesh position={[0, windowCenterY + height/2 + frameThickness/2, 0]} castShadow receiveShadow>
+        <boxGeometry args={[width + frameThickness * 2, frameThickness, frameDepth]} />
+        <meshStandardMaterial 
+          color={styling.frameColor}
+          roughness={0.7} 
+          metalness={0.0}
+        />
+      </mesh>
+      
+      {/* Bottom frame */}
+      <mesh position={[0, windowCenterY - height/2 - frameThickness/2, 0]} castShadow receiveShadow>
+        <boxGeometry args={[width + frameThickness * 2, frameThickness, frameDepth]} />
+        <meshStandardMaterial 
+          color={styling.frameColor}
+          roughness={0.7} 
+          metalness={0.0}
         />
       </mesh>
       
       {/* Left Window Pane (Opens outward to the left) */}
       <group ref={leftPaneRef} position={[-width/4, windowCenterY, 0]}>
-        {/* Left Glass - moves with pane, becomes more transparent when open */}
+        {/* Left Glass - moves with pane, becomes nearly invisible when open for clear view */}
         <mesh position={[0, 0, 0.001]} onClick={handleClick} style={{ cursor: 'pointer' }}>
           <boxGeometry args={[width/2 - 0.04, height - 0.02, glassThickness]} />
           <meshStandardMaterial 
             color={styling.glassColor}
             transparent 
-            opacity={isOpen ? styling.glassOpacity * 0.3 : styling.glassOpacity}
+            opacity={localIsOpen ? 0.02 : styling.glassOpacity}
             roughness={0.05}
             metalness={0.1}
             envMapIntensity={1.2}
@@ -620,7 +658,7 @@ const Window3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 1
           <meshStandardMaterial 
             color={styling.glassColor}
             transparent 
-            opacity={isOpen ? styling.glassOpacity * 0.2 : styling.glassOpacity * 0.8}
+            opacity={localIsOpen ? 0.01 : styling.glassOpacity * 0.8}
             roughness={0.05}
             metalness={0.1}
             envMapIntensity={1.2}
@@ -642,13 +680,13 @@ const Window3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 1
       
       {/* Right Window Pane (Opens outward to the right) */}
       <group ref={rightPaneRef} position={[width/4, windowCenterY, 0]}>
-        {/* Right Glass - moves with pane, becomes more transparent when open */}
+        {/* Right Glass - moves with pane, becomes nearly invisible when open for clear view */}
         <mesh position={[0, 0, 0.001]} onClick={handleClick} style={{ cursor: 'pointer' }}>
           <boxGeometry args={[width/2 - 0.04, height - 0.02, glassThickness]} />
           <meshStandardMaterial 
             color={styling.glassColor}
             transparent 
-            opacity={isOpen ? styling.glassOpacity * 0.3 : styling.glassOpacity}
+            opacity={localIsOpen ? 0.02 : styling.glassOpacity}
             roughness={0.05}
             metalness={0.1}
             envMapIntensity={1.2}
@@ -663,7 +701,7 @@ const Window3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 1
           <meshStandardMaterial 
             color={styling.glassColor}
             transparent 
-            opacity={isOpen ? styling.glassOpacity * 0.2 : styling.glassOpacity * 0.8}
+            opacity={localIsOpen ? 0.01 : styling.glassOpacity * 0.8}
             roughness={0.05}
             metalness={0.1}
             envMapIntensity={1.2}
@@ -694,27 +732,27 @@ const Window3D = memo(({ position, rotation = [0, 0, 0], width = 1.2, height = 1
         />
       </mesh>
       
-      {/* Window Sills */}
-      <mesh position={[0, windowBottomHeight - 0.04, frameDepth/2 + 0.02]} castShadow receiveShadow>
-        <boxGeometry args={[width + 0.12, 0.08, 0.06]} />
+      {/* Window Sills - positioned below window frame */}
+      <mesh position={[0, windowBottomHeight - frameThickness - 0.02, frameDepth/2]} castShadow receiveShadow>
+        <boxGeometry args={[width + frameThickness * 2 + 0.1, 0.04, 0.04]} />
         <meshStandardMaterial 
-          color="#A0826D"
+          color={styling.frameColor}
           roughness={0.7}
           metalness={0.0}
         />
       </mesh>
       
-      <mesh position={[0, windowBottomHeight - 0.04, -frameDepth/2 - 0.02]} castShadow receiveShadow>
-        <boxGeometry args={[width + 0.12, 0.08, 0.06]} />
+      <mesh position={[0, windowBottomHeight - frameThickness - 0.02, -frameDepth/2]} castShadow receiveShadow>
+        <boxGeometry args={[width + frameThickness * 2 + 0.1, 0.04, 0.04]} />
         <meshStandardMaterial 
-          color="#A0826D"
+          color={styling.frameColor}
           roughness={0.7}
           metalness={0.0}
         />
       </mesh>
       
       {/* Open indicator */}
-      {isOpen && (
+      {localIsOpen && (
         <mesh position={[0, windowCenterY + height/2 + 0.2, 0]}>
           <ringGeometry args={[0.08, 0.12]} />
           <meshBasicMaterial color="#4CAF50" transparent opacity={0.7} />
@@ -1225,47 +1263,112 @@ const generateSmartWindows = (rooms, bounds, detectedWindows = []) => {
       // Determine window orientation (horizontal or vertical)
       const isHorizontal = windowWidth > windowHeight;
       
-      // Find the nearest room wall and adjust position to sit on wall
-      let adjustedX = worldPos.x;
-      let adjustedZ = worldPos.z;
-      
-      // Find nearest room to determine wall position
+      // Detect which rooms this window borders (LIKE DOORS)
+      const connectedRooms = [];
       const tolerance = 0.5;
+      
       rooms.forEach(room => {
         const roomWorld = convertToWorld3D(room.x, room.y, room.width, room.height, bounds);
+        const roomCenterX = roomWorld.x + roomWorld.width / 2;
+        const roomCenterZ = roomWorld.z + roomWorld.height / 2;
         
-        // Check if window is near room boundaries and snap to wall center
-        if (Math.abs(worldPos.z - roomWorld.z) < tolerance) {
-          // Near north wall
-          adjustedZ = roomWorld.z + wallThickness/2;
-        } else if (Math.abs(worldPos.z - (roomWorld.z + roomWorld.height)) < tolerance) {
-          // Near south wall
-          adjustedZ = roomWorld.z + roomWorld.height - wallThickness/2;
+        // Check if window is on any of the room's walls
+        // North wall (top edge)
+        if (Math.abs(worldPos.z - roomWorld.z) < tolerance &&
+            worldPos.x >= roomWorld.x && worldPos.x <= roomWorld.x + roomWorld.width) {
+          connectedRooms.push({
+            room: room,
+            wall: 'north',
+            wallPosition: worldPos.x - roomCenterX
+          });
         }
-        
-        if (Math.abs(worldPos.x - roomWorld.x) < tolerance) {
-          // Near west wall
-          adjustedX = roomWorld.x + wallThickness/2;
-        } else if (Math.abs(worldPos.x - (roomWorld.x + roomWorld.width)) < tolerance) {
-          // Near east wall
-          adjustedX = roomWorld.x + roomWorld.width - wallThickness/2;
+        // South wall (bottom edge)
+        else if (Math.abs(worldPos.z - (roomWorld.z + roomWorld.height)) < tolerance &&
+                 worldPos.x >= roomWorld.x && worldPos.x <= roomWorld.x + roomWorld.width) {
+          connectedRooms.push({
+            room: room,
+            wall: 'south',
+            wallPosition: worldPos.x - roomCenterX
+          });
+        }
+        // West wall (left edge)
+        else if (Math.abs(worldPos.x - roomWorld.x) < tolerance &&
+                 worldPos.z >= roomWorld.z && worldPos.z <= roomWorld.z + roomWorld.height) {
+          connectedRooms.push({
+            room: room,
+            wall: 'west',
+            wallPosition: worldPos.z - roomCenterZ
+          });
+        }
+        // East wall (right edge)
+        else if (Math.abs(worldPos.x - (roomWorld.x + roomWorld.width)) < tolerance &&
+                 worldPos.z >= roomWorld.z && worldPos.z <= roomWorld.z + roomWorld.height) {
+          connectedRooms.push({
+            room: room,
+            wall: 'east',
+            wallPosition: worldPos.z - roomCenterZ
+          });
         }
       });
+      
+      console.log(`ðŸªŸ Window ${idx} connects ${connectedRooms.length} rooms:`, 
+                  connectedRooms.map(cr => `${cr.room.name} (${cr.wall})`));
+      
+      // Position window at the exact wall boundary if between two rooms
+      let finalX = worldPos.x;
+      let finalZ = worldPos.z;
+      let finalRotation = isHorizontal ? [0, 0, 0] : [0, Math.PI/2, 0];
+      
+      if (connectedRooms.length >= 1) {
+        const firstRoom = connectedRooms[0];
+        const roomWorld = convertToWorld3D(firstRoom.room.x, firstRoom.room.y, 
+                                          firstRoom.room.width, firstRoom.room.height, bounds);
+        const roomCenterX = roomWorld.x + roomWorld.width / 2;
+        const roomCenterZ = roomWorld.z + roomWorld.height / 2;
+        
+        // Position at exact wall boundary based on wall type
+        if (firstRoom.wall === 'north') {
+          finalZ = roomWorld.z;
+          finalX = roomCenterX + firstRoom.wallPosition;
+          finalRotation = [0, 0, 0];
+        } else if (firstRoom.wall === 'south') {
+          finalZ = roomWorld.z + roomWorld.height;
+          finalX = roomCenterX + firstRoom.wallPosition;
+          finalRotation = [0, Math.PI, 0];
+        } else if (firstRoom.wall === 'east') {
+          finalX = roomWorld.x + roomWorld.width;
+          finalZ = roomCenterZ + firstRoom.wallPosition;
+          finalRotation = [0, -Math.PI/2, 0];
+        } else if (firstRoom.wall === 'west') {
+          finalX = roomWorld.x;
+          finalZ = roomCenterZ + firstRoom.wallPosition;
+          finalRotation = [0, Math.PI/2, 0];
+        }
+      }
       
       // Use unique ID combining original ID and index to prevent duplicates
       const uniqueId = `detected-window-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      windows.push({
+      // Create window with door-like structure for wall cutouts
+      const windowData = {
         id: uniqueId,
-        position: [adjustedX, 1.2, adjustedZ], // Position at standard window height, adjusted to wall
-        rotation: isHorizontal ? [0, 0, 0] : [0, Math.PI/2, 0],
+        position: [finalX, 0, finalZ], // Global position at wall boundary
+        rotation: finalRotation,
         width: Math.max(0.6, (isHorizontal ? windowWidth : windowHeight) / 100),
         height: 1.2,
         roomType: 'detected',
-        isDetected: true
-      });
+        isDetected: true,
+        connectedRooms: connectedRooms.map(cr => cr.room.id), // Room IDs like doors
+        roomPositions: connectedRooms.map(cr => ({ // Wall positions like doors
+          roomId: cr.room.id,
+          wall: cr.wall,
+          wallPosition: cr.wallPosition
+        }))
+      };
       
-      console.log(`ðŸªŸ Added detected window:`, windows[windows.length - 1]);
+      windows.push(windowData);
+      
+      console.log(`ðŸªŸ Added detected window with room positions:`, windowData);
     });
   }
   
@@ -1990,9 +2093,12 @@ const Room3D = ({ room, bounds, showLabels = true, doors = [], windows = [], wal
     (door.roomPositions && door.roomPositions.some(rp => rp.roomId === room.id))
   );
   
+  // Find windows for this room - include both local windows and globally-rendered windows that border this room
   const roomWindows = windows.filter(window => 
     window.roomId === room.id ||
-    window.id.includes(room.id?.toString() || room.name)
+    window.id.includes(room.id?.toString() || room.name) ||
+    window.connectedRooms?.includes(room.id) ||  // Global windows that border this room (LIKE DOORS)
+    (window.roomPositions && window.roomPositions.some(rp => rp.roomId === room.id))
   );
   
   console.log(`Room ${room.name}: Doors: ${roomDoors.length}, Windows: ${roomWindows.length}`);
@@ -2010,7 +2116,7 @@ const Room3D = ({ room, bounds, showLabels = true, doors = [], windows = [], wal
           const wallHeight = 2.7;
           const wallThickness = 0.08;
           
-          // Function to generate wall segments avoiding door cutouts
+          // Function to generate wall segments avoiding door and window cutouts
           const generateWallSegments = (wallType, totalLength) => {
             // Find doors on this wall for this specific room
             const wallDoors = roomDoors.filter(door => {
@@ -2022,38 +2128,69 @@ const Room3D = ({ room, bounds, showLabels = true, doors = [], windows = [], wal
               return false;
             });
             
-            if (wallDoors.length === 0) {
+            // Find windows on this wall for this specific room (check both wall property and roomPositions)
+            const wallWindows = roomWindows.filter(window => {
+              // Check simple wall property (for local windows)
+              if (window.wall === wallType) return true;
+              // Check roomPositions array (for global windows like doors)
+              if (window.roomPositions) {
+                return window.roomPositions.some(rp => 
+                  rp.roomId === room.id && rp.wall === wallType
+                );
+              }
+              return false;
+            });
+            
+            // Combine doors and windows for cutout processing
+            const openings = [
+              ...wallDoors.map(door => {
+                const roomPosData = door.roomPositions?.find(rp => rp.roomId === room.id);
+                return {
+                  type: 'door',
+                  width: door.width || 0.8,
+                  position: roomPosData?.wallPosition || 0
+                };
+              }),
+              ...wallWindows.map(window => {
+                // Get wall position from either simple property or roomPositions array
+                let wallPosition = window.wallPosition || 0;
+                if (window.roomPositions) {
+                  const roomPosData = window.roomPositions.find(rp => rp.roomId === room.id);
+                  wallPosition = roomPosData?.wallPosition || 0;
+                }
+                return {
+                  type: 'window',
+                  width: window.width || 1.2,
+                  position: wallPosition
+                };
+              })
+            ];
+            
+            if (openings.length === 0) {
               return [{ start: -totalLength/2, end: totalLength/2, center: 0, length: totalLength }];
             }
             
             const segments = [];
             let currentPos = -totalLength/2;
             
-            // Sort doors by position along the wall
-            wallDoors.sort((a, b) => {
-              const posA = a.roomPositions.find(rp => rp.roomId === room.id)?.wallPosition || 0;
-              const posB = b.roomPositions.find(rp => rp.roomId === room.id)?.wallPosition || 0;
-              return posA - posB;
-            });
+            // Sort openings (doors and windows) by position along the wall
+            openings.sort((a, b) => a.position - b.position);
             
-            wallDoors.forEach(door => {
-              const doorWidth = door.width || 0.8;
-              const roomPosData = door.roomPositions.find(rp => rp.roomId === room.id);
-              const doorPos = roomPosData?.wallPosition || 0;
-              const doorStart = doorPos - doorWidth/2;
-              const doorEnd = doorPos + doorWidth/2;
+            openings.forEach(opening => {
+              const openingStart = opening.position - opening.width/2;
+              const openingEnd = opening.position + opening.width/2;
               
-              if (currentPos < doorStart - 0.05) {
-                const segmentCenter = (currentPos + doorStart) / 2;
+              if (currentPos < openingStart - 0.05) {
+                const segmentCenter = (currentPos + openingStart) / 2;
                 segments.push({ 
                   start: currentPos, 
-                  end: doorStart - 0.05, 
+                  end: openingStart - 0.05, 
                   center: segmentCenter,
-                  length: doorStart - 0.05 - currentPos
+                  length: openingStart - 0.05 - currentPos
                 });
               }
               
-              currentPos = doorEnd + 0.05;
+              currentPos = openingEnd + 0.05;
             });
             
             if (currentPos < totalLength/2) {
@@ -3190,6 +3327,8 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
             height={window.height}
             roomType={window.roomType || 'default'}
             customColors={colors}
+            playerPosition={playerPosition}
+            autoOpen={mode === 'walk'}
           />
         ))}
       </group>
