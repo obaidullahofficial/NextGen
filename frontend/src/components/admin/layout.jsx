@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { Bell, UserCircle } from "lucide-react";
 
 const NavBar = () => (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import axios from 'axios';
 
 /**
@@ -26,12 +26,12 @@ const QuickVerify = ({ email, onVerified, showAlways = false }) => {
     setMessage('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/manual-verify-email', {
+      const response = await axios.post('$API_URL/manual-verify-email', {
         email: email
       });
 
       if (response.data.success) {
-        setMessage(response.data.message || 'Email verified successfully! ✅');
+        setMessage(response.data.message || 'Email verified successfully! âœ…');
         
         // Call the onVerified callback if provided
         if (onVerified) {
@@ -48,7 +48,7 @@ const QuickVerify = ({ email, onVerified, showAlways = false }) => {
 
   return (
     <div className="quick-verify-container" style={styles.container}>
-      <div style={styles.badge}>🧪 DEV MODE</div>
+      <div style={styles.badge}>ðŸ§ª DEV MODE</div>
       
       <button
         onClick={handleQuickVerify}
@@ -59,24 +59,24 @@ const QuickVerify = ({ email, onVerified, showAlways = false }) => {
           ...(!email ? styles.buttonDisabled : {})
         }}
       >
-        {isVerifying ? '⏳ Verifying...' : '⚡ Quick Verify Email'}
+        {isVerifying ? 'â³ Verifying...' : 'âš¡ Quick Verify Email'}
       </button>
 
       {message && (
         <div style={styles.success}>
-          ✅ {message}
+          âœ… {message}
         </div>
       )}
 
       {error && (
         <div style={styles.error}>
-          ❌ {error}
+          âŒ {error}
         </div>
       )}
 
       <div style={styles.info}>
         <small>
-          ⚡ Skip email verification for testing<br />
+          âš¡ Skip email verification for testing<br />
           Email: <strong>{email || 'Not provided'}</strong>
         </small>
       </div>

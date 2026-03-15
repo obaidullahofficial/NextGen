@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 
 const ForgotPasswordModal = ({ isOpen, onClose, onSuccess }) => {
     const [email, setEmail] = useState('');
@@ -155,7 +155,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onSuccess }) => {
                         onClick={handleClose}
                         className="text-gray-400 hover:text-[#ED7600] text-2xl font-bold"
                     >
-                        ×
+                        Ã—
                     </button>
                 </div>
 

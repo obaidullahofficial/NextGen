@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", cancelText = "Cancel", type = "warning" }) => {
   if (!isOpen) return null;
@@ -7,28 +7,28 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
     switch (type) {
       case 'danger':
         return {
-          icon: '⚠️',
+          icon: 'âš ï¸',
           confirmButton: 'bg-red-600 hover:bg-red-700 text-white',
           iconBg: 'bg-red-100',
           iconColor: 'text-red-600'
         };
       case 'warning':
         return {
-          icon: '⚠️',
+          icon: 'âš ï¸',
           confirmButton: 'bg-[#ED7600] hover:bg-[#D56900] text-white',
           iconBg: 'bg-orange-100',
           iconColor: 'text-[#ED7600]'
         };
       case 'info':
         return {
-          icon: 'ℹ️',
+          icon: 'â„¹ï¸',
           confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white',
           iconBg: 'bg-blue-100',
           iconColor: 'text-blue-600'
         };
       default:
         return {
-          icon: '❓',
+          icon: 'â“',
           confirmButton: 'bg-[#ED7600] hover:bg-[#D56900] text-white',
           iconBg: 'bg-gray-100',
           iconColor: 'text-gray-600'

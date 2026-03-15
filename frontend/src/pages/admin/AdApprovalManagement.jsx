@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import advertisementAPI from '../../services/advertisementAPI';
 
 const AdApprovalManagement = () => {
@@ -95,14 +95,14 @@ const AdApprovalManagement = () => {
       {error && (
         <div className="alert alert-error">
           {error}
-          <button onClick={() => setError('')} className="close-btn">×</button>
+          <button onClick={() => setError('')} className="close-btn">Ã—</button>
         </div>
       )}
 
       {success && (
         <div className="alert alert-success">
           {success}
-          <button onClick={() => setSuccess('')} className="close-btn">×</button>
+          <button onClick={() => setSuccess('')} className="close-btn">Ã—</button>
         </div>
       )}
 
@@ -120,7 +120,7 @@ const AdApprovalManagement = () => {
         <>
           {pendingAds.length === 0 ? (
             <div className="no-data">
-              <div className="icon">📭</div>
+              <div className="icon">ðŸ“­</div>
               <h2>No Pending Advertisements</h2>
               <p>All advertisements have been reviewed!</p>
             </div>
@@ -197,20 +197,20 @@ const AdApprovalManagement = () => {
                             className="btn btn-success"
                             title="Approve and display immediately"
                           >
-                            ✓ Approve & Display
+                            âœ“ Approve & Display
                           </button>
                           <button 
                             onClick={() => handleApprove(ad._id, false)}
                             className="btn btn-info"
                             title="Approve but don't display yet"
                           >
-                            ✓ Approve Only
+                            âœ“ Approve Only
                           </button>
                           <button 
                             onClick={() => setRejectingAd(ad._id)}
                             className="btn btn-danger"
                           >
-                            ✗ Reject
+                            âœ— Reject
                           </button>
                         </div>
                       )}
@@ -227,7 +227,7 @@ const AdApprovalManagement = () => {
                     disabled={page === 1}
                     className="btn btn-secondary"
                   >
-                    ← Previous
+                    â† Previous
                   </button>
                   <span className="page-info">
                     Page {page} of {pagination.total_pages}
@@ -237,7 +237,7 @@ const AdApprovalManagement = () => {
                     disabled={page === pagination.total_pages}
                     className="btn btn-secondary"
                   >
-                    Next →
+                    Next â†’
                   </button>
                 </div>
               )}

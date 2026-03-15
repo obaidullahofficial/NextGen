@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import KonvaFloorPlan from '../../components/FloorPlan/KonvaFloorPlan';
 import jsPDF from 'jspdf';
@@ -9,7 +9,7 @@ const FloorPlan3D = React.lazy(() =>
     default: () => (
       <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg">
         <div className="text-center p-8">
-          <div className="text-6xl mb-4">🏗️</div>
+          <div className="text-6xl mb-4">ðŸ—ï¸</div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">3D Viewer Unavailable</h3>
           <p className="text-gray-600 text-sm mb-4">
             The 3D viewer requires additional dependencies. Please install Three.js packages:
@@ -39,7 +39,7 @@ const FloorPlanCustomization = () => {
     const initializeFloorPlan = async () => {
       // Prevent duplicate initialization
       if (isInitialized) {
-        console.log('⏭️ Already initialized, skipping');
+        console.log('â­ï¸ Already initialized, skipping');
         return;
       }
       
@@ -48,12 +48,12 @@ const FloorPlanCustomization = () => {
         
         // Check if floor plan has database ID to determine if it's a new or existing floorplan
         if (!floorPlan._id) {
-          console.log('🆕 New floor plan from generator (no database ID)');
+          console.log('ðŸ†• New floor plan from generator (no database ID)');
           console.log('Floor plan data:', floorPlan);
           setFloorPlanData(floorPlan);
           setIsFirstSave(true); // This is a new floorplan
         } else {
-          console.log('✅ Loading existing floor plan with ID:', floorPlan._id || floorPlan.id);
+          console.log('âœ… Loading existing floor plan with ID:', floorPlan._id || floorPlan.id);
           
           // CRITICAL FIX: Flatten floor_plan_data to top level
           // The backend stores dimensions inside floor_plan_data, but KonvaFloorPlan expects them at top level
@@ -71,7 +71,7 @@ const FloorPlanCustomization = () => {
             windows: floorPlan.windows || floorPlan.floor_plan_data?.windows || []
           };
           
-          console.log('📊 Floor plan dimensions:', {
+          console.log('ðŸ“Š Floor plan dimensions:', {
             plotWidth: normalizedData.plotWidth,
             plotHeight: normalizedData.plotHeight,
             actualLength: normalizedData.actualLength,
@@ -80,24 +80,24 @@ const FloorPlanCustomization = () => {
           
           // CRITICAL VALIDATION: Check if dimension values are reasonable
           if (!normalizedData.plotWidth || !normalizedData.plotHeight) {
-            console.warn('⚠️ WARNING: plotWidth or plotHeight missing! Using defaults.');
+            console.warn('âš ï¸ WARNING: plotWidth or plotHeight missing! Using defaults.');
           }
           if (!normalizedData.actualLength || !normalizedData.actualWidth) {
-            console.warn('⚠️ WARNING: actualLength or actualWidth missing! Using defaults.');
+            console.warn('âš ï¸ WARNING: actualLength or actualWidth missing! Using defaults.');
           }
           
-          console.log('🏠 Rooms count:', normalizedData.rooms?.length || 0);
-          console.log('📦 MapData items:', normalizedData.mapData?.length || 0);
+          console.log('ðŸ  Rooms count:', normalizedData.rooms?.length || 0);
+          console.log('ðŸ“¦ MapData items:', normalizedData.mapData?.length || 0);
           
           if (normalizedData.rooms && normalizedData.rooms.length > 0) {
-            console.log('🏠 First room data (backend coords):', normalizedData.rooms[0]);
+            console.log('ðŸ  First room data (backend coords):', normalizedData.rooms[0]);
           }
           
           const stairsInMapData = (normalizedData.mapData || []).filter(item => 
             item.type === 'Stairs' || item.type === 'stairs'
           );
           if (stairsInMapData.length > 0) {
-            console.log('🪜 Stairs loaded from database:', stairsInMapData);
+            console.log('ðŸªœ Stairs loaded from database:', stairsInMapData);
           }
           
           setFloorPlanData(normalizedData);
@@ -107,7 +107,7 @@ const FloorPlanCustomization = () => {
         // Mark as initialized to prevent re-processing
         setIsInitialized(true);
       } else {
-        console.log('❌ No floor plan in navigation state');
+        console.log('âŒ No floor plan in navigation state');
         setIsInitialized(true); // Mark as initialized even if no data
         // If no floor plan data, redirect back to generator
         navigate('/floor-plan/generate', { replace: true });
@@ -119,7 +119,7 @@ const FloorPlanCustomization = () => {
 
   // Handle room updates (called during drag/resize with BACKEND coordinates)
   const handleRoomUpdate = useCallback((roomId, newProperties) => {
-    console.log(`🔄 handleRoomUpdate for ${roomId}:`, newProperties);
+    console.log(`ðŸ”„ handleRoomUpdate for ${roomId}:`, newProperties);
     
     setFloorPlanData(prevData => {
       if (!prevData) return prevData;
@@ -152,8 +152,8 @@ const FloorPlanCustomization = () => {
     const canvasHeight = window.innerHeight - 180;
     const plotWidth  = data.plotWidth  || 1000;
     const plotHeight = data.plotHeight || 1000;
-    const actualLength = data.actualLength || 55;   // feet – horizontal
-    const actualWidth  = data.actualWidth  || 25;    // feet – vertical
+    const actualLength = data.actualLength || 55;   // feet â€“ horizontal
+    const actualWidth  = data.actualWidth  || 25;    // feet â€“ vertical
 
     const availableWidth  = canvasWidth  - minMargin * 2;
     const availableHeight = canvasHeight - minMargin * 2;
@@ -173,14 +173,14 @@ const FloorPlanCustomization = () => {
 
   // Handle rooms change (add/remove)
   const handleRoomsChange = useCallback((updatedRooms) => {
-    console.log('🏠 handleRoomsChange called with', updatedRooms.length, 'rooms');
+    console.log('ðŸ  handleRoomsChange called with', updatedRooms.length, 'rooms');
     
     setFloorPlanData(prevData => {
       if (!prevData) return prevData;
       
       const { offsetX, offsetY, coordScaleX, coordScaleY } = getLayoutProps(prevData);
       
-      console.log('🔧 Coordinate conversion factors:', { offsetX, offsetY, coordScaleX, coordScaleY });
+      console.log('ðŸ”§ Coordinate conversion factors:', { offsetX, offsetY, coordScaleX, coordScaleY });
       
       // Convert ALL Konva rooms back to backend format
       // IMPORTANT: Always convert current x/y/width/height back to backend coords
@@ -205,7 +205,7 @@ const FloorPlanCustomization = () => {
         return backendRoom;
       });
       
-      console.log('✅ Converted all rooms to backend coordinates');
+      console.log('âœ… Converted all rooms to backend coordinates');
       
       return {
         ...prevData,
@@ -326,7 +326,7 @@ const FloorPlanCustomization = () => {
 
   // Handle stairs changes from Konva editor
   const handleStairsChange = useCallback((updatedStairs) => {
-    console.log('🪜 handleStairsChange called with', updatedStairs.length, 'stairs');
+    console.log('ðŸªœ handleStairsChange called with', updatedStairs.length, 'stairs');
     console.log('   Raw Konva stairs:', updatedStairs.map(s => ({ id: s.id, x: s.x, y: s.y, w: s.width, h: s.height })));
     
     setFloorPlanData(prevData => {
@@ -354,7 +354,7 @@ const FloorPlanCustomization = () => {
         return converted;
       });
       
-      console.log('🪜 Converted stairs to backend format:', backendStairs);
+      console.log('ðŸªœ Converted stairs to backend format:', backendStairs);
       
       // Keep only non-stairs items from mapData
       const nonStairsMapData = (prevData.mapData || []).filter(item => 
@@ -366,7 +366,7 @@ const FloorPlanCustomization = () => {
         ...backendStairs
       ];
       
-      console.log('📦 Updated mapData:', {
+      console.log('ðŸ“¦ Updated mapData:', {
         total: newMapData.length,
         stairs: backendStairs.length,
         other: nonStairsMapData.length
@@ -577,7 +577,7 @@ const FloorPlanCustomization = () => {
           const y2 = item.y2 || 0;
           if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
               Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
-            console.warn('⚠️ PDF download: Skipping wall with corrupted coordinates from mapData');
+            console.warn('âš ï¸ PDF download: Skipping wall with corrupted coordinates from mapData');
             return false;
           }
           return true;
@@ -594,7 +594,7 @@ const FloorPlanCustomization = () => {
           const y2 = wall.y2 || 0;
           if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
               Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
-            console.warn('⚠️ PDF download: Skipping wall with corrupted coordinates from walls array');
+            console.warn('âš ï¸ PDF download: Skipping wall with corrupted coordinates from walls array');
             return false;
           }
           return true;
@@ -621,7 +621,7 @@ const FloorPlanCustomization = () => {
           const y2 = item.y2 || 0;
           if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
               Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
-            console.warn('⚠️ PDF download: Skipping door with corrupted coordinates from mapData');
+            console.warn('âš ï¸ PDF download: Skipping door with corrupted coordinates from mapData');
             return false;
           }
           return true;
@@ -638,7 +638,7 @@ const FloorPlanCustomization = () => {
           const y2 = door.y2 || 0;
           if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
               Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
-            console.warn('⚠️ PDF download: Skipping door with corrupted coordinates from doors array');
+            console.warn('âš ï¸ PDF download: Skipping door with corrupted coordinates from doors array');
             return false;
           }
           return true;
@@ -648,7 +648,7 @@ const FloorPlanCustomization = () => {
       
       // Method 3: Auto-generate doors on room walls if no doors found (same as KonvaFloorPlan)
       if (doorsData.length === 0 && floorPlanData.rooms && floorPlanData.rooms.length > 0) {
-        console.log('📋 PDF: Auto-generating doors for rooms (no doors in data)');
+        console.log('ðŸ“‹ PDF: Auto-generating doors for rooms (no doors in data)');
         floorPlanData.rooms.forEach((room, index) => {
           const roomX = room.x || 0;
           const roomY = room.y || 0;
@@ -722,7 +722,7 @@ const FloorPlanCustomization = () => {
           const y2 = item.y2 || 0;
           if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
               Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
-            console.warn('⚠️ PDF download: Skipping window with corrupted coordinates from mapData');
+            console.warn('âš ï¸ PDF download: Skipping window with corrupted coordinates from mapData');
             return false;
           }
           return true;
@@ -739,7 +739,7 @@ const FloorPlanCustomization = () => {
           const y2 = window.y2 || 0;
           if (Math.abs(x1) > maxReasonableCoord || Math.abs(y1) > maxReasonableCoord ||
               Math.abs(x2) > maxReasonableCoord || Math.abs(y2) > maxReasonableCoord) {
-            console.warn('⚠️ PDF download: Skipping window with corrupted coordinates from windows array');
+            console.warn('âš ï¸ PDF download: Skipping window with corrupted coordinates from windows array');
             return false;
           }
           return true;
@@ -845,19 +845,19 @@ const FloorPlanCustomization = () => {
         let arrowText;
         switch (direction) {
           case 'up':
-            arrowText = '↑';
+            arrowText = 'â†‘';
             break;
           case 'down':
-            arrowText = '↓';
+            arrowText = 'â†“';
             break;
           case 'left':
-            arrowText = '←';
+            arrowText = 'â†';
             break;
           case 'right':
-            arrowText = '→';
+            arrowText = 'â†’';
             break;
           default:
-            arrowText = '↑';
+            arrowText = 'â†‘';
         }
         
         ctx.fillStyle = '#000000';
@@ -972,31 +972,31 @@ const FloorPlanCustomization = () => {
       };
       
       // DEBUG: Log what coordinates are actually being saved
-      console.log('💾 Rooms data being saved (should be backend coords 0-1000):');
+      console.log('ðŸ’¾ Rooms data being saved (should be backend coords 0-1000):');
       (floorPlanData.rooms || []).forEach((room, index) => {
         if (index < 3) { // Log first 3 rooms
           console.log(`   ${room.name || room.type}: x=${room.x?.toFixed(1)}, y=${room.y?.toFixed(1)}, w=${room.width?.toFixed(1)}, h=${room.height?.toFixed(1)}`);
           
           // VALIDATION: Check if coordinates look like Konva coords (> 1000)
           if (room.x > 1500 || room.y > 1500 || room.width > 1500 || room.height > 1500) {
-            console.error(`   ❌ ERROR: Room ${room.name || room.type} has KONVA coordinates, not backend coordinates!`);
+            console.error(`   âŒ ERROR: Room ${room.name || room.type} has KONVA coordinates, not backend coordinates!`);
             console.error(`      This will cause double-conversion on reload.`);
           }
         }
       });
       
       const stairsBeingSaved = (floorPlanData.mapData || []).filter(item => item.type === 'Stairs' || item.type === 'stairs');
-      console.log(`💾 Stairs data being saved: ${stairsBeingSaved.length} stairs`);
+      console.log(`ðŸ’¾ Stairs data being saved: ${stairsBeingSaved.length} stairs`);
       stairsBeingSaved.forEach((stair, index) => {
         console.log(`   Stairs ${stair.id}: x=${stair.x?.toFixed(1)}, y=${stair.y?.toFixed(1)}, w=${stair.width?.toFixed(1)}, h=${stair.height?.toFixed(1)}`);
         
         // VALIDATION: Check if coordinates look like Konva coords
         if (stair.x > 1500 || stair.y > 1500 || stair.width > 1500 || stair.height > 1500) {
-          console.error(`   ❌ ERROR: Stairs ${stair.id} has KONVA coordinates, not backend coordinates!`);
+          console.error(`   âŒ ERROR: Stairs ${stair.id} has KONVA coordinates, not backend coordinates!`);
         }
       });
 
-      console.log('💾 Preparing to save floor plan:', {
+      console.log('ðŸ’¾ Preparing to save floor plan:', {
         isFirstSave,
         hasId: !!floorPlanData._id,
         roomCount: saveData.room_data?.length || 0,
@@ -1013,10 +1013,10 @@ const FloorPlanCustomization = () => {
       
       // CRITICAL VALIDATION: Ensure we're not losing dimension data
       if (!saveData.floor_plan_data.plotWidth || !saveData.floor_plan_data.plotHeight) {
-        console.error('❌ ERROR: plotWidth or plotHeight is missing from save data!');
+        console.error('âŒ ERROR: plotWidth or plotHeight is missing from save data!');
       }
       if (!saveData.floor_plan_data.actualLength || !saveData.floor_plan_data.actualWidth) {
-        console.error('❌ ERROR: actualLength or actualWidth is missing from save data!');
+        console.error('âŒ ERROR: actualLength or actualWidth is missing from save data!');
       }
       
       // Debug: Log stairs data specifically
@@ -1024,16 +1024,16 @@ const FloorPlanCustomization = () => {
         item.type === 'Stairs' || item.type === 'stairs'
       );
       if (stairsInMapData && stairsInMapData.length > 0) {
-        console.log('🪜 Stairs being saved:', stairsInMapData);
+        console.log('ðŸªœ Stairs being saved:', stairsInMapData);
       } else {
-        console.warn('⚠️ No stairs found in mapData to save');
+        console.warn('âš ï¸ No stairs found in mapData to save');
       }
 
       // Determine API endpoint based on whether this is first save or update
       const apiEndpoint = (floorPlanData._id && !isFirstSave) ? '/api/floorplan/update' : '/api/floorplan/save';
       const method = (floorPlanData._id && !isFirstSave) ? 'PUT' : 'POST';
       
-      console.log(`📤 ${isFirstSave ? 'Creating new' : 'Updating existing'} floor plan via ${apiEndpoint}`);
+      console.log(`ðŸ“¤ ${isFirstSave ? 'Creating new' : 'Updating existing'} floor plan via ${apiEndpoint}`);
       
       // Prevent multiple concurrent saves
       setIsSaving(true);
@@ -1078,7 +1078,7 @@ const FloorPlanCustomization = () => {
           : `Floor plan "${finalName}" saved successfully!`;
         alert(message);
         
-        console.log('✅ Floor plan saved successfully:', {
+        console.log('âœ… Floor plan saved successfully:', {
           id: result.floorplan_id,
           name: finalName,
           isUpdate: !isFirstSave
@@ -1187,7 +1187,7 @@ const FloorPlanCustomization = () => {
                       : 'text-gray-300 hover:text-white'
                   }`}
                 >
-                  📐 2D Edit
+                  ðŸ“ 2D Edit
                 </button>
                 <button
                   onClick={() => setViewMode('3d')}
@@ -1197,7 +1197,7 @@ const FloorPlanCustomization = () => {
                       : 'text-gray-300 hover:text-white'
                   }`}
                 >
-                  🏗️ 3D View
+                  ðŸ—ï¸ 3D View
                 </button>
               </div>
               

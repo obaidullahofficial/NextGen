@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import paymentAPI from '../../services/paymentAPI';
 
@@ -65,11 +65,11 @@ const PaymentSuccess = () => {
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border border-gray-200">
             {modalType === 'success' ? (
               <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-white text-5xl">✓</span>
+                <span className="text-white text-5xl">âœ“</span>
               </div>
             ) : (
               <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-white text-5xl">✗</span>
+                <span className="text-white text-5xl">âœ—</span>
               </div>
             )}
             

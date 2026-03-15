@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { FiPhone } from "react-icons/fi";
 import AlertModal from '../common/AlertModal';
 import { useAlert } from '../../hooks/useAlert';
@@ -386,7 +386,7 @@ const AddPlotForm = ({ onSubmit, onCancel}) => {
                   className="w-full border border-gray-300 rounded-md p-2 bg-gray-100 text-gray-600 cursor-not-allowed"
                   placeholder="Auto-calculated"
                 />
-                <p className="text-gray-500 text-xs mt-1">Auto-calculated from X × Y</p>
+                <p className="text-gray-500 text-xs mt-1">Auto-calculated from X Ã— Y</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Dimension X (ft)</label>
@@ -422,7 +422,7 @@ const AddPlotForm = ({ onSubmit, onCancel}) => {
               <div className="space-y-2">
                 {form.description.map((item, index) => (
                   <div key={index} className="flex items-center">
-                    <span className="mr-2">•</span>
+                    <span className="mr-2">â€¢</span>
                     <input
                       type="text"
                       value={item}
@@ -476,7 +476,7 @@ const AddPlotForm = ({ onSubmit, onCancel}) => {
               {/* Image preview in society profile view format */}
               {imagePreviews.length > 0 ? (
                 <div className="text-center">
-                  <div className="mb-2 text-sm text-green-600">✓ Current Image</div>
+                  <div className="mb-2 text-sm text-green-600">âœ“ Current Image</div>
                   <img
                     src={imagePreviews[0]}
                     alt="Plot Preview"

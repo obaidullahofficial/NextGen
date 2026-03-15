@@ -1,4 +1,4 @@
-// src/pages/user/SocietyPlots.jsx
+﻿// src/pages/user/SocietyPlots.jsx
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -324,7 +324,7 @@ const SocietyPlots = () => {
                                         
                                         <div className="space-y-2 mb-4">
                                             {plot.dimension_x && plot.dimension_y && (
-                                                <p><span className="font-medium">Dimensions:</span> {plot.dimension_x} × {plot.dimension_y}</p>
+                                                <p><span className="font-medium">Dimensions:</span> {plot.dimension_x} Ã— {plot.dimension_y}</p>
                                             )}
                                             {plot.area && (
                                                 <p><span className="font-medium">Area:</span> {plot.area}</p>

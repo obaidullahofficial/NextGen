@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Box, Grid, Typography, Button, Paper, Alert, Avatar } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { getSocietyProfile, checkProfileCompleteness } from '../../services/apiService';
@@ -177,7 +177,7 @@ const SocietyProfile = () => {
                         border: '2px dashed #ddd'
                       }}
                     >
-                      🏢
+                      ðŸ¢
                     </Avatar>
                   )}
                 </Box>
@@ -311,7 +311,7 @@ const SocietyProfile = () => {
                               fontWeight: 600
                             }}
                           >
-                            <span style={{ fontSize: '18px' }}>✓</span>
+                            <span style={{ fontSize: '18px' }}>âœ“</span>
                             <Typography variant="body2" sx={{ fontWeight: 600, color: '#ED7600' }}>
                               {amenity}
                             </Typography>

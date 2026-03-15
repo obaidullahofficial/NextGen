@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { FiFilter, FiCheckCircle, FiEye } from 'react-icons/fi';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || '$API_URL';
 
 const TemplateGallery = ({ onSelectTemplate, onGenerateNew, societyId }) => {
   const { user } = useAuth();
@@ -73,7 +73,7 @@ const TemplateGallery = ({ onSelectTemplate, onGenerateNew, societyId }) => {
     <div className="bg-white rounded-xl shadow-lg p-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">
-          🏠 Recommended Floor Plans
+          ðŸ  Recommended Floor Plans
         </h2>
         <p className="text-gray-600">
           Society-approved templates that meet all compliance requirements
@@ -148,7 +148,7 @@ const TemplateGallery = ({ onSelectTemplate, onGenerateNew, societyId }) => {
                 <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <FiCheckCircle size={16} />
-                    <span className="text-xs font-semibold">✨ Recommended by Society</span>
+                    <span className="text-xs font-semibold">âœ¨ Recommended by Society</span>
                   </div>
                   <h3 className="font-bold text-lg">
                     {template.template_name || template.project_name}
@@ -174,7 +174,7 @@ const TemplateGallery = ({ onSelectTemplate, onGenerateNew, societyId }) => {
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Dimensions:</span>
-                      <span>{template.dimensions?.width || 1000} × {template.dimensions?.height || 1000} ft</span>
+                      <span>{template.dimensions?.width || 1000} Ã— {template.dimensions?.height || 1000} ft</span>
                     </div>
                   </div>
 

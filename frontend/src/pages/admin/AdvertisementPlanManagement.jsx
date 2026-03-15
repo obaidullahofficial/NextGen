@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import advertisementPlanAPI from '../../services/advertisementPlanAPI';
 
 const AdvertisementPlanManagement = () => {
@@ -171,14 +171,14 @@ const AdvertisementPlanManagement = () => {
 
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-800">
-            <span className="text-xl">⚠</span>
+            <span className="text-xl">âš </span>
             {error}
           </div>
         )}
 
         {success && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-800">
-            <span className="text-xl">✓</span>
+            <span className="text-xl">âœ“</span>
             {success}
           </div>
         )}
@@ -236,21 +236,21 @@ const AdvertisementPlanManagement = () => {
                             onClick={() => openModal(plan)}
                             title="Edit"
                           >
-                            ✏️
+                            âœï¸
                           </button>
                           <button
                             className="p-2 hover:bg-orange-50 rounded transition-colors text-xl"
                             onClick={() => handleToggleStatus(plan._id)}
                             title={plan.is_active ? 'Deactivate' : 'Activate'}
                           >
-                            {plan.is_active ? '🔒' : '🔓'}
+                            {plan.is_active ? 'ðŸ”’' : 'ðŸ”“'}
                           </button>
                           <button
                             className="p-2 hover:bg-red-50 rounded transition-colors text-xl"
                             onClick={() => handleDeletePlan(plan._id)}
                             title="Delete"
                           >
-                            🗑️
+                            ðŸ—‘ï¸
                           </button>
                         </div>
                       </td>

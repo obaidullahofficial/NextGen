@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { getSocietyProfile, updateSocietyProfile } from '../../services/apiService';
 import PopupModal from '../common/PopupModal';
 import { FiX, FiUpload, FiImage, FiUser, FiMapPin, FiHome, FiEdit2, FiLoader, FiCheckCircle } from 'react-icons/fi';
@@ -510,7 +510,7 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
                             placeholder="Society name from registration"
                           />
                           <p className="text-xs text-gray-500 mt-1">
-                            💡 This name was registered during approval and cannot be modified for security reasons.
+                            ðŸ’¡ This name was registered during approval and cannot be modified for security reasons.
                           </p>
                         </div>
 
@@ -529,7 +529,7 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
                             placeholder="e.g. Lahore, Karachi, Islamabad"
                           />
                           <p className="text-xs text-gray-500 mt-1">
-                            💡 This location is from your approved registration and cannot be changed.
+                            ðŸ’¡ This location is from your approved registration and cannot be changed.
                           </p>
                         </div>
 
@@ -567,7 +567,7 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
                                     }`}
                                   >
                                     {profile.available_plots.includes(plotSize) && (
-                                      <span className="text-white text-sm font-bold">✓</span>
+                                      <span className="text-white text-sm font-bold">âœ“</span>
                                     )}
                                   </div>
                                   <span className="text-sm font-medium text-[#2F3D57]">{plotSize}</span>
@@ -719,7 +719,7 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
                                 }`}
                               >
                                 {profile.amenities[amenity.id] && (
-                                  <span className="text-white text-sm font-bold">✓</span>
+                                  <span className="text-white text-sm font-bold">âœ“</span>
                                 )}
                               </div>
                               <span

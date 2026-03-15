@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FiInbox, 
@@ -109,7 +109,7 @@ const MyProgress = () => {
       });
     } else {
       // Backend plan - Navigate to customization page with floor plan data
-      console.log('🔍 Viewing saved floor plan:', plan);
+      console.log('ðŸ” Viewing saved floor plan:', plan);
       navigate('/floor-plan/customize', {
         state: {
           floorPlan: {
@@ -146,7 +146,7 @@ const MyProgress = () => {
       }
       setSavedPlans(savedPlans.filter(p => p._id !== planId && p.key !== planId));
       setShowDeleteConfirm(null);
-      showNotification('🗑️ Floor plan deleted successfully', 'success');
+      showNotification('ðŸ—‘ï¸ Floor plan deleted successfully', 'success');
     } catch (err) {
       console.error('Error deleting floor plan:', err);
       showNotification('Failed to delete floor plan: ' + (err.message || 'Unknown error'), 'error');
@@ -169,7 +169,7 @@ const MyProgress = () => {
       
       // Show success notification
       showNotification(
-        !currentFavoriteStatus ? '⭐ Added to favorites!' : 'Removed from favorites',
+        !currentFavoriteStatus ? 'â­ Added to favorites!' : 'Removed from favorites',
         'success'
       );
     } catch (err) {
@@ -535,7 +535,7 @@ const MyProgress = () => {
                 onClick={() => setSelectedPlan(null)}
                 className="text-white hover:text-gray-200 text-2xl font-bold"
               >
-                ×
+                Ã—
               </button>
             </div>
 

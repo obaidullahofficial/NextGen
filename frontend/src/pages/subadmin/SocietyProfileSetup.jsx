@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Box, Grid, TextField, Button, Typography, Alert, Paper, MenuItem } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { getSocietyProfile, updateSocietyProfile } from '../../services/apiService';
@@ -538,7 +538,7 @@ const SocietyProfileSetup = () => {
                             }}
                           >
                             {profile.available_plots.includes(plotSize) && (
-                              <Typography sx={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>✓</Typography>
+                              <Typography sx={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>âœ“</Typography>
                             )}
                           </Box>
                           <Typography sx={{ fontSize: '14px', color: '#2F3D57', fontWeight: 500, whiteSpace: 'nowrap' }}>
@@ -742,7 +742,7 @@ const SocietyProfileSetup = () => {
                         }}
                       >
                         {profile.amenities[amenity.id] && (
-                          <Typography sx={{ color: 'white', fontSize: 18, fontWeight: 700 }}>✓</Typography>
+                          <Typography sx={{ color: 'white', fontSize: 18, fontWeight: 700 }}>âœ“</Typography>
                         )}
                       </Box>
                       <Typography 
@@ -815,7 +815,7 @@ const SocietyProfileSetup = () => {
                     }}
                   />
                   <Typography variant="body2" sx={{ mt: 1, color: '#2F3D57', fontWeight: 500 }}>
-                    ✅ Logo Preview - Ready for submission
+                    âœ… Logo Preview - Ready for submission
                   </Typography>
                 </Box>
               )}

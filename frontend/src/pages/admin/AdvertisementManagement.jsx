@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { FiEye } from 'react-icons/fi';
 import advertisementAPI from '../../services/advertisementAPI';
 
@@ -240,7 +240,7 @@ const AdvertisementManagement = () => {
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between text-red-800">
             <div className="flex items-center gap-2">
-              <span className="text-xl">⚠</span>
+              <span className="text-xl">âš </span>
               <span>{error}</span>
             </div>
             <button 
@@ -248,7 +248,7 @@ const AdvertisementManagement = () => {
               className="text-red-600 hover:text-red-800 font-bold text-xl leading-none"
               aria-label="Close"
             >
-              ×
+              Ã—
             </button>
           </div>
         )}
@@ -256,7 +256,7 @@ const AdvertisementManagement = () => {
         {success && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between text-green-800">
             <div className="flex items-center gap-2">
-              <span className="text-xl">✓</span>
+              <span className="text-xl">âœ“</span>
               <span>{success}</span>
             </div>
             <button 
@@ -264,7 +264,7 @@ const AdvertisementManagement = () => {
               className="text-green-600 hover:text-green-800 font-bold text-xl leading-none"
               aria-label="Close"
             >
-              ×
+              Ã—
             </button>
           </div>
         )}
@@ -373,13 +373,13 @@ const AdvertisementManagement = () => {
                           disabled={ad.payment_status !== 'paid'}
                           title={ad.payment_status !== 'paid' ? 'Payment must be completed before approval' : 'Approve advertisement'}
                         >
-                          ✓ Approve
+                          âœ“ Approve
                         </button>
                         <button
                           className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium shadow"
                           onClick={() => openApprovalModal(ad, 'reject')}
                         >
-                          ✕ Reject
+                          âœ• Reject
                         </button>
                       </div>
                     </div>
@@ -503,7 +503,7 @@ const AdvertisementManagement = () => {
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
-                ← Previous
+                â† Previous
               </button>
               <span className="text-gray-700 font-semibold text-base bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
                 Page {page} of {pagination.total_pages}
@@ -678,7 +678,7 @@ const AdvertisementManagement = () => {
                       <span>Approving...</span>
                     </>
                   ) : (
-                    <>✓ Approve</>
+                    <>âœ“ Approve</>
                   )}
                 </button>
               )}
@@ -698,7 +698,7 @@ const AdvertisementManagement = () => {
                       <span>Rejecting...</span>
                     </>
                   ) : (
-                    <>✕ Reject</>
+                    <>âœ• Reject</>
                   )}
                 </button>
               )}
@@ -718,7 +718,7 @@ const AdvertisementManagement = () => {
                       <span>Updating...</span>
                     </>
                   ) : (
-                    <>💾 Save Changes</>
+                    <>ðŸ’¾ Save Changes</>
                   )}
                 </button>
               )}
@@ -738,7 +738,7 @@ const AdvertisementManagement = () => {
                       <span>Deleting...</span>
                     </>
                   ) : (
-                    <>🗑 Delete</>
+                    <>ðŸ—‘ Delete</>
                   )}
                 </button>
               )}

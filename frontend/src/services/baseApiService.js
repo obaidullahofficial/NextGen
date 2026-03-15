@@ -1,5 +1,5 @@
-// Base API service with common configuration and utilities
-export const API_URL = "http://localhost:5000/api";
+﻿// Base API service with common configuration and utilities
+export const API_URL = "$API_URL";
 
 /**
  * Helper function to get and validate authentication token

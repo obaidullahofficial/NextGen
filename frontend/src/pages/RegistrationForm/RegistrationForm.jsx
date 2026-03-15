@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Box, Grid, TextField, Button, MenuItem, Typography, Alert, Paper, Divider, Card, CardContent, InputAdornment, FormControlLabel, Checkbox } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import PopupModal from '../../components/common/PopupModal';
@@ -312,7 +312,7 @@ const RegistrationForm = () => {
             position: 'relative',
             zIndex: 1
           }}>
-            🏢 Society Registration
+            ðŸ¢ Society Registration
           </Typography>
           <Typography sx={{ 
             color: "#fff", 
@@ -342,7 +342,7 @@ const RegistrationForm = () => {
                 fontWeight: 600, 
                 fontSize: 14 
               }}>
-                📧 {userData.userEmail}
+                ðŸ“§ {userData.userEmail}
               </Typography>
             </Box>
           )}
@@ -365,14 +365,14 @@ const RegistrationForm = () => {
                 alignItems: 'center',
                 gap: 1
               }}>
-                📋 How to Fill This Form
+                ðŸ“‹ How to Fill This Form
               </Typography>
               <Divider sx={{ mb: 2, borderColor: '#ED7600', opacity: 0.3 }} />
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
                   <Box sx={{ mb: 1.5 }}>
                     <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
-                      🏷️ Society Name
+                      ðŸ·ï¸ Society Name
                     </Typography>
                     <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
                       Enter the official registered name of your society
@@ -380,7 +380,7 @@ const RegistrationForm = () => {
                   </Box>
                   <Box sx={{ mb: 1.5 }}>
                     <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
-                      🏛️ Type & Authority
+                      ðŸ›ï¸ Type & Authority
                     </Typography>
                     <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
                       Select society type (Private/Public) and regulatory authority
@@ -388,7 +388,7 @@ const RegistrationForm = () => {
                   </Box>
                   <Box sx={{ mb: 1.5 }}>
                     <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
-                      🔢 Registration Number
+                      ðŸ”¢ Registration Number
                     </Typography>
                     <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
                       Your official society registration number
@@ -398,7 +398,7 @@ const RegistrationForm = () => {
                 <Grid item xs={12} md={6}>
                   <Box sx={{ mb: 1.5 }}>
                     <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
-                      📅 Established Date
+                      ðŸ“… Established Date
                     </Typography>
                     <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
                       Select when your society was officially established
@@ -406,7 +406,7 @@ const RegistrationForm = () => {
                   </Box>
                   <Box sx={{ mb: 1.5 }}>
                     <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
-                      📞 Contact & Website
+                      ðŸ“ž Contact & Website
                     </Typography>
                     <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
                       Primary contact number and official website URL
@@ -414,7 +414,7 @@ const RegistrationForm = () => {
                   </Box>
                   <Box sx={{ mb: 1.5 }}>
                     <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
-                      🏙️ City Location
+                      ðŸ™ï¸ City Location
                     </Typography>
                     <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
                       Select the city where society is located
@@ -784,7 +784,7 @@ const RegistrationForm = () => {
                           borderRadius: 1,
                           border: '1px solid #e0e0e0'
                         }}>
-                          <Typography sx={{ fontSize: 18 }}>🇵🇰</Typography>
+                          <Typography sx={{ fontSize: 18 }}>ðŸ‡µðŸ‡°</Typography>
                           <Typography sx={{ 
                             fontWeight: 700, 
                             color: '#2F3D57',
@@ -890,7 +890,7 @@ const RegistrationForm = () => {
                   fontSize: 13,
                   fontStyle: 'italic' 
                 }}>
-                  * All fields are required • Your registration will be reviewed by admin
+                  * All fields are required â€¢ Your registration will be reviewed by admin
                 </Typography>
               </Grid>
             </Grid>

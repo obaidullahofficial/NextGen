@@ -1,4 +1,4 @@
-import { authenticatedRequest, API_URL } from './baseApiService.js';
+﻿import { authenticatedRequest, API_URL } from './baseApiService.js';
 
 // ============================
 // SOCIETY PROFILE API FUNCTIONS

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle, useMemo } from 'react';
+﻿import React, { useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle, useMemo } from 'react';
 import { Stage, Layer, Rect, Text, Line, Group, Arc, Circle } from 'react-konva';
 
 const KonvaFloorPlan = forwardRef(({ 
@@ -14,7 +14,7 @@ const KonvaFloorPlan = forwardRef(({
   isEditable = false,
   showWalls = true,
   showAllocatedArea = true,
-  setbacks = null  // { front, rear, left, right } in feet — optional
+  setbacks = null  // { front, rear, left, right } in feet â€” optional
 }, ref) => {
   const [rooms, setRooms] = useState([]);
   const [walls, setWalls] = useState([]);
@@ -61,13 +61,13 @@ const KonvaFloorPlan = forwardRef(({
   
   // Room types matching the generation form
   const roomTypes = [
-    { key: 'livingroom', label: 'Living Room', icon: '🛋️' },
-    { key: 'kitchen', label: 'Kitchen', icon: '🍴' },
-    { key: 'bedroom', label: 'Bedroom', icon: '🛏️' },
-    { key: 'bathroom', label: 'Bathroom', icon: '🚿' },
-    { key: 'carporch', label: 'Car Porch', icon: '🚗' },
-    { key: 'garden', label: 'Garden', icon: '🌳' },
-    { key: 'drawingroom', label: 'Drawing Room', icon: '🛋️' }
+    { key: 'livingroom', label: 'Living Room', icon: 'ðŸ›‹ï¸' },
+    { key: 'kitchen', label: 'Kitchen', icon: 'ðŸ´' },
+    { key: 'bedroom', label: 'Bedroom', icon: 'ðŸ›ï¸' },
+    { key: 'bathroom', label: 'Bathroom', icon: 'ðŸš¿' },
+    { key: 'carporch', label: 'Car Porch', icon: 'ðŸš—' },
+    { key: 'garden', label: 'Garden', icon: 'ðŸŒ³' },
+    { key: 'drawingroom', label: 'Drawing Room', icon: 'ðŸ›‹ï¸' }
   ];
 
   // Calculate centered layout - useMemo for performance
@@ -79,7 +79,7 @@ const KonvaFloorPlan = forwardRef(({
     const actualLength = floorPlanData?.actualLength || 55;
     const actualWidth = floorPlanData?.actualWidth || 25;
     
-    console.log('📐 layoutProps calculation:', { plotWidth, plotHeight, actualLength, actualWidth, canvasWidth: width, canvasHeight: height });
+    console.log('ðŸ“ layoutProps calculation:', { plotWidth, plotHeight, actualLength, actualWidth, canvasWidth: width, canvasHeight: height });
     
     // Available canvas area after margins
     const availableWidth = width - minMargin * 2;
@@ -89,7 +89,7 @@ const KonvaFloorPlan = forwardRef(({
     // actualLength = horizontal (x-axis), actualWidth = vertical (y-axis)
     const scaleToFit = Math.min(availableWidth / actualLength, availableHeight / actualWidth);
     
-    // Pixel dimensions of the plot preview — proportional to real feet
+    // Pixel dimensions of the plot preview â€” proportional to real feet
     const scaledWidth = actualLength * scaleToFit;
     const scaledHeight = actualWidth * scaleToFit;
     
@@ -98,7 +98,7 @@ const KonvaFloorPlan = forwardRef(({
     const coordScaleX = scaledWidth / plotWidth;
     const coordScaleY = scaledHeight / plotHeight;
     
-    console.log('📐 Calculated scales:', { coordScaleX, coordScaleY, scaledWidth, scaledHeight });
+    console.log('ðŸ“ Calculated scales:', { coordScaleX, coordScaleY, scaledWidth, scaledHeight });
     
     // General scale factor for stroke widths and other non-directional sizes
     const scale = Math.min(coordScaleX, coordScaleY);
@@ -473,7 +473,7 @@ const KonvaFloorPlan = forwardRef(({
       // Use centered layout props with separate x/y coordinate scales
       const { offsetX, offsetY, scale, coordScaleX, coordScaleY } = layoutProps;
       
-      console.log('🔧 KonvaFloorPlan: Converting backend data to Konva coordinates');
+      console.log('ðŸ”§ KonvaFloorPlan: Converting backend data to Konva coordinates');
       console.log('   Layout props:', { offsetX, offsetY, coordScaleX, coordScaleY });
       
       // Convert rooms data with proportional scaling (different for x and y)
@@ -717,7 +717,7 @@ const KonvaFloorPlan = forwardRef(({
       // Convert stairs data with proper scaling
       let stairsData = [];
       
-      console.log('🪜 KonvaFloorPlan: Loading stairs from backend data');
+      console.log('ðŸªœ KonvaFloorPlan: Loading stairs from backend data');
       
       // Check mapData for stairs
       if (floorPlanData.mapData && Array.isArray(floorPlanData.mapData)) {
@@ -2164,7 +2164,7 @@ const KonvaFloorPlan = forwardRef(({
           {/* Quick Add Section */}
           <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
             <div className="text-xs font-medium text-gray-900 mb-2">
-              🔨 Creation Tools
+              ðŸ”¨ Creation Tools
             </div>
             
             <div className="space-y-2">
@@ -2174,7 +2174,7 @@ const KonvaFloorPlan = forwardRef(({
                 className="w-full px-2 py-1.5 text-xs rounded border bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors"
                 title="Add door at center"
               >
-                🚪 Add Door
+                ðŸšª Add Door
               </button>
               
               {/* Quick Add Stairs */}
@@ -2183,7 +2183,7 @@ const KonvaFloorPlan = forwardRef(({
                 className="w-full px-2 py-1.5 text-xs rounded border bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors"
                 title="Add stairs at center"
               >
-                🪜 Add Stairs
+                ðŸªœ Add Stairs
               </button>
               
               {/* Quick Add Window */}
@@ -2211,7 +2211,7 @@ const KonvaFloorPlan = forwardRef(({
                 className="w-full px-2 py-1.5 text-xs rounded border bg-cyan-50 border-cyan-300 text-cyan-800 hover:bg-cyan-100 transition-colors"
                 title="Add window at center"
               >
-                🪟 Add Window
+                ðŸªŸ Add Window
               </button>
               
               {/* Quick Add Room */}
@@ -2220,7 +2220,7 @@ const KonvaFloorPlan = forwardRef(({
                 className="w-full px-2 py-1.5 text-xs rounded border bg-purple-50 border-purple-300 text-purple-800 hover:bg-purple-100 transition-colors"
                 title="Add room at center"
               >
-                🏠 Add Room
+                ðŸ  Add Room
               </button>
             </div>
           </div>
@@ -2228,7 +2228,7 @@ const KonvaFloorPlan = forwardRef(({
           {/* Grid Settings */}
           <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
             <div className="text-xs font-medium text-gray-900 mb-2">
-              📐 Grid Settings
+              ðŸ“ Grid Settings
             </div>
             
             <div className="space-y-2">
@@ -2242,7 +2242,7 @@ const KonvaFloorPlan = forwardRef(({
                 }`}
                 title={snapToGrid ? 'Grid snap enabled (25px)' : 'Grid snap disabled'}
               >
-                {snapToGrid ? '✓ 25px Grid: ON' : '✗ 25px Grid: OFF'}
+                {snapToGrid ? 'âœ“ 25px Grid: ON' : 'âœ— 25px Grid: OFF'}
               </button>
               
               <div className="text-xs text-gray-500 text-center">
@@ -2257,7 +2257,7 @@ const KonvaFloorPlan = forwardRef(({
           {(selectedDoor || selectedWall) && !selectedRoom && (
             <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
               <div className="text-sm font-medium text-gray-900 mb-3">
-                🎨 Customize {selectedDoor ? 'Door' : 'Wall'}
+                ðŸŽ¨ Customize {selectedDoor ? 'Door' : 'Wall'}
               </div>
               
               {selectedDoor && (
@@ -2347,7 +2347,7 @@ const KonvaFloorPlan = forwardRef(({
           {/* Room Type Distribution Panel */}
           <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
             <div className="text-xs font-medium text-gray-900 mb-2">
-              🏠 Room Types
+              ðŸ  Room Types
             </div>
             <div className="space-y-1 max-h-32 overflow-y-auto">
               {Object.entries(roomTypeDistribution).map(([roomType, percentage]) => (
@@ -2518,11 +2518,11 @@ const KonvaFloorPlan = forwardRef(({
             );
           })()}
 
-          {/* Setback zone overlay — inner buildable boundary + dimension labels */}
+          {/* Setback zone overlay â€” inner buildable boundary + dimension labels */}
           {setbacks && floorPlanData && (() => {
             const { offsetX, offsetY, scaledWidth, scaledHeight, scaleToFit } = layoutProps;
 
-            // Convert setback feet → canvas pixels
+            // Convert setback feet â†’ canvas pixels
             const frontPx = (parseFloat(setbacks.front) || 0) * scaleToFit;
             const rearPx  = (parseFloat(setbacks.rear)  || 0) * scaleToFit;
             const leftPx  = (parseFloat(setbacks.left)  || 0) * scaleToFit;
@@ -2555,7 +2555,7 @@ const KonvaFloorPlan = forwardRef(({
                   listening={false}
                 />
 
-                {/* Rear setback label — top zone, centred */}
+                {/* Rear setback label â€” top zone, centred */}
                 {rearPx > 8 && (
                   <Text
                     x={offsetX}
@@ -2571,7 +2571,7 @@ const KonvaFloorPlan = forwardRef(({
                   />
                 )}
 
-                {/* Front setback label — bottom zone, centred */}
+                {/* Front setback label â€” bottom zone, centred */}
                 {frontPx > 8 && (
                   <Text
                     x={offsetX}
@@ -2587,7 +2587,7 @@ const KonvaFloorPlan = forwardRef(({
                   />
                 )}
 
-                {/* Left setback label — left zone, rotated -90° */}
+                {/* Left setback label â€” left zone, rotated -90Â° */}
                 {leftPx > 8 && (
                   <Text
                     x={offsetX + leftPx / 2}
@@ -2602,7 +2602,7 @@ const KonvaFloorPlan = forwardRef(({
                   />
                 )}
 
-                {/* Right setback label — right zone, rotated 90° */}
+                {/* Right setback label â€” right zone, rotated 90Â° */}
                 {rightPx > 8 && (
                   <Text
                     x={offsetX + scaledWidth - rightPx / 2}
@@ -2708,7 +2708,7 @@ const KonvaFloorPlan = forwardRef(({
               <Text
                 x={room.x}
                 y={room.y + renderHeight / 2}
-                text={`${Math.round((renderWidth / layoutProps.scaledWidth) * layoutProps.actualLength)}'×${Math.round((renderHeight / layoutProps.scaledHeight) * layoutProps.actualWidth)}'`}
+                text={`${Math.round((renderWidth / layoutProps.scaledWidth) * layoutProps.actualLength)}'Ã—${Math.round((renderHeight / layoutProps.scaledHeight) * layoutProps.actualWidth)}'`}
                 fontSize={Math.min(10, Math.max(7, Math.min(renderWidth, renderHeight) / 15))}
                 fontFamily="Arial"
                 fill="#6b7280"
@@ -3133,9 +3133,9 @@ const KonvaFloorPlan = forwardRef(({
                 x={stair.x}
                 y={stair.y + stair.height / 2 - 10}
                 text={
-                  stair.direction === 'up' ? '↑' : 
-                  stair.direction === 'down' ? '↓' :
-                  stair.direction === 'left' ? '←' : '→'
+                  stair.direction === 'up' ? 'â†‘' : 
+                  stair.direction === 'down' ? 'â†“' :
+                  stair.direction === 'left' ? 'â†' : 'â†’'
                 }
                 fontSize={24}
                 fill="#78350f"
@@ -3438,7 +3438,7 @@ const KonvaFloorPlan = forwardRef(({
                 Position: ({Math.round(rooms.find(r => r.id === selectedRoom)?.x || 0)}, {Math.round(rooms.find(r => r.id === selectedRoom)?.y || 0)})
               </div>
               <div className="text-xs text-gray-600">
-                Size: {Math.round(rooms.find(r => r.id === selectedRoom)?.width || 0)}×{Math.round(rooms.find(r => r.id === selectedRoom)?.height || 0)}
+                Size: {Math.round(rooms.find(r => r.id === selectedRoom)?.width || 0)}Ã—{Math.round(rooms.find(r => r.id === selectedRoom)?.height || 0)}
               </div>
             </>
           )}
@@ -3499,10 +3499,10 @@ const KonvaFloorPlan = forwardRef(({
             const currentStair = stairs.find(s => s.id === contextMenu.id);
             const currentDirection = currentStair?.direction || 'up';
             const allDirections = [
-              { value: 'up', label: 'Up', icon: '↑' },
-              { value: 'down', label: 'Down', icon: '↓' },
-              { value: 'left', label: 'Left', icon: '←' },
-              { value: 'right', label: 'Right', icon: '→' }
+              { value: 'up', label: 'Up', icon: 'â†‘' },
+              { value: 'down', label: 'Down', icon: 'â†“' },
+              { value: 'left', label: 'Left', icon: 'â†' },
+              { value: 'right', label: 'Right', icon: 'â†’' }
             ];
             const availableDirections = allDirections.filter(d => d.value !== currentDirection);
             

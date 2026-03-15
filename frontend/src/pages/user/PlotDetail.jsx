@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiPhone, FiMapPin, FiDollarSign, FiHome, FiShield, FiCheckCircle } from 'react-icons/fi';
 import { HiOutlineDocumentText, HiOutlineTemplate } from 'react-icons/hi';
@@ -8,7 +8,7 @@ import plotImage from '../../assets/plot.png';
 import Navbar from '../../components/user/Navbar';
 import Footer from '../../components/user/Footer';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || '$API_URL';
 
 // Helper to get auth headers
 const getAuthHeaders = () => {
@@ -192,7 +192,7 @@ const PlotDetail = () => {
     location: 'Bahria Town, Islamabad',
     description: [
       'Located in Bahria Enclave Sector P',
-      '10 Marla Residential Plot – Street 13',
+      '10 Marla Residential Plot â€“ Street 13',
       'Possession & Utility Charges Paid',
       'Beautiful View & Prime Location',
       'Reasonable Price & Investment Opportunity',
@@ -277,7 +277,7 @@ const PlotDetail = () => {
         {/* Debug indicator - remove in production */}
         {!plotData && (
           <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 rounded text-sm text-yellow-800">
-            ⚠️ Displaying sample data - unable to load plot details
+            âš ï¸ Displaying sample data - unable to load plot details
           </div>
         )}
         
@@ -285,7 +285,7 @@ const PlotDetail = () => {
           onClick={() => navigate(-1)} 
           className="mb-6 flex items-center text-[#ED7600] hover:text-[#d46000]"
         >
-          <span className="mr-2">←</span> Back to Plots
+          <span className="mr-2">â†</span> Back to Plots
         </button>
         
         <div className="grid md:grid-cols-3 gap-8">
@@ -330,7 +330,7 @@ const PlotDetail = () => {
                 <div>
                   <p className="uppercase text-xs font-medium">Dimensions</p>
                   <p className="font-semibold text-base text-[#2F3D57]">
-                    {displayData.dimension_x} ft × {displayData.dimension_y} ft
+                    {displayData.dimension_x} ft Ã— {displayData.dimension_y} ft
                   </p>
                 </div>
                 {societyData && (
@@ -372,7 +372,7 @@ const PlotDetail = () => {
                   <ul className="space-y-2 text-sm leading-relaxed">
                     {generateComplianceInstructions(complianceRules).map((instruction, index) => (
                       <li key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-orange-50 transition-colors">
-                        <span className="text-orange-600 flex-shrink-0 mt-1">•</span>
+                        <span className="text-orange-600 flex-shrink-0 mt-1">â€¢</span>
                         <div className="flex-1">
                           <p className="text-gray-700 leading-relaxed">
                             {instruction.split('**').map((part, i) => 

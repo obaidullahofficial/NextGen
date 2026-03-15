@@ -1,6 +1,6 @@
-// API service for Society Profiles CRUD operations
+﻿// API service for Society Profiles CRUD operations
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = '$API_URL';
 
 // Helper function to get authorization headers
 const getAuthHeaders = () => {

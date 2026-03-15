@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/user/Navbar';
 import Footer from '../../components/user/Footer';
 import advertisementAPI from '../../services/advertisementAPI';
@@ -132,7 +132,7 @@ const OffersPage = () => {
                 <div className="relative">
                   {offer.is_featured && (
                     <div className="absolute top-3 left-3 bg-[#ED7600] text-white text-xs font-bold px-3 py-1 rounded-md flex items-center z-10">
-                      ⭐ Featured
+                      â­ Featured
                     </div>
                   )}
                   {offer.status && (
@@ -213,7 +213,7 @@ const OffersPage = () => {
                       onClick={() => handleOfferClick(offer)}
                       className="flex-1 bg-[#2F3D57] text-white text-center py-2 rounded-lg font-semibold hover:bg-[#1E2936] transition-colors flex items-center justify-center"
                     >
-                      👁️ View Details
+                      ðŸ‘ï¸ View Details
                     </button>
                     {offer.contact_info && (
                       <a
@@ -221,7 +221,7 @@ const OffersPage = () => {
                         onClick={(e) => e.stopPropagation()}
                         className="flex-1 bg-[#ED7600] text-white text-center py-2 rounded-lg font-semibold hover:bg-[#d66a00] transition-colors flex items-center justify-center"
                       >
-                        📞 Contact
+                        ðŸ“ž Contact
                       </a>
                     )}
                   </div>
@@ -257,7 +257,7 @@ const OffersPage = () => {
                 onClick={closeModal}
                 className="text-gray-500 hover:text-gray-700 text-3xl font-bold leading-none"
               >
-                ×
+                Ã—
               </button>
             </div>
 
@@ -276,7 +276,7 @@ const OffersPage = () => {
                   <img
                     src={selectedOffer.image_url.startsWith('http') 
                       ? selectedOffer.image_url 
-                      : `http://localhost:5000${selectedOffer.image_url}`}
+                      : `https://nextgen-ta95.onrender.com${selectedOffer.image_url}`}
                     alt={selectedOffer.title}
                     className="w-full h-64 object-cover"
                     onError={(e) => {

@@ -1,5 +1,5 @@
-// Advertisement Plan API Service
-const API_BASE_URL = 'http://localhost:5000/api';
+﻿// Advertisement Plan API Service
+const API_BASE_URL = '$API_URL';
 
 class AdvertisementPlanAPI {
   getAuthToken() {

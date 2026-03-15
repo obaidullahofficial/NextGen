@@ -1,4 +1,4 @@
-// components/ComplianceManagement.jsx
+﻿// components/ComplianceManagement.jsx
 import React, { useState } from "react";
 import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes } from "react-icons/fa";
 
@@ -438,7 +438,7 @@ const ComplianceManagement = () => {
                             <div key={connection.id} className="flex items-center justify-between bg-gray-50 p-2 rounded text-xs">
                               <span>
                                 <span className="font-medium">{connection.room1} {connection.room1Number}</span>
-                                <span className="mx-1 text-gray-400">↔</span>
+                                <span className="mx-1 text-gray-400">â†”</span>
                                 <span className="font-medium">{connection.room2} {connection.room2Number}</span>
                               </span>
                               <button

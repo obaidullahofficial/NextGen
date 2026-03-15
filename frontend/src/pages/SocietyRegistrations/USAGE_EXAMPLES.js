@@ -1,4 +1,4 @@
-// USAGE EXAMPLES FOR SOCIETY REGISTRATIONS LIST
+﻿// USAGE EXAMPLES FOR SOCIETY REGISTRATIONS LIST
 
 // =====================================================
 // 1. Add to App.jsx routing (Admin section)

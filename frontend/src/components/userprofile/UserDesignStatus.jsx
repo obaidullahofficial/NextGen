@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { userProfileAPI } from "../../services/userProfileAPI";
 import { Eye, FileText, Calendar, MapPin, AlertCircle } from "lucide-react";
 
@@ -228,7 +228,7 @@ const UserDesignStatus = () => {
                 onClick={() => setSelectedRequest(null)}
                 className="text-white hover:text-gray-200 text-2xl font-bold"
               >
-                ×
+                Ã—
               </button>
             </div>
 
