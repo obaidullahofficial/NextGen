@@ -1,24 +1,16 @@
-cd backend
-pip install flask flask-cors pymongo
-pip install flask-jwt-extended
-python -m pip install "pymongo[srv]"
-npm install jspdf html2canvas
-pip install google-auth google-auth-oauthlib google-auth-httplib2
-pip install python-dotenv
-pip install numpy
-pip install stripe
-pip install requests
-pip install --upgrade werkzeug
-pip install google-genai
-
-python app.py
-
-{
-  "username": "admin",
-  "email": "admin@example.com",
-  "password": "Admin#123",
-  "role": "admin"
-}
+flask
+flask-cors
+pymongo[srv]
+flask-jwt-extended
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+python-dotenv
+numpy
+stripe
+requests
+werkzeug
+google-genai
   "username": "testuser5",
   "email": "abcf@example.com",
   "password": "abcf@example.com",
