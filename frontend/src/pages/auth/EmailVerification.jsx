@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
@@ -63,7 +63,7 @@ const EmailVerification = () => {
       setError('Please enter a 6-digit verification code');
       return;
     }
-    if (code.length !== 6 || !/^https://nextgen-ta95.onrender.com/apid{6}$/.test(code)) {
+    if (code.length !== 6 || !/^\d{6}$/.test(code)) {
       setError('Verification code must be 6 digits');
       return;
     }
@@ -100,7 +100,7 @@ const EmailVerification = () => {
     return (
       <div style={styles.container}>
         <div style={styles.card}>
-          <div style={styles.loader}>â³</div>
+          <div style={styles.loader}>Ã¢ÂÂ³</div>
           <h2 style={styles.title}>Verifying Your Email...</h2>
           <p style={styles.text}>Please wait while we verify your email address.</p>
         </div>
@@ -112,7 +112,7 @@ const EmailVerification = () => {
     return (
       <div style={styles.container}>
         <div style={styles.card}>
-          <div style={styles.successIcon}>âœ…</div>
+          <div style={styles.successIcon}>Ã¢Å“â€¦</div>
           <h2 style={styles.title}>Email Verified Successfully!</h2>
           <p style={styles.successText}>{message}</p>
           <p style={styles.text}>
@@ -139,14 +139,14 @@ const EmailVerification = () => {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.header}>
-          <div style={styles.logo}>ðŸ“§</div>
+          <div style={styles.logo}>Ã°Å¸â€œÂ§</div>
           <h1 style={styles.title}>Email Verification</h1>
           <p style={styles.subtitle}>NextGen Architect</p>
         </div>
 
         {error && (
           <div style={styles.errorBox}>
-            <span style={styles.errorIcon}>âŒ</span>
+            <span style={styles.errorIcon}>Ã¢ÂÅ’</span>
             <div>
               <strong>Verification Failed</strong>
               <p style={styles.errorText}>{error}</p>
@@ -156,7 +156,7 @@ const EmailVerification = () => {
 
         {message && !error && (
           <div style={styles.successBox}>
-            <span style={styles.successIcon}>âœ…</span>
+            <span style={styles.successIcon}>Ã¢Å“â€¦</span>
             <p style={styles.successText}>{message}</p>
           </div>
         )}
@@ -183,7 +183,7 @@ const EmailVerification = () => {
               ...(!code || code.length !== 6 ? styles.buttonDisabled : {})
             }}
           >
-            {verifying ? 'â³ Verifying...' : 'Verify Email'}
+            {verifying ? 'Ã¢ÂÂ³ Verifying...' : 'Verify Email'}
           </button>
         </div>
 
@@ -205,13 +205,13 @@ const EmailVerification = () => {
               ...(!email ? styles.buttonDisabled : {})
             }}
           >
-            {loading ? 'â³ Sending...' : 'ðŸ“§ Resend Verification Email'}
+            {loading ? 'Ã¢ÂÂ³ Sending...' : 'Ã°Å¸â€œÂ§ Resend Verification Email'}
           </button>
         </div>
 
         {/* Help Section */}
         <div style={styles.helpBox}>
-          <div style={styles.helpIcon}>ðŸ“¬</div>
+          <div style={styles.helpIcon}>Ã°Å¸â€œÂ¬</div>
           <h4 style={styles.helpTitle}>Email Verification Help</h4>
           <ul style={styles.helpList}>
             <li>Check your Gmail inbox for the verification email</li>
@@ -227,7 +227,7 @@ const EmailVerification = () => {
             onClick={() => navigate('/login')}
             style={styles.linkButton}
           >
-            â† Back to Login
+            Ã¢â€ Â Back to Login
           </button>
         </div>
       </div>
@@ -407,3 +407,4 @@ const styles = {
 };
 
 export default EmailVerification;
+

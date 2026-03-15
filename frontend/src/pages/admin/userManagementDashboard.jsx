@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { 
   Edit2, 
   Trash2, 
@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 //
-// ðŸ”¹ Add User Modal Component
+// Ã°Å¸â€Â¹ Add User Modal Component
 //
 function AddUserModal({ isOpen, onClose, onUserAdded }) {
   const [formData, setFormData] = useState({
@@ -284,7 +284,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }) {
 }
 
 //
-// ðŸ”¹ View User Modal Component
+// Ã°Å¸â€Â¹ View User Modal Component
 //
 function ViewUserModal({ isOpen, onClose, user }) {
   if (!isOpen || !user) return null;
@@ -362,7 +362,7 @@ function ViewUserModal({ isOpen, onClose, user }) {
 }
 
 //
-// ðŸ”¹ Edit User Modal Component
+// Ã°Å¸â€Â¹ Edit User Modal Component
 //
 function EditUserModal({ isOpen, onClose, user, onUserUpdated }) {
   const [formData, setFormData] = useState({
@@ -416,7 +416,7 @@ function EditUserModal({ isOpen, onClose, user, onUserUpdated }) {
         updateData.password = formData.password;
       }
 
-      const response = await fetch(https://nextgen-ta95.onrender.com/api/users/${user._id}`, {
+      const response = await fetch(`https://nextgen-ta95.onrender.com/api/users/${user._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -582,7 +582,7 @@ function EditUserModal({ isOpen, onClose, user, onUserUpdated }) {
 }
 
 //
-// ðŸ”¹ Delete Confirmation Modal
+// Ã°Å¸â€Â¹ Delete Confirmation Modal
 //
 function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
   const [loading, setLoading] = useState(false);
@@ -593,7 +593,7 @@ function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
     setError('');
 
     try {
-      const response = await fetch(https://nextgen-ta95.onrender.com/api/users/${user._id}`, {
+      const response = await fetch(`https://nextgen-ta95.onrender.com/api/users/${user._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': 'Bearer ' + localStorage.getItem('token')
@@ -655,7 +655,7 @@ function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
           
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
             <p className="text-sm text-yellow-800">
-              âš ï¸ This will permanently remove the user and all associated data.
+              Ã¢Å¡Â Ã¯Â¸Â This will permanently remove the user and all associated data.
             </p>
           </div>
 
@@ -691,7 +691,7 @@ function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
 }
 
 //
-// ðŸ”¹ Avatar Component
+// Ã°Å¸â€Â¹ Avatar Component
 //
 function Avatar({ name, avatar, role }) {
   const getRoleColor = (role) => {
@@ -733,7 +733,7 @@ function Avatar({ name, avatar, role }) {
 }
 
 //
-// ðŸ”¹ Status Badge Component
+// Ã°Å¸â€Â¹ Status Badge Component
 //
 function StatusBadge({ status }) {
   const colors = {
@@ -748,13 +748,13 @@ function StatusBadge({ status }) {
         colors[status] || "bg-gray-100 text-gray-700 border border-gray-200"
       }`}
     >
-      â€¢ {status}
+      Ã¢â‚¬Â¢ {status}
     </span>
   );
 }
 
 //
-// ðŸ”¹ Role Badge Component
+// Ã°Å¸â€Â¹ Role Badge Component
 //
 function RoleBadge({ role }) {
   const colors = {
@@ -782,7 +782,7 @@ function RoleBadge({ role }) {
 }
 
 //
-// ðŸ”¹ User Row Component
+// Ã°Å¸â€Â¹ User Row Component
 //
 function UserRow({ user, index, selectedUsers, onSelectUser, onViewUser, onEditUser, onDeleteUser }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -874,7 +874,7 @@ function UserRow({ user, index, selectedUsers, onSelectUser, onViewUser, onEditU
 }
 
 //
-// ðŸ”¹ Stats Card Component
+// Ã°Å¸â€Â¹ Stats Card Component
 //
 function StatsCard({ icon: Icon, title, value, change, color = "blue" }) {
   const colorClasses = {
@@ -900,7 +900,7 @@ function StatsCard({ icon: Icon, title, value, change, color = "blue" }) {
 }
 
 //
-// ðŸ”¹ Dashboard Component
+// Ã°Å¸â€Â¹ Dashboard Component
 //
 export default function UserManagementDashboard() {
   const [users, setUsers] = useState([]);
@@ -921,7 +921,7 @@ export default function UserManagementDashboard() {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
-  // ðŸ”¹ Fetch users from backend
+  // Ã°Å¸â€Â¹ Fetch users from backend
   const fetchUsers = async () => {
     try {
       setRefreshing(true);
@@ -951,7 +951,7 @@ export default function UserManagementDashboard() {
     fetchUsers();
   }, []);
 
-  // ðŸ”¹ CRUD Handlers
+  // Ã°Å¸â€Â¹ CRUD Handlers
   const handleViewUser = (user) => {
     setSelectedUser(user);
     setIsViewModalOpen(true);
@@ -967,7 +967,7 @@ export default function UserManagementDashboard() {
     setIsDeleteModalOpen(true);
   };
 
-  // ðŸ”¹ Bulk Selection Handlers
+  // Ã°Å¸â€Â¹ Bulk Selection Handlers
   const handleSelectUser = (userId) => {
     setSelectedUsers(prev => {
       if (prev.includes(userId)) {
@@ -1017,7 +1017,7 @@ export default function UserManagementDashboard() {
     }
   };
 
-  // ðŸ”¹ Modal Callbacks
+  // Ã°Å¸â€Â¹ Modal Callbacks
   const handleUserAdded = () => {
     fetchUsers(); // Refresh the user list
     setIsAddUserModalOpen(false);
@@ -1035,7 +1035,7 @@ export default function UserManagementDashboard() {
     setSelectedUser(null);
   };
 
-  // ðŸ”¹ Search + Filter + Pagination
+  // Ã°Å¸â€Â¹ Search + Filter + Pagination
   const filteredUsers = users.filter((u) => {
     const matchesSearch = 
       u.username?.toLowerCase().includes(search.toLowerCase()) ||
@@ -1051,7 +1051,7 @@ export default function UserManagementDashboard() {
     currentPage * usersPerPage
   );
 
-  // ðŸ”¹ Calculate stats
+  // Ã°Å¸â€Â¹ Calculate stats
   const totalUsers = users.length;
   const adminCount = users.filter(u => u.role === 'admin').length;
   const societyCount = users.filter(u => u.role === 'society').length;
@@ -1060,7 +1060,7 @@ export default function UserManagementDashboard() {
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto">
-        {/* ðŸ”¹ Header */}
+        {/* Ã°Å¸â€Â¹ Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -1095,7 +1095,7 @@ export default function UserManagementDashboard() {
             </div>
           </div>
 
-          {/* ðŸ”¹ Stats Cards */}
+          {/* Ã°Å¸â€Â¹ Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <StatsCard
               icon={Users}
@@ -1127,9 +1127,9 @@ export default function UserManagementDashboard() {
           </div>
         </div>
 
-        {/* ðŸ”¹ Main Content */}
+        {/* Ã°Å¸â€Â¹ Main Content */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* ðŸ”¹ Filters */}
+          {/* Ã°Å¸â€Â¹ Filters */}
           <div className="p-6 border-b border-gray-100 bg-gray-50">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
               <div className="flex items-center space-x-4">
@@ -1163,7 +1163,7 @@ export default function UserManagementDashboard() {
             </div>
           </div>
 
-          {/* ðŸ”¹ Table */}
+          {/* Ã°Å¸â€Â¹ Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-100">
@@ -1228,7 +1228,7 @@ export default function UserManagementDashboard() {
             </table>
           </div>
 
-          {/* ðŸ”¹ Pagination */}
+          {/* Ã°Å¸â€Â¹ Pagination */}
           {filteredUsers.length > 0 && (
             <div className="p-6 bg-gray-50 border-t border-gray-100">
               <div className="flex items-center justify-between">
@@ -1289,7 +1289,7 @@ export default function UserManagementDashboard() {
         </div>
       </div>
 
-      {/* ðŸ”¹ Modals */}
+      {/* Ã°Å¸â€Â¹ Modals */}
       <AddUserModal
         isOpen={isAddUserModalOpen}
         onClose={() => setIsAddUserModalOpen(false)}
@@ -1318,3 +1318,5 @@ export default function UserManagementDashboard() {
     </div>
   );
 }
+
+

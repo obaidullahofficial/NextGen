@@ -133,7 +133,7 @@ const FloorPlanManager = () => {
       console.log('ðŸ‘¤ User object:', user);
       
       // Use society endpoint for subadmins to get all floor plans in their society
-      const response = await fetch(https://nextgen-ta95.onrender.com/api/floorplan/society/${userId}`, {
+        const response = await fetch(`https://nextgen-ta95.onrender.com/api/floorplan/society/${userId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },

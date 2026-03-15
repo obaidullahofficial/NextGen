@@ -142,7 +142,7 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
     }
     
     // Remove all spaces, dashes, and parentheses
-    const cleaned = phone.replace(/[https://nextgen-ta95.onrender.com/apishttps://nextgen-ta95.onrender.com/api-()]/g, '');
+    const cleaned = phone.replace(/[\s\-()]/g, '');
     
     // Pakistani phone number patterns:
     // +92XXXXXXXXXX (13 digits with +92)

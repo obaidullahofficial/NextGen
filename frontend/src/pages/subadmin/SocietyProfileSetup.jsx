@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Grid, TextField, Button, Typography, Alert, Paper, MenuItem } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { getSocietyProfile, updateSocietyProfile } from '../../services/apiService';
@@ -154,7 +154,7 @@ const SocietyProfileSetup = () => {
     }
     
     // Remove all spaces, dashes, and parentheses
-    const cleaned = phone.replace(/[https://nextgen-ta95.onrender.com/apishttps://nextgen-ta95.onrender.com/api-()]/g, '');
+    const cleaned = phone.replace(/[\s\-()]/g, '');
     
     // Pakistani phone number patterns:
     // +92XXXXXXXXXX (13 digits with +92)

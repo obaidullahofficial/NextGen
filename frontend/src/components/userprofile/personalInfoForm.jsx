@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userProfileAPI, createProfileFormData } from '../../services/userProfileAPI';
 import { useAuth } from '../../context/AuthContext';
@@ -146,7 +146,7 @@ const PersonalInfoForm = () => {
                     ? 'text-green-700' 
                     : 'text-orange-700'
                 }`}>
-                  {existingProfile.is_verified ? 'âœ“ Verified Account' : 'â³ Pending Verification'}
+                  {existingProfile.is_verified ? 'Ã¢Å“â€œ Verified Account' : 'Ã¢ÂÂ³ Pending Verification'}
                 </p>
                 <p className="text-xs text-gray-600 mt-1">
                   {existingProfile.is_verified 
@@ -318,7 +318,7 @@ const PersonalInfoForm = () => {
                       />
                     ) : existingProfile?.profile_image_url ? (
                       <img
-                        src={https://nextgen-ta95.onrender.com/api/file/${existingProfile.profile_image_url.replace(/^https://nextgen-ta95.onrender.com/api//, '')}`}
+                          src={`https://nextgen-ta95.onrender.com/api/file/${existingProfile.profile_image_url.replace(/^\//, '')}`}
                         alt="Profile"
                         className="w-full h-full object-cover"
                         onError={(e) => {
