@@ -25,7 +25,7 @@ CORS(app,
          "http://localhost:5175", 
          "http://localhost:5176",
          os.getenv("FRONTEND_URL", "http://localhost:5173"),
-         "https://nextgen-7q5e.vercel.app" # You can add your exact vercel URL here later
+         "https://next-gen-silk.vercel.app"
      ],
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
