@@ -169,7 +169,7 @@ export const AuthProvider = ({ children }) => {
       if (profileData?.profile_image_url || profileData?.profile_image) {
         profileImagePath = profileData.profile_image_url || profileData.profile_image;
         // Fix path format
-        profileImagePath = profileImagePath.replace(/https://nextgen-ta95.onrender.com/apihttps://nextgen-ta95.onrender.com/api/g, '/');
+        profileImagePath = profileImagePath.replace(/\\\\/g, '/');
         if (!profileImagePath.startsWith('/')) {
           profileImagePath = '/' + profileImagePath;
         }
