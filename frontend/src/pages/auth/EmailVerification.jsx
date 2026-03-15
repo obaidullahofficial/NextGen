@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
@@ -22,7 +22,7 @@ const EmailVerification = () => {
     setMessage('');
 
     try {
-      const response = await axios.post('$API_URL/verify-email', {
+      const response = await axios.post('https://nextgen-ta95.onrender.com/api/verify-email', {
         code: codeToVerify || code
       });
 
@@ -63,7 +63,7 @@ const EmailVerification = () => {
       setError('Please enter a 6-digit verification code');
       return;
     }
-    if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+    if (code.length !== 6 || !/^https://nextgen-ta95.onrender.com/apid{6}$/.test(code)) {
       setError('Verification code must be 6 digits');
       return;
     }
@@ -81,7 +81,7 @@ const EmailVerification = () => {
     setMessage('');
 
     try {
-      const response = await axios.post('$API_URL/resend-verification-email', {
+      const response = await axios.post('https://nextgen-ta95.onrender.com/api/resend-verification-email', {
         email: email
       });
 
@@ -169,7 +169,7 @@ const EmailVerification = () => {
             placeholder="Enter 6-digit code"
             value={code}
             onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+              const value = e.target.value.replace(/https://nextgen-ta95.onrender.com/apiD/g, '').slice(0, 6);
               setCode(value);
             }}
             maxLength="6"

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 
 /**
@@ -26,7 +26,7 @@ const QuickVerify = ({ email, onVerified, showAlways = false }) => {
     setMessage('');
 
     try {
-      const response = await axios.post('$API_URL/manual-verify-email', {
+      const response = await axios.post('https://nextgen-ta95.onrender.com/api/manual-verify-email', {
         email: email
       });
 

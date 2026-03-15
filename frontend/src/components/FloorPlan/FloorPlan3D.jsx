@@ -1,4 +1,4 @@
-﻿import React, { Suspense, useRef, useState, useEffect, useCallback, useMemo, memo } from 'react';
+import React, { Suspense, useRef, useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { 
   OrbitControls, 
@@ -2017,7 +2017,7 @@ const Room3D = ({ room, bounds, showLabels = true, doors = [], windows = [], wal
   
   // Normalize room type for color lookup
   const normalizedType = room.type?.toLowerCase()
-    .replace(/[-\d\s]/g, '') 
+    .replace(/[-https://nextgen-ta95.onrender.com/apidhttps://nextgen-ta95.onrender.com/apis]/g, '') 
     .replace('room', '') || 'room';
   
   const roomColor = floorColors[normalizedType] || '#F5F5F5';

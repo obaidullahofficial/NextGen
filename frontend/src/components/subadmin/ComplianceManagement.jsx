@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   getSocietyCompliances,
@@ -11,7 +11,7 @@ import {
 import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '$API_URL';
+const API_URL = import.meta.env.VITE_API_URL || 'https://nextgen-ta95.onrender.com/api';
 
 const MARLA_DIMENSIONS = {
   '5 Marla': { x: 30, y: 50 },
@@ -452,7 +452,7 @@ const ComplianceManagement = () => {
     const validationErrors = validateForm();
     
     if (validationErrors.length > 0) {
-      const errorMessage = 'Please fix the following:\n\n' + validationErrors.join('\n');
+      const errorMessage = 'Please fix the following:https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apin' + validationErrors.join('https://nextgen-ta95.onrender.com/apin');
       showAlert(errorMessage, 'error');
       return;
     }

@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -1887,7 +1887,7 @@ const Fountain = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
 export const getRoomAccessories = (roomType, roomWidth, roomHeight) => {
   const accessories = [];
   // Normalize: lowercase, strip digits/dashes/spaces, then determine base type
-  const raw = roomType.toLowerCase().replace(/[-\d\s]/g, '');
+  const raw = roomType.toLowerCase().replace(/[-https://nextgen-ta95.onrender.com/apidhttps://nextgen-ta95.onrender.com/apis]/g, '');
   // Determine type by checking includes (order matters: check compound words first)
   let type = 'unknown';
   if (raw.includes('living') || raw.includes('drawing') || raw === 'lounge') type = 'living';

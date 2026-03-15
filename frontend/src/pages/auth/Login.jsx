@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Logo from '../../assets/Logo.png';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { signupUser, loginUser, checkEmail, googleLogin } from '../../services/apiService';
@@ -467,7 +467,7 @@ const Login = () => {
     const validateField = (field, value, formType = 'signup') => {
         switch (field) {
             case 'email':
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const emailRegex = /^[^https://nextgen-ta95.onrender.com/apis@]+@[^https://nextgen-ta95.onrender.com/apis@]+https://nextgen-ta95.onrender.com/api.[^https://nextgen-ta95.onrender.com/apis@]+$/;
                 if (!value) return 'Email is required';
                 if (!emailRegex.test(value)) return 'Please enter a valid email address';
                 return '';

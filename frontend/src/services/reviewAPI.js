@@ -1,5 +1,5 @@
-﻿// API service for Review CRUD operations
-const API_BASE_URL = '$API_URL';
+// API service for Review CRUD operations
+const API_BASE_URL = 'https://nextgen-ta95.onrender.com/api';
 
 class ReviewAPI {
   // Get authentication token from localStorage

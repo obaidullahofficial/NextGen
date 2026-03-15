@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiPhone, FiMapPin, FiDollarSign, FiHome, FiShield, FiCheckCircle } from 'react-icons/fi';
 import { HiOutlineDocumentText, HiOutlineTemplate } from 'react-icons/hi';
@@ -8,7 +8,7 @@ import plotImage from '../../assets/plot.png';
 import Navbar from '../../components/user/Navbar';
 import Footer from '../../components/user/Footer';
 
-const API_URL = import.meta.env.VITE_API_URL || '$API_URL';
+const API_URL = import.meta.env.VITE_API_URL || 'https://nextgen-ta95.onrender.com/api';
 
 // Helper to get auth headers
 const getAuthHeaders = () => {

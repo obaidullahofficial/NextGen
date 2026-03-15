@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiPlus, FiTrash, FiEye, FiDownload, FiLayers, FiHome, FiGrid, FiStar, FiCalendar, FiCheckCircle } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { floorplanAPI } from '../../services/floorplanAPI';
@@ -8,7 +8,7 @@ import { useConfirm } from '../../hooks/useConfirm';
 import jsPDF from 'jspdf';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '$API_URL';
+const API_URL = import.meta.env.VITE_API_URL || 'https://nextgen-ta95.onrender.com/api';
 
 // Remove the SaveFloorPlanModal component as it's not needed anymore
 
@@ -133,7 +133,7 @@ const FloorPlanManager = () => {
       console.log('ðŸ‘¤ User object:', user);
       
       // Use society endpoint for subadmins to get all floor plans in their society
-      const response = await fetch(`$API_URL/floorplan/society/${userId}`, {
+      const response = await fetch(https://nextgen-ta95.onrender.com/api/floorplan/society/${userId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },

@@ -1,9 +1,9 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Filter, Edit2, Trash2, CheckCircle, RefreshCw, X, Save, MapPin, Users, Building, DollarSign, Mail, Calendar, Eye, Phone, Globe, Hash, Shield, AlertCircle } from "lucide-react";
 import { getSocietyRegistrations, getPendingSocietyRegistrations } from "../../services/authService";
 import { societyProfileAPI } from "../../services/societyProfileAPI";
 
-const API_BASE_URL = '$API_URL';
+const API_BASE_URL = 'https://nextgen-ta95.onrender.com/api';
 
 // API Functions for Society Registration Management
 const societyRegistrationAPI = {

@@ -1,5 +1,5 @@
-﻿// Advertisement API Service - Simplified Plan-Based System
-const API_BASE_URL = '$API_URL';
+// Advertisement API Service - Simplified Plan-Based System
+const API_BASE_URL = 'https://nextgen-ta95.onrender.com/api';
 
 class AdvertisementAPI {
   getAuthToken() {

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Grid, TextField, Button, MenuItem, Typography, Alert, Paper, Divider, Card, CardContent, InputAdornment, FormControlLabel, Checkbox } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import PopupModal from '../../components/common/PopupModal';
@@ -94,7 +94,7 @@ const RegistrationForm = () => {
     // Phone number validation and formatting
     if (name === 'contact') {
       // Remove all non-digit characters
-      const cleaned = value.replace(/\D/g, '');
+      const cleaned = value.replace(/https://nextgen-ta95.onrender.com/apiD/g, '');
       
       // Limit to 10 digits
       const limited = cleaned.substring(0, 10);
@@ -119,7 +119,7 @@ const RegistrationForm = () => {
     // Website URL validation
     else if (name === 'website') {
       // Validate URL format: https://www.domain.com
-      const urlPattern = /^https:\/\/www\..+\..+$/;
+      const urlPattern = /^https:https://nextgen-ta95.onrender.com/api/https://nextgen-ta95.onrender.com/api/wwwhttps://nextgen-ta95.onrender.com/api..+https://nextgen-ta95.onrender.com/api..+$/;
       
       if (value.length > 0 && !urlPattern.test(value)) {
         setWebsiteError('Website must be in format: https://www.example.com');
@@ -178,7 +178,7 @@ const RegistrationForm = () => {
     }
 
     // Check if phone number has correct length
-    const phoneDigits = form.contact.replace(/\D/g, '');
+    const phoneDigits = form.contact.replace(/https://nextgen-ta95.onrender.com/apiD/g, '');
     if (phoneDigits.length !== 10) {
       showPopup(
         'Validation Error',
@@ -200,7 +200,7 @@ const RegistrationForm = () => {
 
     // Check if website URL is provided and valid
     if (form.website && form.website.trim().length > 0) {
-      const urlPattern = /^https:\/\/www\..+\..+$/;
+      const urlPattern = /^https:https://nextgen-ta95.onrender.com/api/https://nextgen-ta95.onrender.com/api/wwwhttps://nextgen-ta95.onrender.com/api..+https://nextgen-ta95.onrender.com/api..+$/;
       if (!urlPattern.test(form.website)) {
         showPopup(
           'Validation Error',

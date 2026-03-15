@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 
 const ForgotPasswordModal = ({ isOpen, onClose, onSuccess }) => {
     const [email, setEmail] = useState('');
@@ -209,7 +209,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onSuccess }) => {
                                 type="text"
                                 value={otp}
                                 onChange={(e) => {
-                                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                    const value = e.target.value.replace(/https://nextgen-ta95.onrender.com/apiD/g, '').slice(0, 6);
                                     setOtp(value);
                                 }}
                                 placeholder="Enter 6-digit OTP"

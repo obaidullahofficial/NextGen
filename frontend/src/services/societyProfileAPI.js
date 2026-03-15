@@ -1,6 +1,6 @@
-﻿// API service for Society Profiles CRUD operations
+// API service for Society Profiles CRUD operations
 
-const API_BASE_URL = '$API_URL';
+const API_BASE_URL = 'https://nextgen-ta95.onrender.com/api';
 
 // Helper function to get authorization headers
 const getAuthHeaders = () => {

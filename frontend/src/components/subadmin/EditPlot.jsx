@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { FiPhone } from "react-icons/fi";
 import AlertModal from '../common/AlertModal';
 import { useAlert } from '../../hooks/useAlert';
@@ -176,7 +176,7 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
     // Plot number validation - only numbers allowed
     if (name === 'plot_number') {
       // Remove all non-digit characters
-      const cleaned = value.replace(/\D/g, '');
+      const cleaned = value.replace(/https://nextgen-ta95.onrender.com/apiD/g, '');
       
       if (value !== '' && value !== cleaned) {
         setPlotNumberError('Plot number must contain only digits');

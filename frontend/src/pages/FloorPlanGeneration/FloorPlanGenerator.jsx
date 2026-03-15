@@ -1,11 +1,11 @@
-﻿import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import KonvaFloorPlan from '../../components/FloorPlan/KonvaFloorPlan';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 
-const API_URL = import.meta.env.VITE_API_URL || '$API_URL';
+const API_URL = import.meta.env.VITE_API_URL || 'https://nextgen-ta95.onrender.com/api';
 
 const FloorPlanGenerator = () => {
   const navigate = useNavigate();
@@ -124,7 +124,7 @@ const FloorPlanGenerator = () => {
         }
       } catch (err) {
         console.error('Failed to parse floor plan data from database:', err);
-        alert('âŒ Could not load floor plan data from approval request.\n\nError: ' + err.message);
+        alert('âŒ Could not load floor plan data from approval request.https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apinError: ' + err.message);
       }
       return;
     }
@@ -138,7 +138,7 @@ const FloorPlanGenerator = () => {
         
         if (!res.ok) {
           if (res.status === 404) {
-            alert('âŒ Floor plan file not found!\n\nThe file was referenced in the database but does not exist on the server. The file may have been deleted or never uploaded properly.\n\nPlease ask the user to re-submit their floor plan.');
+            alert('âŒ Floor plan file not found!https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apinThe file was referenced in the database but does not exist on the server. The file may have been deleted or never uploaded properly.https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apinPlease ask the user to re-submit their floor plan.');
           } else if (res.status === 403) {
             alert('âŒ Access denied to floor plan file.');
           } else {
@@ -158,7 +158,7 @@ const FloorPlanGenerator = () => {
         setCurrentStep(3); // Jump directly to review/visualization step
       } catch (err) {
         console.error('Failed to import floor plan JSON:', err);
-        alert('âŒ Could not load floor plan JSON from approval request.\n\nError: ' + err.message);
+        alert('âŒ Could not load floor plan JSON from approval request.https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apinError: ' + err.message);
       }
     };
 
@@ -199,8 +199,8 @@ const FloorPlanGenerator = () => {
       const marlaSize = plotData?.marla_size || complianceRules?.marla_size;
       if (marlaSize) {
         // Extract numeric value from marla size (e.g., "5 Marla" -> 5, "1 Kanal" -> 20)
-        const marlaMatch = marlaSize.match(/(\d+)\s*Marla/i);
-        const kanalMatch = marlaSize.match(/(\d+)\s*Kanal/i);
+        const marlaMatch = marlaSize.match(/(https://nextgen-ta95.onrender.com/apid+)https://nextgen-ta95.onrender.com/apis*Marla/i);
+        const kanalMatch = marlaSize.match(/(https://nextgen-ta95.onrender.com/apid+)https://nextgen-ta95.onrender.com/apis*Kanal/i);
         
         let marlaNumber = null;
         if (marlaMatch) {
@@ -326,16 +326,16 @@ const FloorPlanGenerator = () => {
         const exceededPercentage = ((totalRoomArea / maxAllowedArea) * 100) - 100;
         
         alert(
-          `âš ï¸ AREA COVERAGE EXCEEDED!\n\n` +
-          `Total Room Area: ${totalRoomArea.toFixed(0)} sq ft\n` +
-          `Maximum Allowed (${maxGroundCoverage}% coverage): ${maxAllowedArea.toFixed(0)} sq ft\n` +
-          `Exceeded by: ${exceededBy.toFixed(0)} sq ft (${exceededPercentage.toFixed(1)}%)\n\n` +
-          `âŒ Cannot generate floor plan with these compliance rules.\n\n` +
-          `Please contact your society administrator to adjust the compliance rules for ${complianceRules.marla_size} plots.\n\n` +
-          `Suggestions:\n` +
-          `â€¢ Reduce individual room areas\n` +
-          `â€¢ Reduce number of rooms\n` +
-          `â€¢ Increase ground coverage percentage\n` +
+          `âš ï¸ AREA COVERAGE EXCEEDED!https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apin` +
+          `Total Room Area: ${totalRoomArea.toFixed(0)} sq fthttps://nextgen-ta95.onrender.com/apin` +
+          `Maximum Allowed (${maxGroundCoverage}% coverage): ${maxAllowedArea.toFixed(0)} sq fthttps://nextgen-ta95.onrender.com/apin` +
+          `Exceeded by: ${exceededBy.toFixed(0)} sq ft (${exceededPercentage.toFixed(1)}%)https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apin` +
+          `âŒ Cannot generate floor plan with these compliance rules.https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apin` +
+          `Please contact your society administrator to adjust the compliance rules for ${complianceRules.marla_size} plots.https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apin` +
+          `Suggestions:https://nextgen-ta95.onrender.com/apin` +
+          `â€¢ Reduce individual room areashttps://nextgen-ta95.onrender.com/apin` +
+          `â€¢ Reduce number of roomshttps://nextgen-ta95.onrender.com/apin` +
+          `â€¢ Increase ground coverage percentagehttps://nextgen-ta95.onrender.com/apin` +
           `â€¢ Increase plot dimensions`
         );
         
@@ -1039,7 +1039,7 @@ const FloorPlanGenerator = () => {
 
       console.log('Sending updates to backend:', updateData);
 
-      const response = await fetch('$API_URL/floorplan/update', {
+      const response = await fetch('https://nextgen-ta95.onrender.com/api/floorplan/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData)
@@ -1617,7 +1617,7 @@ const FloorPlanGenerator = () => {
       console.log('Connections:', connects);
       console.log('Sending data to backend:', backendData);
 
-      const response = await fetch('$API_URL/floorplan/generate', {
+      const response = await fetch('https://nextgen-ta95.onrender.com/api/floorplan/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(backendData)
@@ -2042,7 +2042,7 @@ const FloorPlanGenerator = () => {
                               <option value="">From...</option>
                               {getSelectedRooms().map(roomTag => (
                                 <option key={roomTag} value={roomTag}>
-                                  {roomTag.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  {roomTag.replace('-', ' ').replace(/https://nextgen-ta95.onrender.com/apibhttps://nextgen-ta95.onrender.com/apiw/g, l => l.toUpperCase())}
                                 </option>
                               ))}
                             </select>
@@ -2055,7 +2055,7 @@ const FloorPlanGenerator = () => {
                               <option value="">To...</option>
                               {getSelectedRooms().map(roomTag => (
                                 <option key={roomTag} value={roomTag}>
-                                  {roomTag.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  {roomTag.replace('-', ' ').replace(/https://nextgen-ta95.onrender.com/apibhttps://nextgen-ta95.onrender.com/apiw/g, l => l.toUpperCase())}
                                 </option>
                               ))}
                             </select>

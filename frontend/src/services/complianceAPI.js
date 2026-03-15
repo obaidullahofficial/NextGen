@@ -1,6 +1,6 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '$API_URL';
+const API_URL = import.meta.env.VITE_API_URL || 'https://nextgen-ta95.onrender.com/api';
 
 // Helper to get auth headers
 const getAuthHeaders = () => {

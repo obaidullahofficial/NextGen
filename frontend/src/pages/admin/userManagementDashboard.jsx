@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Edit2, 
   Trash2, 
@@ -85,7 +85,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }) {
     setError('');
 
     try {
-      const response = await fetch('$API_URL/register', {
+      const response = await fetch('https://nextgen-ta95.onrender.com/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -416,7 +416,7 @@ function EditUserModal({ isOpen, onClose, user, onUserUpdated }) {
         updateData.password = formData.password;
       }
 
-      const response = await fetch(`$API_URL/users/${user._id}`, {
+      const response = await fetch(https://nextgen-ta95.onrender.com/api/users/${user._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -593,7 +593,7 @@ function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
     setError('');
 
     try {
-      const response = await fetch(`$API_URL/users/${user._id}`, {
+      const response = await fetch(https://nextgen-ta95.onrender.com/api/users/${user._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': 'Bearer ' + localStorage.getItem('token')
@@ -925,7 +925,7 @@ export default function UserManagementDashboard() {
   const fetchUsers = async () => {
     try {
       setRefreshing(true);
-      const res = await fetch("$API_URL/users", {
+      const res = await fetch("https://nextgen-ta95.onrender.com/api/users", {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token"),
@@ -992,7 +992,7 @@ export default function UserManagementDashboard() {
     
     if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) {
       try {
-        const response = await fetch('$API_URL/users/bulk-delete', {
+        const response = await fetch('https://nextgen-ta95.onrender.com/api/users/bulk-delete', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',

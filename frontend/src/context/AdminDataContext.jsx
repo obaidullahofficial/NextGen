@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import userAPI from '../services/userAPI';
 import reviewAPI from '../services/reviewAPI';
 import advertisementAPI from '../services/advertisementAPI';
@@ -9,7 +9,7 @@ const societyRegistrationAPI = {
   getAll: async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('$API_URL/society-registrations', {
+      const response = await fetch('https://nextgen-ta95.onrender.com/api/society-registrations', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
