@@ -190,7 +190,9 @@ def jwt_test():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 5000))
     # Python 3.14 + Werkzeug on Windows has a WinError 10038 (socket selector bug).
     # use_reloader=False + threaded=False avoids the broken selector paths.
-    app.run(debug=True, use_reloader=False, threaded=False)
+    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False, threaded=False)
 
