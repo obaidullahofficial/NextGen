@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+﻿import React, { createContext, useContext, useState, useEffect } from 'react';
 import { loginUser as loginUserService, logout as logoutService, API_URL } from '../services/apiService.js';
 
 const AuthContext = createContext(null);
@@ -214,7 +214,7 @@ export const AuthProvider = ({ children }) => {
       
       if (profileImagePath) {
         // Replace backslashes with forward slashes
-        profileImagePath = profileImagePath.replace(/https://nextgen-ta95.onrender.com/apihttps://nextgen-ta95.onrender.com/api/g, '/');
+        profileImagePath = profileImagePath.replace(/\\\\/g, '/');
         
         // Ensure it starts with a forward slash
         if (!profileImagePath.startsWith('/')) {
@@ -405,3 +405,7 @@ export const useAuth = () => {
   return context;
 };
 export { AuthContext };
+
+
+
+
