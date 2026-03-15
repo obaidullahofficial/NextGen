@@ -17,9 +17,16 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configure CORS - Allow all localhost ports for development
+# Configure CORS - Allow frontend domains
 CORS(app, 
-     origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"], 
+     origins=[
+         "http://localhost:5173", 
+         "http://localhost:5174", 
+         "http://localhost:5175", 
+         "http://localhost:5176",
+         os.getenv("FRONTEND_URL", "http://localhost:5173"),
+         "https://nextgen-7q5e.vercel.app" # You can add your exact vercel URL here later
+     ],
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"],
