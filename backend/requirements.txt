@@ -11,12 +11,3 @@ stripe
 requests
 werkzeug
 google-genai
-  "username": "testuser5",
-  "email": "abcf@example.com",
-  "password": "abcf@example.com",
-  "role": "society"
-
-  "username": "testuser",
-  "email": "usertesting@gmail.com",
-  "password": "usertesting@gmail.com",
-  "role": "user"
