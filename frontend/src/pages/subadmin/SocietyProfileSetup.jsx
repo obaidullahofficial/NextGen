@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Box, Grid, TextField, Button, Typography, Alert, Paper, MenuItem } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { getSocietyProfile, updateSocietyProfile } from '../../services/apiService';
@@ -161,7 +161,7 @@ const SocietyProfileSetup = () => {
     // 92XXXXXXXXXX (12 digits starting with 92)
     // 03XXXXXXXXX (11 digits starting with 0)
     const patterns = [
-      /^https://nextgen-ta95.onrender.com/api+92[0-9]{10}$/, // +92XXXXXXXXXX
+      /^\+92[0-9]{10}$/, // +92XXXXXXXXXX
       /^92[0-9]{10}$/, // 92XXXXXXXXXX
       /^0[0-9]{10}$/ // 0XXXXXXXXXX
     ];
@@ -538,7 +538,7 @@ const SocietyProfileSetup = () => {
                             }}
                           >
                             {profile.available_plots.includes(plotSize) && (
-                              <Typography sx={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>âœ“</Typography>
+                              <Typography sx={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>Ã¢Å“â€œ</Typography>
                             )}
                           </Box>
                           <Typography sx={{ fontSize: '14px', color: '#2F3D57', fontWeight: 500, whiteSpace: 'nowrap' }}>
@@ -742,7 +742,7 @@ const SocietyProfileSetup = () => {
                         }}
                       >
                         {profile.amenities[amenity.id] && (
-                          <Typography sx={{ color: 'white', fontSize: 18, fontWeight: 700 }}>âœ“</Typography>
+                          <Typography sx={{ color: 'white', fontSize: 18, fontWeight: 700 }}>Ã¢Å“â€œ</Typography>
                         )}
                       </Box>
                       <Typography 
@@ -815,7 +815,7 @@ const SocietyProfileSetup = () => {
                     }}
                   />
                   <Typography variant="body2" sx={{ mt: 1, color: '#2F3D57', fontWeight: 500 }}>
-                    âœ… Logo Preview - Ready for submission
+                    Ã¢Å“â€¦ Logo Preview - Ready for submission
                   </Typography>
                 </Box>
               )}
@@ -860,3 +860,4 @@ const SocietyProfileSetup = () => {
 };
 
 export default SocietyProfileSetup;
+

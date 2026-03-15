@@ -149,7 +149,7 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
     // 92XXXXXXXXXX (12 digits starting with 92)
     // 03XXXXXXXXX (11 digits starting with 0)
     const patterns = [
-      /^https://nextgen-ta95.onrender.com/api+92[0-9]{10}$/, // +92XXXXXXXXXX
+      /^\+92[0-9]{10}$/, // +92XXXXXXXXXX
       /^92[0-9]{10}$/, // 92XXXXXXXXXX
       /^0[0-9]{10}$/ // 0XXXXXXXXXX
     ];
