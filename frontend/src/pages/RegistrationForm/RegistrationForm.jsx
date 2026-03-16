@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Grid, TextField, Button, MenuItem, Typography, Alert, Paper, Divider, Card, CardContent, InputAdornment, FormControlLabel, Checkbox } from "@mui/material";
+import { Box, Grid, TextField, Button, MenuItem, Typography, Alert, Paper, Divider, InputAdornment, FormControlLabel, Checkbox, CircularProgress } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import PopupModal from '../../components/common/PopupModal';
 import { societySignup } from '../../services/authService.js';
@@ -69,11 +69,18 @@ const RegistrationForm = () => {
 
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [phoneError, setPhoneError] = useState('');
   const [websiteError, setWebsiteError] = useState('');
   const [regNoError, setRegNoError] = useState('');
   const [establishedDateError, setEstablishedDateError] = useState('');
+  const [focusedField, setFocusedField] = useState('');
   const today = new Date().toISOString().split('T')[0];
+
+  const getHelperText = (field, hint, error = '') => {
+    if (error) return error;
+    return focusedField === field ? hint : ' ';
+  };
   
   // Popup modal state with navigation callback
   const [popup, setPopup] = useState({
@@ -269,6 +276,8 @@ const RegistrationForm = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       // Prepare multipart form data to support NOC document upload
       const societyData = new FormData();
@@ -317,6 +326,8 @@ const RegistrationForm = () => {
         'Error connecting to server. Please check your internet connection and try again.',
         error
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -413,86 +424,67 @@ const RegistrationForm = () => {
           )}
         </Box>
 
-        {/* Instructions Card */}
-        <Box sx={{ p: 4, pb: 2, background: '#f8f9fa' }}>
-          <Card sx={{ 
-            background: 'linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%)', 
-            borderRadius: 2,
-            border: '2px solid #ED7600',
-            boxShadow: '0 4px 12px rgba(237, 118, 0, 0.15)'
-          }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ 
-                color: '#2F3D57', 
-                fontWeight: 700,
-                mb: 2,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}>
-                📋 How to Fill This Form
-              </Typography>
-              <Divider sx={{ mb: 2, borderColor: '#ED7600', opacity: 0.3 }} />
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <Box sx={{ mb: 1.5 }}>
-                    <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
-                      🏷️ Society Name
-                    </Typography>
-                    <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
-                      Enter the official registered name of your society
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mb: 1.5 }}>
-                    <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
-                      🏛️ Type & Authority
-                    </Typography>
-                    <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
-                      Select society type (Private/Public) and regulatory authority
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mb: 1.5 }}>
-                    <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
-                      🔢 Registration Number
-                    </Typography>
-                    <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
-                      Your official society registration number
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Box sx={{ mb: 1.5 }}>
-                    <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
-                      📅 Established Date
-                    </Typography>
-                    <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
-                      Select when your society was officially established
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mb: 1.5 }}>
-                    <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
-                      📞 Contact & Website
-                    </Typography>
-                    <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
-                      Primary contact number and official website URL
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mb: 1.5 }}>
-                    <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
-                      🏙️ City Location
-                    </Typography>
-                    <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
-                      Select the city where society is located
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Box>
-
         {/* Form Section */}
-        <Box sx={{ px: 4, pb: 4, background: '#f8f9fa' }}>
+        <Box sx={{
+          px: 4,
+          pt: 4,
+          pb: 4,
+          background: '#f8f9fa',
+          maxWidth: 980,
+          mx: 'auto',
+          '& .MuiGrid-item': {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+          },
+          '& .MuiFormControl-root': {
+            width: '360px !important',
+            minWidth: '360px',
+            maxWidth: '360px',
+          },
+          '& .MuiInputBase-root': {
+            height: 56,
+            minHeight: 56,
+            maxHeight: 56,
+            boxSizing: 'border-box',
+          },
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            height: 56,
+            minHeight: 56,
+            maxHeight: 56,
+            background: '#fff',
+            boxSizing: 'border-box',
+          },
+          '& .MuiInputBase-input': {
+            height: '56px',
+            lineHeight: '56px',
+            boxSizing: 'border-box',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            paddingTop: '0 !important',
+            paddingBottom: '0 !important',
+          },
+          '& .MuiSelect-select': {
+            height: '56px !important',
+            lineHeight: '56px !important',
+            display: 'block',
+            boxSizing: 'border-box',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            paddingTop: '0 !important',
+            paddingBottom: '0 !important',
+          },
+          '& .MuiSelect-icon': {
+            top: 'calc(50% - 12px)',
+          },
+          '& .MuiFormHelperText-root': {
+            minHeight: 20,
+            marginTop: '4px',
+          },
+        }}>
           {message && <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>{message}</Alert>}
           {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>}
 
@@ -508,8 +500,11 @@ const RegistrationForm = () => {
                   placeholder="e.g., Bahria Town Lahore"
                   value={form.name} 
                   onChange={handleChange} 
+                  onFocus={() => setFocusedField('name')}
+                  onBlur={() => setFocusedField('')}
                   fullWidth 
                   required 
+                  helperText={getHelperText('name', 'Enter official registered society name')}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 2,
@@ -537,10 +532,12 @@ const RegistrationForm = () => {
                   placeholder="e.g., 123456"
                   value={form.regNo} 
                   onChange={handleChange} 
+                  onFocus={() => setFocusedField('regNo')}
+                  onBlur={() => setFocusedField('')}
                   fullWidth 
                   required
                   error={!!regNoError}
-                  helperText={regNoError || 'Enter exactly 6 digits'}
+                  helperText={getHelperText('regNo', 'Enter exactly 6 digits', regNoError)}
                   inputProps={{ maxLength: 6, inputMode: 'numeric', pattern: '[0-9]*' }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
@@ -569,10 +566,12 @@ const RegistrationForm = () => {
                   type="date" 
                   value={form.established} 
                   onChange={handleChange} 
+                  onFocus={() => setFocusedField('established')}
+                  onBlur={() => setFocusedField('')}
                   fullWidth 
                   required 
                   error={!!establishedDateError}
-                  helperText={establishedDateError || 'Future date is not allowed'}
+                  helperText={getHelperText('established', 'Select a valid date (future date not allowed)', establishedDateError)}
                   inputProps={{ max: today }}
                   InputLabelProps={{ shrink: true }}
                   sx={{
@@ -896,10 +895,12 @@ const RegistrationForm = () => {
                   placeholder="3XX-XXXXXXX"
                   value={form.contact} 
                   onChange={handleChange} 
+                  onFocus={() => setFocusedField('contact')}
+                  onBlur={() => setFocusedField('')}
                   fullWidth 
                   required
                   error={!!phoneError}
-                  helperText={phoneError || 'Enter 10 digits (e.g., 300-1234567)'}
+                  helperText={getHelperText('contact', 'Enter 10 digits (e.g., 300-1234567)', phoneError)}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -960,10 +961,12 @@ const RegistrationForm = () => {
                   placeholder="https://www.yoursociety.com"
                   value={form.website} 
                   onChange={handleChange} 
+                  onFocus={() => setFocusedField('website')}
+                  onBlur={() => setFocusedField('')}
                   fullWidth 
                   required
                   error={!!websiteError}
-                  helperText={websiteError}
+                  helperText={getHelperText('website', 'Use format: https://www.example.com', websiteError)}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 2,
@@ -1008,8 +1011,15 @@ const RegistrationForm = () => {
                       transform: 'translateY(-2px)',
                       transition: 'all 0.3s ease'
                     }
-                  }}>
-                    Submit Registration
+                  }} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+                        <CircularProgress size={20} sx={{ color: '#fff' }} />
+                        Submitting Registration...
+                      </Box>
+                    ) : (
+                      'Submit Registration'
+                    )}
                   </Button>
                 </Box>
                 <Typography sx={{ 
