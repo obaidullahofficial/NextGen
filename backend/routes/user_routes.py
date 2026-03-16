@@ -13,32 +13,64 @@ import os
 user_bp = Blueprint('user', __name__)
 
 # Get all users (for admin dashboard)
+import functools
+
+# Cache admin user list for 10 seconds (or manually invalidated). For simplified caching:
+@functools.lru_cache(maxsize=32)
+def _get_admin_users_data(page, limit, search, role):
+    db = get_db()
+    users = user_collection(db)
+    skip = (page - 1) * limit
+    
+    # Build query
+    query = {}
+    if search:
+        query['$or'] = [
+            {'username': {'$regex': search, '$options': 'i'}},
+            {'email': {'$regex': search, '$options': 'i'}}
+        ]
+    if role:
+        query['role'] = role
+        
+    # Fetch only required fields (Projection) and Paginate
+    projection = {
+        'password': 0, 'password_hash': 0, 'verification_token': 0, 'reset_token': 0
+    }
+    
+    cursor = users.find(query, projection).skip(skip).limit(limit)
+    user_list = list(cursor)
+    
+    for user in user_list:
+        user['_id'] = str(user['_id'])
+        if 'created_at' not in user:
+            user['created_at'] = datetime.now().isoformat()
+            
+    total_users = users.count_documents(query)
+    return user_list, total_users
+
 @user_bp.route('/users', methods=['GET'])
 @jwt_required()
 def get_all_users():
     try:
-        db = get_db()
-        users = user_collection(db)
+        # Proper pagination and filters
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 1000))
+        search = request.args.get('search', '').strip()
+        role = request.args.get('role', '').strip()
         
-        # Get all users except passwords
-        user_list = list(users.find({}, {'password': 0}))
-        
-        # Convert ObjectId to string
-        for user in user_list:
-            user['_id'] = str(user['_id'])
-            # Add created date if not present
-            if 'created_at' not in user:
-                user['created_at'] = datetime.now().isoformat()
-        
+        user_list, total_count = _get_admin_users_data(page, limit, search, role)
+
         return jsonify({
             "success": True,
             "data": user_list,
             "users": user_list,  # Keep both for backward compatibility
-            "total": len(user_list),
-            "total_count": len(user_list),
+            "total": total_count,
+            "total_count": total_count,
+            "page": page,
+            "limit": limit,
             "message": f"Retrieved {len(user_list)} users successfully"
         }), 200
-        
+
     except Exception as e:
         return jsonify({
             "success": False,
@@ -1273,12 +1305,13 @@ def update_user(user_id):
             update_data['username'] = data['username'].strip()
         
         if 'email' in data and data['email'].strip():
-            # Check if email is already taken by another user
-            email_check = users.find_one({'email': data['email'].strip(), '_id': {'$ne': ObjectId(user_id)}})
-            if email_check:
-                return jsonify({"success": False, "message": "Email already exists"}), 400
-            update_data['email'] = data['email'].strip()
-        
+              new_email = data['email'].strip()
+              # Only check if email exists if the user is actually changing it
+              if new_email != existing_user.get('email'):
+                  email_check = users.find_one({'email': new_email, '_id': {'$ne': ObjectId(user_id)}})
+                  if email_check:
+                      return jsonify({"success": False, "message": "Email already exists"}), 400
+              update_data['email'] = new_email
         if 'role' in data:
             valid_roles = ['user', 'society', 'admin']
             if data['role'] not in valid_roles:

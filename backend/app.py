@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, send_file, abort, request
+from flask_compress import Compress  # <--- Added for Compression
 from flask_jwt_extended import JWTManager
 from routes.user_routes import user_bp
 from routes.society_profile_routes import society_profile_bp
@@ -16,6 +17,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+
+# Apply GZIP Compression for Admin performance optimizations
+Compress(app)
 
 # Configure CORS - Allow all localhost ports for development
 CORS(app, 

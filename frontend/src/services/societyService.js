@@ -1,4 +1,5 @@
 import { authenticatedRequest, API_URL } from './baseApiService.js';
+import { userProfileAPI } from './userProfileAPI.js';
 
 // ============================
 // SOCIETY PROFILE API FUNCTIONS
@@ -96,25 +97,67 @@ export async function debugSocietyProfile() {
 
 /**
  * Get all society profiles (public endpoint for browsing societies)
+ * Caches the promise to prevent multiple re-fetches across tab changes
  * @returns {Promise<Object>} List of all society profiles
  */
-export async function getAllSocietyProfiles() {
+let societyProfilesPromise = null;
+
+export async function getAllSocietyProfiles(forceRefresh = false) {
+  if (societyProfilesPromise && !forceRefresh) {
+    console.log('[getAllSocietyProfiles] Returning cached profiles promise with auto bg-update...');
+    
+    // Background validation and auto plot preloading (Stale-While-Revalidate)
+    fetch(`${API_URL}/society-profiles`)
+      .then(res => res.json())
+      .then(result => {
+        // Silently update cache
+        societyProfilesPromise = Promise.resolve(result);
+        
+        // Auto-preload plots in the background
+        const dataArray = result.data || result.societies || result;
+        if (Array.isArray(dataArray)) {
+          dataArray.forEach(soc => {
+            userProfileAPI.getPlotsBySociety(soc._id, true).catch(() => {});
+          });
+        }
+      })
+      .catch(err => console.error('Background society refresh failed', err));
+      
+    return societyProfilesPromise;
+  }
+
   console.log('[getAllSocietyProfiles] Fetching all society profiles...');
   
-  try {
-    // This is a public endpoint, no authentication required
-    const response = await fetch(`${API_URL}/society-profiles`);
-    const result = await response.json();
-    
-    console.log('[getAllSocietyProfiles] Response:', { status: response.status, result });
-    
-    if (!response.ok) {
-      throw new Error(result.error || 'Failed to fetch society profiles');
+  societyProfilesPromise = (async () => {
+    try {
+      const response = await fetch(`${API_URL}/society-profiles`);
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch society profiles');
+      }
+      
+      // Auto-preload plots in the background after main fetch
+      setTimeout(() => {
+        const dataArray = result.data || result.societies || result;
+        if (Array.isArray(dataArray)) {
+          dataArray.forEach(soc => {
+            userProfileAPI.getPlotsBySociety(soc._id).catch(() => {});
+          });
+        }
+      }, 500); // 500ms delay to let the main thread render first
+      
+      return result;
+    } catch (error) {
+      console.error('[getAllSocietyProfiles] Error:', error);
+      societyProfilesPromise = null; 
+      throw error;
     }
-    
-    return result;
-  } catch (error) {
-    console.error('[getAllSocietyProfiles] Error:', error);
-    throw error;
-  }
+  })();
+
+  return societyProfilesPromise;
+}
+
+export function preloadSocietyProfiles() {
+  getAllSocietyProfiles().catch(() => {});
 }

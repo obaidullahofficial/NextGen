@@ -33,7 +33,7 @@ const RatingStars = ({ count, size = 16 }) => {
           className={`${i < count ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
         />
       ))}
-      <span className="ml-2 text-sm text-gray-600 font-medium">({count}/5)</span>
+      <span className="ml-2 text-xs text-gray-600 font-medium">({count}/5)</span>
     </div>
   );
 };
@@ -105,13 +105,13 @@ function ReviewModal({ isOpen, onClose, review, onSave, isEdit = false }) {
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
         <div className="p-8">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
             <div className="flex items-center space-x-3">
               <div className={`p-3 rounded-xl ${isEdit ? 'bg-blue-100' : 'bg-green-100'}`}>
                 {isEdit ? <FaEdit className="text-blue-600" size={24} /> : <FaPlus className="text-green-600" size={24} />}
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-gray-900">
                   {isEdit ? 'Edit Review' : 'Create New Review'}
                 </h2>
                 <p className="text-gray-600 mt-1">
@@ -136,7 +136,7 @@ function ReviewModal({ isOpen, onClose, review, onSave, isEdit = false }) {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+              <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                 <Building className="mr-2 text-gray-500" size={16} />
                 Plot ID *
               </label>
@@ -153,7 +153,7 @@ function ReviewModal({ isOpen, onClose, review, onSave, isEdit = false }) {
             </div>
 
             <div className="space-y-2">
-              <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+              <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                 <Star className="mr-2 text-gray-500" size={16} />
                 Rating *
               </label>
@@ -173,7 +173,7 @@ function ReviewModal({ isOpen, onClose, review, onSave, isEdit = false }) {
             </div>
 
             <div className="space-y-2">
-              <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+              <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                 <Eye className="mr-2 text-gray-500" size={16} />
                 Comment *
               </label>
@@ -331,12 +331,12 @@ export default function ReviewManagement() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-white p-6">
+    <div className="w-full min-min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Review Management</h1>
-          <p className="text-lg text-gray-600">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Review Management</h1>
+          <p className="text-base text-gray-600">
             Monitor and moderate user reviews about plots and properties.
           </p>
         </div>
@@ -346,8 +346,8 @@ export default function ReviewManagement() {
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-600 text-sm font-semibold">Total Reviews</p>
-                <p className="text-3xl font-bold text-blue-800">{reviews.length}</p>
+                <p className="text-blue-600 text-xs font-semibold">Total Reviews</p>
+                <p className="text-2xl font-bold text-blue-800">{reviews.length}</p>
               </div>
               <div className="bg-blue-200 p-3 rounded-xl">
                 <Eye className="text-blue-600" size={24} />
@@ -358,8 +358,8 @@ export default function ReviewManagement() {
           <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-600 text-sm font-semibold">High Rated</p>
-                <p className="text-3xl font-bold text-green-800">
+                <p className="text-green-600 text-xs font-semibold">High Rated</p>
+                <p className="text-2xl font-bold text-green-800">
                   {reviews.filter(review => review.rating >= 4).length}
                 </p>
               </div>
@@ -372,8 +372,8 @@ export default function ReviewManagement() {
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-2xl border border-yellow-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-yellow-600 text-sm font-semibold">Average Rating</p>
-                <p className="text-3xl font-bold text-yellow-800">
+                <p className="text-yellow-600 text-xs font-semibold">Average Rating</p>
+                <p className="text-2xl font-bold text-yellow-800">
                   {reviews.length > 0 ? 
                     (reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.length).toFixed(1) 
                     : '0.0'
@@ -389,8 +389,8 @@ export default function ReviewManagement() {
           <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-2xl border border-red-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-red-600 text-sm font-semibold">Low Rated</p>
-                <p className="text-3xl font-bold text-red-800">
+                <p className="text-red-600 text-xs font-semibold">Low Rated</p>
+                <p className="text-2xl font-bold text-red-800">
                   {reviews.filter(review => review.rating <= 2).length}
                 </p>
               </div>
@@ -404,7 +404,7 @@ export default function ReviewManagement() {
         {/* Actions Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 space-y-4 sm:space-y-0">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">All Reviews</h2>
+            <h2 className="text-xl font-bold text-gray-900">All Reviews</h2>
             <p className="text-gray-600 mt-1">Manage all user reviews and their ratings</p>
           </div>
           <button
@@ -443,7 +443,7 @@ export default function ReviewManagement() {
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <span className="text-lg text-gray-600 font-medium">Loading reviews...</span>
+              <span className="text-base text-gray-600 font-medium">Loading reviews...</span>
             </div>
           </div>
         )}
@@ -454,7 +454,7 @@ export default function ReviewManagement() {
             {displayedReviews.length === 0 ? (
               <div className="text-center py-16">
                 <Eye className="mx-auto text-gray-400 mb-4" size={48} />
-                <h3 className="text-xl font-semibold text-gray-600 mb-2">No reviews found</h3>
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">No reviews found</h3>
                 <p className="text-gray-500">
                   {search ? 'Try adjusting your search criteria or create a new review.' : 'Get started by creating your first review.'}
                 </p>
@@ -471,7 +471,7 @@ export default function ReviewManagement() {
                           </div>
                           <div>
                             <div className="font-semibold text-gray-900">{review.user_email || 'Unknown User'}</div>
-                            <div className="text-sm text-gray-500">Plot ID: {review.plot_id || 'N/A'}</div>
+                            <div className="text-xs text-gray-500">Plot ID: {review.plot_id || 'N/A'}</div>
                           </div>
                         </div>
                         <StatusBadge status={review.status || 'Pending'} />
@@ -485,8 +485,8 @@ export default function ReviewManagement() {
                         {review.comment || 'No comment provided'}
                       </p>
                       
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <div className="flex items-center space-x-4">
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex flex-wrap items-center gap-4">
                           <div className="flex items-center">
                             <Calendar className="mr-1" size={14} />
                             {formatDate(review.created_at)}
@@ -529,7 +529,7 @@ export default function ReviewManagement() {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 Previous
               </button>
@@ -538,7 +538,7 @@ export default function ReviewManagement() {
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                  className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors duration-200 ${
                     currentPage === page
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
@@ -551,7 +551,7 @@ export default function ReviewManagement() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="px-4 py-2 text-xs font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 Next
               </button>

@@ -1,3 +1,5 @@
+import useSWR from 'swr';
+import debounce from 'lodash.debounce';
 import React, { useState, useRef } from "react";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -595,17 +597,17 @@ const ReportManagement = () => {
   const safePlots = plots || [];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-min-h-screen bg-white">
       {/* Modern Header Section */}
       <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between py-6">
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center gap-4">
               <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg">
                 <BarChart3 className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
                   Statistics
                 </h1>
                 <p className="text-gray-600 mt-1">
@@ -664,22 +666,22 @@ const ReportManagement = () => {
       <div ref={reportRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Key Metrics Cards - Enhanced with More Detailed Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200 hover:shadow-xl transition-all duration-300">
+          <div className="group relative overflow-hidden flex flex-col bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200 hover:shadow-xl transition-all duration-300">
             <div className="absolute top-0 right-0 w-20 h-20 bg-blue-600 rounded-full -mr-10 -mt-10 opacity-10 group-hover:opacity-20 transition-opacity"></div>
             <div className="relative">
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
                   <Users className="h-6 w-6 text-white" />
                 </div>
-                <div className="flex items-center text-emerald-600 text-sm font-medium bg-emerald-50 px-2 py-1 rounded-full">
+                <div className="flex items-center text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-full">
                   <ArrowUpRight className="h-3 w-3 mr-1" />
                   
                 </div>
               </div>
-              <h3 className="text-sm font-medium text-blue-800 mb-1">Total Users</h3>
-              <p className="text-3xl font-bold text-blue-900">{overviewStats.totalUsers.toLocaleString()}</p>
+              <h3 className="text-xs font-medium text-blue-800 mb-1">Total Users</h3>
+              <p className="text-2xl font-bold text-blue-900">{overviewStats.totalUsers.toLocaleString()}</p>
               <div className="mt-3 space-y-1">
-                <p className="text-sm text-blue-700 flex items-center">
+                <p className="text-xs text-blue-700 flex items-center">
                   <Activity className="h-3 w-3 mr-1" />
                   {overviewStats.activeUsers.toLocaleString()} active users
                 </p>
@@ -690,22 +692,22 @@ const ReportManagement = () => {
             </div>
           </div>
 
-          <div className="group relative overflow-hidden bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-6 border border-emerald-200 hover:shadow-xl transition-all duration-300">
+          <div className="group relative overflow-hidden flex flex-col bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-6 border border-emerald-200 hover:shadow-xl transition-all duration-300">
             <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-600 rounded-full -mr-10 -mt-10 opacity-10 group-hover:opacity-20 transition-opacity"></div>
             <div className="relative">
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-emerald-600 rounded-xl shadow-lg">
                   <Building className="h-6 w-6 text-white" />
                 </div>
-                <div className="flex items-center text-emerald-600 text-sm font-medium bg-emerald-50 px-2 py-1 rounded-full">
+                <div className="flex items-center text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-full">
                   <ArrowUpRight className="h-3 w-3 mr-1" />
                   +{overviewStats.societyApprovalRate ? overviewStats.societyApprovalRate.toFixed(0) : '8'}%
                 </div>
               </div>
-              <h3 className="text-sm font-medium text-emerald-800 mb-1">Society Registrations</h3>
-              <p className="text-3xl font-bold text-emerald-900">{overviewStats.totalSocieties.toLocaleString()}</p>
+              <h3 className="text-xs font-medium text-emerald-800 mb-1">Society Registrations</h3>
+              <p className="text-2xl font-bold text-emerald-900">{overviewStats.totalSocieties.toLocaleString()}</p>
               <div className="mt-3 space-y-1">
-                <p className="text-sm text-emerald-700 flex items-center">
+                <p className="text-xs text-emerald-700 flex items-center">
                   <CheckCircle className="h-3 w-3 mr-1" />
                   {overviewStats.approvedSocieties} approved
                 </p>
@@ -716,22 +718,22 @@ const ReportManagement = () => {
             </div>
           </div>
 
-          <div className="group relative overflow-hidden bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-6 border border-amber-200 hover:shadow-xl transition-all duration-300">
+          <div className="group relative overflow-hidden flex flex-col bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-6 border border-amber-200 hover:shadow-xl transition-all duration-300">
             <div className="absolute top-0 right-0 w-20 h-20 bg-amber-600 rounded-full -mr-10 -mt-10 opacity-10 group-hover:opacity-20 transition-opacity"></div>
             <div className="relative">
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-amber-600 rounded-xl shadow-lg">
                   <Star className="h-6 w-6 text-white" />
                 </div>
-                <div className="flex items-center text-emerald-600 text-sm font-medium bg-emerald-50 px-2 py-1 rounded-full">
+                <div className="flex items-center text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-full">
                   <ArrowUpRight className="h-3 w-3 mr-1" />
                   +{overviewStats.reviewEngagementRate ? overviewStats.reviewEngagementRate.toFixed(0) : '15'}%
                 </div>
               </div>
-              <h3 className="text-sm font-medium text-amber-800 mb-1">Reviews</h3>
-              <p className="text-3xl font-bold text-amber-900">{overviewStats.totalReviews.toLocaleString()}</p>
+              <h3 className="text-xs font-medium text-amber-800 mb-1">Reviews</h3>
+              <p className="text-2xl font-bold text-amber-900">{overviewStats.totalReviews.toLocaleString()}</p>
               <div className="mt-3 space-y-1">
-                <p className="text-sm text-amber-700 flex items-center">
+                <p className="text-xs text-amber-700 flex items-center">
                   <Star className="h-3 w-3 mr-1" />
                   {(overviewStats.avgRating || 0).toFixed(1)} avg rating
                 </p>
@@ -742,22 +744,22 @@ const ReportManagement = () => {
             </div>
           </div>
 
-          <div className="group relative overflow-hidden bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border border-purple-200 hover:shadow-xl transition-all duration-300">
+          <div className="group relative overflow-hidden flex flex-col bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border border-purple-200 hover:shadow-xl transition-all duration-300">
             <div className="absolute top-0 right-0 w-20 h-20 bg-purple-600 rounded-full -mr-10 -mt-10 opacity-10 group-hover:opacity-20 transition-opacity"></div>
             <div className="relative">
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-purple-600 rounded-xl shadow-lg">
                   <MapPin className="h-6 w-6 text-white" />
                 </div>
-                <div className="flex items-center text-emerald-600 text-sm font-medium bg-emerald-50 px-2 py-1 rounded-full">
+                <div className="flex items-center text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-full">
                   <ArrowUpRight className="h-3 w-3 mr-1" />
                   {overviewStats.availablePlots > 0 ? ((overviewStats.availablePlots / overviewStats.totalPlots) * 100).toFixed(0) : '0'}%
                 </div>
               </div>
-              <h3 className="text-sm font-medium text-purple-800 mb-1">Plots</h3>
-              <p className="text-3xl font-bold text-purple-900">{overviewStats.totalPlots.toLocaleString()}</p>
+              <h3 className="text-xs font-medium text-purple-800 mb-1">Plots</h3>
+              <p className="text-2xl font-bold text-purple-900">{overviewStats.totalPlots.toLocaleString()}</p>
               <div className="mt-3 space-y-1">
-                <p className="text-sm text-purple-700 flex items-center">
+                <p className="text-xs text-purple-700 flex items-center">
                   <CheckCircle className="h-3 w-3 mr-1" />
                   {overviewStats.availablePlots.toLocaleString()} available
                 </p>
@@ -783,7 +785,7 @@ const ReportManagement = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center px-6 py-3 rounded-xl font-medium text-sm whitespace-nowrap transition-all duration-200 ${
+                  className={`flex items-center px-6 py-3 rounded-xl font-medium text-xs whitespace-nowrap transition-all duration-200 ${
                     activeTab === tab.id
                       ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -810,8 +812,8 @@ const ReportManagement = () => {
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Platform Activity</h3>
-                    <p className="text-sm text-gray-600">Daily engagement trends</p>
+                    <h3 className="text-base font-semibold text-gray-900">Platform Activity</h3>
+                    <p className="text-xs text-gray-600">Daily engagement trends</p>
                   </div>
                   <div className="p-2 bg-blue-50 rounded-lg">
                     <TrendingUp className="h-5 w-5 text-blue-600" />
@@ -848,8 +850,8 @@ const ReportManagement = () => {
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Performance Metrics</h3>
-                    <p className="text-sm text-gray-600">Key performance indicators from database</p>
+                    <h3 className="text-base font-semibold text-gray-900">Performance Metrics</h3>
+                    <p className="text-xs text-gray-600">Key performance indicators from database</p>
                   </div>
                   <div className="p-2 bg-purple-50 rounded-lg">
                     <Target className="h-5 w-5 text-purple-600" />
@@ -863,7 +865,7 @@ const ReportManagement = () => {
                       </div>
                       <span className="font-medium text-gray-700">Review Engagement Rate</span>
                     </div>
-                    <span className="text-lg font-bold text-emerald-600">
+                    <span className="text-base font-bold text-emerald-600">
                       {(overviewStats.reviewEngagementRate || 0).toFixed(1)}%
                     </span>
                   </div>
@@ -874,7 +876,7 @@ const ReportManagement = () => {
                       </div>
                       <span className="font-medium text-gray-700">Plot Availability Rate</span>
                     </div>
-                    <span className="text-lg font-bold text-purple-600">
+                    <span className="text-base font-bold text-purple-600">
                       {overviewStats.totalPlots > 0 ? ((overviewStats.availablePlots / overviewStats.totalPlots) * 100).toFixed(1) : '0'}%
                     </span>
                   </div>
@@ -885,7 +887,7 @@ const ReportManagement = () => {
                       </div>
                       <span className="font-medium text-gray-700">Society Approval Rate</span>
                     </div>
-                    <span className="text-lg font-bold text-amber-600">
+                    <span className="text-base font-bold text-amber-600">
                       {(overviewStats.societyApprovalRate || 0).toFixed(1)}%
                     </span>
                   </div>
@@ -896,7 +898,7 @@ const ReportManagement = () => {
                       </div>
                       <span className="font-medium text-gray-700">Platform Satisfaction</span>
                     </div>
-                    <span className="text-lg font-bold text-indigo-600">
+                    <span className="text-base font-bold text-indigo-600">
                       {(overviewStats.avgRating || 0).toFixed(1)}/5.0
                     </span>
                   </div>
@@ -907,7 +909,7 @@ const ReportManagement = () => {
                       </div>
                       <span className="font-medium text-gray-700">Plot Sales Rate</span>
                     </div>
-                    <span className="text-lg font-bold text-rose-600">
+                    <span className="text-base font-bold text-rose-600">
                       {overviewStats.totalPlots > 0 ? ((overviewStats.soldPlots / overviewStats.totalPlots) * 100).toFixed(1) : '0'}%
                     </span>
                   </div>
@@ -921,11 +923,11 @@ const ReportManagement = () => {
                 <div className="p-4 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-4">
                   <Activity className="h-8 w-8 text-blue-600" />
                 </div>
-                <h3 className="text-sm font-medium text-gray-600 mb-2">Daily Active Users</h3>
-                <p className="text-3xl font-bold text-gray-900">
+                <h3 className="text-xs font-medium text-gray-600 mb-2">Daily Active Users</h3>
+                <p className="text-2xl font-bold text-gray-900">
                   {Math.round(overviewStats.activeUsers * 0.5).toLocaleString()}
                 </p>
-                <p className="text-sm text-green-600 mt-2 flex items-center justify-center">
+                <p className="text-xs text-green-600 mt-2 flex items-center justify-center">
                   <ArrowUpRight className="h-3 w-3 mr-1" />
                   
                 </p>
@@ -940,8 +942,8 @@ const ReportManagement = () => {
                 <div className="p-4 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-4">
                   <Building className="h-8 w-8 text-emerald-600" />
                 </div>
-                <h3 className="text-sm font-medium text-gray-600 mb-2">New Properties</h3>
-                <p className="text-3xl font-bold text-gray-900">
+                <h3 className="text-xs font-medium text-gray-600 mb-2">New Properties</h3>
+                <p className="text-2xl font-bold text-gray-900">
                   +{safeSocieties.filter(s => {
                     try {
                       const societyDate = new Date(s.createdAt || s.dateCreated || s.created_at);
@@ -953,7 +955,7 @@ const ReportManagement = () => {
                     }
                   }).length}
                 </p>
-                <p className="text-sm text-green-600 mt-2 flex items-center justify-center">
+                <p className="text-xs text-green-600 mt-2 flex items-center justify-center">
                   <ArrowUpRight className="h-3 w-3 mr-1" />
                   This week
                 </p>
@@ -968,8 +970,8 @@ const ReportManagement = () => {
                 <div className="p-4 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-4">
                   <MessageSquare className="h-8 w-8 text-amber-600" />
                 </div>
-                <h3 className="text-sm font-medium text-gray-600 mb-2">Recent Reviews</h3>
-                <p className="text-3xl font-bold text-gray-900">
+                <h3 className="text-xs font-medium text-gray-600 mb-2">Recent Reviews</h3>
+                <p className="text-2xl font-bold text-gray-900">
                   {safeReviews.filter(r => {
                     try {
                       const reviewDate = new Date(r.createdAt || r.dateCreated || r.created_at);
@@ -981,7 +983,7 @@ const ReportManagement = () => {
                     }
                   }).length}
                 </p>
-                <p className="text-sm text-green-600 mt-2 flex items-center justify-center">
+                <p className="text-xs text-green-600 mt-2 flex items-center justify-center">
                   <ArrowUpRight className="h-3 w-3 mr-1" />
                   Last 7 days
                 </p>
@@ -997,8 +999,8 @@ const ReportManagement = () => {
             <div className="mt-8 bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Platform Overview</h3>
-                  <p className="text-sm text-gray-600">Complete summary of platform statistics</p>
+                  <h3 className="text-base font-semibold text-gray-900">Platform Overview</h3>
+                  <p className="text-xs text-gray-600">Complete summary of platform statistics</p>
                 </div>
                 <div className="p-2 bg-blue-50 rounded-lg">
                   <BarChart3 className="h-5 w-5 text-blue-600" />
@@ -1007,23 +1009,23 @@ const ReportManagement = () => {
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
-                  <div className="text-2xl font-bold text-gray-900">{overviewStats.totalUsers.toLocaleString()}</div>
-                  <div className="text-sm text-gray-600 mt-1">Total Users</div>
+                  <div className="text-xl font-bold text-gray-900">{overviewStats.totalUsers.toLocaleString()}</div>
+                  <div className="text-xs text-gray-600 mt-1">Total Users</div>
                   <div className="text-xs text-green-600 mt-1">+{overviewStats.newUsersThisMonth} this month</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
-                  <div className="text-2xl font-bold text-gray-900">{overviewStats.totalSocieties.toLocaleString()}</div>
-                  <div className="text-sm text-gray-600 mt-1">Society Registrations</div>
+                  <div className="text-xl font-bold text-gray-900">{overviewStats.totalSocieties.toLocaleString()}</div>
+                  <div className="text-xs text-gray-600 mt-1">Society Registrations</div>
                   <div className="text-xs text-blue-600 mt-1">{(overviewStats.societyApprovalRate || 0).toFixed(0)}% approved</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
-                  <div className="text-2xl font-bold text-gray-900">{overviewStats.totalReviews.toLocaleString()}</div>
-                  <div className="text-sm text-gray-600 mt-1">Reviews</div>
+                  <div className="text-xl font-bold text-gray-900">{overviewStats.totalReviews.toLocaleString()}</div>
+                  <div className="text-xs text-gray-600 mt-1">Reviews</div>
                   <div className="text-xs text-yellow-600 mt-1">{(overviewStats.avgRating || 0).toFixed(1)} ⭐ average</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
-                  <div className="text-2xl font-bold text-gray-900">{overviewStats.totalPlots.toLocaleString()}</div>
-                  <div className="text-sm text-gray-600 mt-1">Plots</div>
+                  <div className="text-xl font-bold text-gray-900">{overviewStats.totalPlots.toLocaleString()}</div>
+                  <div className="text-xs text-gray-600 mt-1">Plots</div>
                   <div className="text-xs text-purple-600 mt-1">{overviewStats.availablePlots.toLocaleString()} available</div>
                 </div>
               </div>
@@ -1035,7 +1037,7 @@ const ReportManagement = () => {
           <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">User Growth Trend</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-6">User Growth Trend</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={generateChartData()}>
                     <XAxis dataKey="day" />
@@ -1047,19 +1049,19 @@ const ReportManagement = () => {
               </div>
 
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">User Statistics</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-6">User Statistics</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-blue-50 rounded-xl">
                     <span className="font-medium text-gray-700">Total Registered</span>
-                    <span className="text-xl font-bold text-blue-600">{overviewStats.totalUsers.toLocaleString()}</span>
+                    <span className="text-lg font-bold text-blue-600">{overviewStats.totalUsers.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-emerald-50 rounded-xl">
                     <span className="font-medium text-gray-700">Active Users</span>
-                    <span className="text-xl font-bold text-emerald-600">{overviewStats.activeUsers.toLocaleString()}</span>
+                    <span className="text-lg font-bold text-emerald-600">{overviewStats.activeUsers.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-amber-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-amber-50 rounded-xl">
                     <span className="font-medium text-gray-700">New This Month</span>
-                    <span className="text-xl font-bold text-amber-600">+{overviewStats.newUsersThisMonth}</span>
+                    <span className="text-lg font-bold text-amber-600">+{overviewStats.newUsersThisMonth}</span>
                   </div>
                 </div>
               </div>
@@ -1067,23 +1069,23 @@ const ReportManagement = () => {
             
             {/* User engagement metrics */}
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">User Engagement</h3>
+              <h3 className="text-base font-semibold text-gray-900 mb-6">User Engagement</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
-                  <div className="text-2xl font-bold text-blue-600">{(overviewStats.reviewEngagementRate || 0).toFixed(1)}%</div>
-                  <div className="text-sm text-gray-600">Review Engagement</div>
+                  <div className="text-xl font-bold text-blue-600">{(overviewStats.reviewEngagementRate || 0).toFixed(1)}%</div>
+                  <div className="text-xs text-gray-600">Review Engagement</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl">
-                  <div className="text-2xl font-bold text-emerald-600">
+                  <div className="text-xl font-bold text-emerald-600">
                     {Math.round((overviewStats.activeUsers / overviewStats.totalUsers) * 100)}%
                   </div>
-                  <div className="text-sm text-gray-600">User Activity Rate</div>
+                  <div className="text-xs text-gray-600">User Activity Rate</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-xl font-bold text-purple-600">
                     {overviewStats.totalUsers > 0 ? Math.round((overviewStats.newUsersThisMonth / overviewStats.totalUsers) * 100) : 0}%
                   </div>
-                  <div className="text-sm text-gray-600">Monthly Growth</div>
+                  <div className="text-xs text-gray-600">Monthly Growth</div>
                 </div>
               </div>
             </div>
@@ -1094,7 +1096,7 @@ const ReportManagement = () => {
           <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Profile Completion Status</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-6">Profile Completion Status</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie 
@@ -1146,7 +1148,7 @@ const ReportManagement = () => {
                 </ResponsiveContainer>
                 
                 {/* Show data summary below chart */}
-                <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
                   <div className="bg-emerald-50 p-2 rounded">
                     <div className="font-semibold text-emerald-700">{overviewStats.approvedSocieties || 0}</div>
                     <div className="text-emerald-600">Approved</div>
@@ -1163,27 +1165,27 @@ const ReportManagement = () => {
               </div>
 
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Property Metrics</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-6">Property Metrics</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-emerald-50 rounded-xl">
                     <span className="font-medium text-gray-700">Total Properties</span>
-                    <span className="text-xl font-bold text-emerald-600">{overviewStats.totalSocieties}</span>
+                    <span className="text-lg font-bold text-emerald-600">{overviewStats.totalSocieties}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-blue-50 rounded-xl">
                     <span className="font-medium text-gray-700">Approved</span>
-                    <span className="text-xl font-bold text-blue-600">{overviewStats.approvedSocieties}</span>
+                    <span className="text-lg font-bold text-blue-600">{overviewStats.approvedSocieties}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-amber-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-amber-50 rounded-xl">
                     <span className="font-medium text-gray-700">Pending Review</span>
-                    <span className="text-xl font-bold text-amber-600">{overviewStats.pendingSocieties}</span>
+                    <span className="text-lg font-bold text-amber-600">{overviewStats.pendingSocieties}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-red-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-red-50 rounded-xl">
                     <span className="font-medium text-gray-700">Rejected</span>
-                    <span className="text-xl font-bold text-red-600">{overviewStats.rejectedSocieties}</span>
+                    <span className="text-lg font-bold text-red-600">{overviewStats.rejectedSocieties}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-purple-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-purple-50 rounded-xl">
                     <span className="font-medium text-gray-700">Approval Rate</span>
-                    <span className="text-xl font-bold text-purple-600">{(overviewStats.societyApprovalRate || 0).toFixed(1)}%</span>
+                    <span className="text-lg font-bold text-purple-600">{(overviewStats.societyApprovalRate || 0).toFixed(1)}%</span>
                   </div>
                 </div>
               </div>
@@ -1191,7 +1193,7 @@ const ReportManagement = () => {
             
             {/* Additional Properties Analytics */}
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Property Trends</h3>
+              <h3 className="text-base font-semibold text-gray-900 mb-6">Property Trends</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={[
                   { 
@@ -1230,7 +1232,7 @@ const ReportManagement = () => {
           <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Review Sentiment</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-6">Review Sentiment</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={[
                     { label: "Positive (4-5★)", count: overviewStats.positiveReviews },
@@ -1246,27 +1248,27 @@ const ReportManagement = () => {
               </div>
 
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Review Statistics</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-6">Review Statistics</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-amber-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-amber-50 rounded-xl">
                     <span className="font-medium text-gray-700">Average Rating</span>
-                    <span className="text-xl font-bold text-amber-600">{(overviewStats.avgRating || 0).toFixed(1)} ⭐</span>
+                    <span className="text-lg font-bold text-amber-600">{(overviewStats.avgRating || 0).toFixed(1)} ⭐</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-emerald-50 rounded-xl">
                     <span className="font-medium text-gray-700">Total Reviews</span>
-                    <span className="text-xl font-bold text-emerald-600">{overviewStats.totalReviews}</span>
+                    <span className="text-lg font-bold text-emerald-600">{overviewStats.totalReviews}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-green-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-green-50 rounded-xl">
                     <span className="font-medium text-gray-700">Positive Reviews</span>
-                    <span className="text-xl font-bold text-green-600">{overviewStats.positiveReviews}</span>
+                    <span className="text-lg font-bold text-green-600">{overviewStats.positiveReviews}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-red-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-red-50 rounded-xl">
                     <span className="font-medium text-gray-700">Negative Reviews</span>
-                    <span className="text-xl font-bold text-red-600">{overviewStats.negativeReviews}</span>
+                    <span className="text-lg font-bold text-red-600">{overviewStats.negativeReviews}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-blue-50 rounded-xl">
                     <span className="font-medium text-gray-700">Engagement Rate</span>
-                    <span className="text-xl font-bold text-blue-600">{(overviewStats.reviewEngagementRate || 0).toFixed(1)}%</span>
+                    <span className="text-lg font-bold text-blue-600">{(overviewStats.reviewEngagementRate || 0).toFixed(1)}%</span>
                   </div>
                 </div>
               </div>
@@ -1278,7 +1280,7 @@ const ReportManagement = () => {
           <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Plot Status Distribution</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-6">Plot Status Distribution</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie 
@@ -1304,33 +1306,33 @@ const ReportManagement = () => {
               </div>
 
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Plot Statistics</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-6">Plot Statistics</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-purple-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-purple-50 rounded-xl">
                     <span className="font-medium text-gray-700">Total Plots</span>
-                    <span className="text-xl font-bold text-purple-600">{overviewStats.totalPlots}</span>
+                    <span className="text-lg font-bold text-purple-600">{overviewStats.totalPlots}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-emerald-50 rounded-xl">
                     <span className="font-medium text-gray-700">Available</span>
-                    <span className="text-xl font-bold text-emerald-600">{overviewStats.availablePlots}</span>
+                    <span className="text-lg font-bold text-emerald-600">{overviewStats.availablePlots}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-rose-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-rose-50 rounded-xl">
                     <span className="font-medium text-gray-700">Sold</span>
-                    <span className="text-xl font-bold text-rose-600">{overviewStats.soldPlots}</span>
+                    <span className="text-lg font-bold text-rose-600">{overviewStats.soldPlots}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-amber-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-amber-50 rounded-xl">
                     <span className="font-medium text-gray-700">Reserved</span>
-                    <span className="text-xl font-bold text-amber-600">{overviewStats.reservedPlots}</span>
+                    <span className="text-lg font-bold text-amber-600">{overviewStats.reservedPlots}</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-blue-50 rounded-xl">
                     <span className="font-medium text-gray-700">Availability Rate</span>
-                    <span className="text-xl font-bold text-blue-600">
+                    <span className="text-lg font-bold text-blue-600">
                       {overviewStats.totalPlots > 0 ? ((overviewStats.availablePlots / overviewStats.totalPlots) * 100).toFixed(1) : '0'}%
                     </span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-indigo-50 rounded-xl">
+                  <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-indigo-50 rounded-xl">
                     <span className="font-medium text-gray-700">Sales Rate</span>
-                    <span className="text-xl font-bold text-indigo-600">
+                    <span className="text-lg font-bold text-indigo-600">
                       {overviewStats.totalPlots > 0 ? ((overviewStats.soldPlots / overviewStats.totalPlots) * 100).toFixed(1) : '0'}%
                     </span>
                   </div>

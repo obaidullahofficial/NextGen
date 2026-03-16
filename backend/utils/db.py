@@ -6,6 +6,19 @@ MONGO_URI = "mongodb+srv://AashfaNoor:NextGenIT22-A@cluster0.otiywgx.mongodb.net
 # Local MongoDB fallback
 LOCAL_MONGO_URI = "mongodb://localhost:27017/"
 
+def setup_admin_indexes(db):
+    """Setup MongoDB indexes to optimize Admin Dashboard queries"""
+    try:
+        db.users.create_index([("email", 1)])
+        db.users.create_index([("role", 1)])
+        db.users.create_index([("created_at", -1)])
+        # Other common admin fields
+        db.society_profiles.create_index([("status", 1)])
+        db.approval_requests.create_index([("status", 1)])
+        print("[DB] Admin query indexes verified.")
+    except Exception as e:
+        print(f"[DB] Failed to create indexes: {e}")
+
 def get_db():
     """
     Get database connection with automatic fallback to local MongoDB
@@ -17,7 +30,9 @@ def get_db():
         # Test the connection
         client.admin.command('ping')
         print("[DB] ✅ Connected to MongoDB Atlas")
-        return client['NextGenArchitect']
+        db = client['NextGenArchitect']
+        setup_admin_indexes(db)
+        return db
     except Exception as atlas_error:
         print(f"[DB] ❌ Atlas connection failed: {atlas_error}")
         
@@ -28,7 +43,9 @@ def get_db():
             # Test the connection
             client.admin.command('ping')
             print("[DB] ✅ Connected to local MongoDB")
-            return client['NextGenArchitect']
+            db = client['NextGenArchitect']
+            setup_admin_indexes(db)
+            return db
         except Exception as local_error:
             print(f"[DB] ❌ Local MongoDB connection failed: {local_error}")
             print("[DB] Both Atlas and local connections failed!")

@@ -1,3 +1,5 @@
+import useSWR from 'swr';
+import debounce from 'lodash.debounce';
 import React, { useState, useEffect } from 'react';
 import advertisementPlanAPI from '../../services/advertisementPlanAPI';
 
@@ -154,11 +156,11 @@ const AdvertisementPlanManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-[#2F3D57] mb-2">Advertisement Plan Management</h1>
+            <h1 className="text-2xl font-bold text-[#2F3D57] mb-2">Advertisement Plan Management</h1>
             <p className="text-gray-600">Create and manage advertisement plans for users</p>
           </div>
           <button 
@@ -171,14 +173,14 @@ const AdvertisementPlanManagement = () => {
 
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-800">
-            <span className="text-xl">⚠</span>
+            <span className="text-lg">⚠</span>
             {error}
           </div>
         )}
 
         {success && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-800">
-            <span className="text-xl">✓</span>
+            <span className="text-lg">✓</span>
             {success}
           </div>
         )}
@@ -199,8 +201,8 @@ const AdvertisementPlanManagement = () => {
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto w-full max-w-full">
+              <table className="w-full min-w-[900px] max-w-none text-left ">
                 <thead>
                   <tr className="bg-[#2F3D57] text-white">
                     <th className="px-6 py-4 text-left font-semibold">Plan Name</th>
@@ -232,21 +234,21 @@ const AdvertisementPlanManagement = () => {
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
                           <button
-                            className="p-2 hover:bg-blue-50 rounded transition-colors text-xl"
+                            className="p-2 hover:bg-blue-50 rounded transition-colors text-lg"
                             onClick={() => openModal(plan)}
                             title="Edit"
                           >
                             ✏️
                           </button>
                           <button
-                            className="p-2 hover:bg-orange-50 rounded transition-colors text-xl"
+                            className="p-2 hover:bg-orange-50 rounded transition-colors text-lg"
                             onClick={() => handleToggleStatus(plan._id)}
                             title={plan.is_active ? 'Deactivate' : 'Activate'}
                           >
                             {plan.is_active ? '🔒' : '🔓'}
                           </button>
                           <button
-                            className="p-2 hover:bg-red-50 rounded transition-colors text-xl"
+                            className="p-2 hover:bg-red-50 rounded transition-colors text-lg"
                             onClick={() => handleDeletePlan(plan._id)}
                             title="Delete"
                           >
@@ -267,15 +269,15 @@ const AdvertisementPlanManagement = () => {
           <div className="fixed inset-0 bg-[#2F3D57]/80 flex items-center justify-center z-50 p-4" onClick={closeModal}>
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-[#2F3D57] text-white">
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-xl font-bold">
                   {editingPlan ? 'Edit Plan' : 'Create New Plan'}
                 </h2>
-                <button className="text-white hover:text-gray-300 text-3xl leading-none" onClick={closeModal}>&times;</button>
+                <button className="text-white hover:text-gray-300 text-2xl leading-none" onClick={closeModal}>&times;</button>
               </div>
               
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="name" className="block text-xs font-medium text-gray-700 mb-2">
                     Plan Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -292,7 +294,7 @@ const AdvertisementPlanManagement = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="duration_days" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="duration_days" className="block text-xs font-medium text-gray-700 mb-2">
                       Duration (Days) <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -309,9 +311,9 @@ const AdvertisementPlanManagement = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="price" className="block text-xs font-medium text-gray-700 mb-2">
                       Price (Rs) <span className="text-red-500">*</span>
-                      <span className="text-sm text-gray-500 font-normal ml-1">(Minimum: 150 Rs)</span>
+                      <span className="text-xs text-gray-500 font-normal ml-1">(Minimum: 150 Rs)</span>
                     </label>
                     <input
                       type="number"
@@ -328,7 +330,7 @@ const AdvertisementPlanManagement = () => {
                       }`}
                     />
                     {priceError && (
-                      <p className="text-red-500 text-sm mt-1">{priceError}</p>
+                      <p className="text-red-500 text-xs mt-1">{priceError}</p>
                     )}
                   </div>
                 </div>
@@ -342,7 +344,7 @@ const AdvertisementPlanManagement = () => {
                       onChange={handleInputChange}
                       className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                     />
-                    <span className="text-sm font-medium text-gray-700">Active (visible to users)</span>
+                    <span className="text-xs font-medium text-gray-700">Active (visible to users)</span>
                   </label>
                 </div>
 

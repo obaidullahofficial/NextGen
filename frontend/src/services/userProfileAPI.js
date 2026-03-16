@@ -11,6 +11,10 @@ const getAuthHeaders = () => {
   };
 };
 
+// Global Cache Storage for User Module
+let societiesCache = null;
+let plotsCache = {}; // { societyId: promise }
+
 // Helper function to handle API responses
 const handleResponse = async (response) => {
   const data = await response.json();
@@ -61,24 +65,74 @@ export const userProfileAPI = {
   // ============= SOCIETIES & PLOTS =============
 
   /**
-   * Get all registered societies (public endpoint)
+   * Get all registered societies (public endpoint) with caching
+   * @param {boolean} forceRefresh - If true, bypass cache
    */
-  async getSocieties() {
-    const response = await fetch(`${API_BASE_URL}/society-profiles`, {
+  async getSocieties(forceRefresh = false) {
+    if (societiesCache && !forceRefresh) {
+      // Return cached promise but do a background refresh
+      const cachedPromise = societiesCache;
+      // Background validation to update cache silently
+      fetch(`${API_BASE_URL}/society-profiles`, { method: 'GET' })
+        .then(response => handleResponse(response))
+        .then(data => {
+          societiesCache = Promise.resolve(data);
+          // Auto-preload plots in the background when societies refresh
+          if (data.societies && Array.isArray(data.societies)) {
+            data.societies.forEach(soc => {
+              this.getPlotsBySociety(soc._id, true).catch(() => {});
+            });
+          } else if (Array.isArray(data)) {
+            data.forEach(soc => {
+              this.getPlotsBySociety(soc._id, true).catch(() => {});
+            });
+          }
+        })
+        .catch(err => console.error('Background society refresh failed:', err));
+      return cachedPromise;
+    }
+
+    societiesCache = fetch(`${API_BASE_URL}/society-profiles`, {
       method: 'GET',
-    });
-    return handleResponse(response);
+    }).then(response => handleResponse(response));
+
+    const result = await societiesCache;
+    
+    // Auto-preload plots for all societies softly in the background
+    try {
+      const societyList = result.societies ? result.societies : (Array.isArray(result) ? result : []);
+      societyList.forEach(soc => {
+        // Preload plots for each society
+        this.getPlotsBySociety(soc._id).catch(() => {});
+      });
+    } catch (e) {}
+
+    return result;
   },
 
   /**
-   * Get plots for a specific society (public endpoint)
+   * Get plots for a specific society (public endpoint) with caching
    * @param {string} societyId
+   * @param {boolean} forceRefresh - If true, bypass cache
    */
-  async getPlotsBySociety(societyId) {
-    const response = await fetch(`${API_BASE_URL}/plots/society/${societyId}`, {
+  async getPlotsBySociety(societyId, forceRefresh = false) {
+    if (plotsCache[societyId] && !forceRefresh) {
+      // Return cached promise but do a background refresh
+      const cachedPromise = plotsCache[societyId];
+      fetch(`${API_BASE_URL}/plots/society/${societyId}`, { method: 'GET' })
+        .then(response => handleResponse(response))
+        .then(data => {
+          plotsCache[societyId] = Promise.resolve(data);
+        })
+        .catch(err => console.error('Background plot refresh failed:', err));
+      return cachedPromise;
+    }
+
+    plotsCache[societyId] = fetch(`${API_BASE_URL}/plots/society/${societyId}`, {
       method: 'GET',
-    });
-    return handleResponse(response);
+    }).then(response => handleResponse(response));
+    
+    return plotsCache[societyId];
   },
 
   // ============= APPROVAL REQUESTS =============

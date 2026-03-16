@@ -65,8 +65,8 @@ const AnimatedSection = ({ children, className = "" }) => {
 // Section Counter Component
 const SectionCounter = ({ number, total = "04", light = false }) => (
   <div className="absolute left-8 top-1/2 -translate-y-1/2 hidden lg:flex flex-col items-center gap-2 z-20">
-    <span className={`text-sm font-bold ${light ? 'text-white' : 'text-[#2F3D57]'}`}>{number}</span>
-    <div className={`w-px h-8 ${light ? 'bg-white/30' : 'bg-[#2F3D57]/20'}`}></div>
+    <span className={`text-sm font-bold ${light ? 'text-white' : 'text-white'}`}>{number}</span>
+    <div className={`w-px h-8 ${light ? 'bg-[#2F3D57]/30' : 'bg-[#2F3D57]/20'}`}></div>
     <span className={`text-sm ${light ? 'text-white/60' : 'text-gray-400'}`}>{total}</span>
   </div>
 );
@@ -85,9 +85,9 @@ const ScrollIndicator = ({ onClick, light = false }) => (
       animate={{ y: [0, 8, 0] }}
       transition={{ duration: 1.5, repeat: Infinity }}
     >
-      <FaChevronDown className={`text-xl ${light ? 'text-white' : 'text-[#2F3D57]'}`} />
+      <FaChevronDown className={`text-lg ${light ? 'text-white' : 'text-white'}`} />
     </motion.div>
-    <span className={`text-xs mt-2 tracking-widest uppercase ${light ? 'text-white/60' : 'text-[#2F3D57]/60'}`}>Scroll</span>
+    <span className={`text-xs mt-2 tracking-widest uppercase ${light ? 'text-white/60' : 'text-white/60'}`}>Scroll</span>
   </motion.div>
 );
 
@@ -458,18 +458,12 @@ const HomePage = () => {
       </div>
 
       {/* ===== SECTION 1: HERO WITH 3D MOCKUP ===== */}
-      <section className="min-h-screen relative flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#f8f9fa] to-white pt-16">
+      <section className="min-h-screen relative flex items-center justify-center overflow-hidden bg-[#2F3D57] pt-16">
         {/* Dot Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.4]" style={{
           backgroundImage: 'radial-gradient(circle, #2F3D57 1px, transparent 1px)',
           backgroundSize: '40px 40px'
         }}></div>
-        
-        {/* Section Counter */}
-        <SectionCounter number="01" />
-        
-        {/* Scroll Indicator */}
-        <ScrollIndicator onClick={() => scrollToSection('mockup-section')} />
 
         <motion.div 
           className="container mx-auto px-6 flex flex-col lg:flex-row items-center justify-between relative z-10"
@@ -499,7 +493,7 @@ const HomePage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.05 }}
             >
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-[#2F3D57] leading-[1.1] mb-8">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-[1.1] mb-8">
                 <span className="block">You Dream It.</span>
                 <span className="block text-[#ED7600]">We Design It.</span>
                 <span className="block">You Own It.</span>
@@ -507,7 +501,7 @@ const HomePage = () => {
             </motion.div>
             
             <motion.p 
-              className="text-xl text-gray-600 mb-10 max-w-lg leading-relaxed"
+              className="text-base text-gray-300 mb-10 max-w-lg leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.15 }}
@@ -524,18 +518,18 @@ const HomePage = () => {
             >
               <motion.button 
                 onClick={handleGenerateNow}
-                className="group px-8 py-4 bg-[#ED7600] text-white rounded-full font-semibold text-lg hover:bg-[#d66a00] transition-all shadow-xl shadow-orange-500/20 flex items-center gap-3"
+                className="group px-8 py-4 bg-[#ED7600] text-white rounded-full font-semibold text-base hover:bg-[#d66a00] transition-all shadow-xl shadow-orange-500/20 flex items-center gap-3"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <FaRocket className="group-hover:animate-bounce" />
                 <span>Generate Now</span>
-                <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                <FaArrowRight className="group-hover:translate-x-0 transition-transform" />
               </motion.button>
               
               <motion.button 
-                onClick={() => navigate('/societies')}
-                className="px-8 py-4 bg-transparent border-2 border-[#2F3D57] text-[#2F3D57] rounded-full font-semibold text-lg hover:bg-[#2F3D57] hover:text-white transition-all flex items-center gap-2"
+                onClick={() => navigate('/society')}
+                className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-full font-semibold text-base hover:bg-[#2F3D57] hover:text-white transition-all flex items-center gap-2"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -579,8 +573,8 @@ const HomePage = () => {
                       }
                     })}
                   </div>
-                  <span className="text-sm font-semibold text-[#2F3D57]">{platformStats.averageRating}</span>
-                  <span className="text-sm text-gray-500">({platformStats.totalUsers}+ users)</span>
+                  <span className="text-sm font-semibold text-white">{platformStats.averageRating}</span>
+                  <span className="text-sm text-gray-500">({platformStats.totalReviews} reviews)</span>
                 </div>
               </div>
             </motion.div>
@@ -596,7 +590,7 @@ const HomePage = () => {
               style={{ 
                 perspective: '1500px',
                 transformStyle: 'preserve-3d',
-                scale: heroMockupScale
+                scale: 0.8
               }}
             >
               {/* 3D Tilted Device Mockup */}
@@ -613,10 +607,10 @@ const HomePage = () => {
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
               >
                 {/* Shadow underneath */}
-                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-[80%] h-8 bg-black/10 blur-2xl rounded-full"></div>
+                <div className="absolute -bottom-8 left-1/2 -translate-x-0 w-[80%] h-8 bg-black/10 blur-2xl rounded-full"></div>
                 
                 {/* Main Device Frame */}
-                <div className="bg-white rounded-[40px] shadow-2xl p-4 border border-gray-100">
+                <div className="bg-[#2F3D57] rounded-[40px] shadow-2xl p-4 border border-gray-100">
                   {/* Device Header */}
                   <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
                     <div className="flex items-center gap-2">
@@ -629,11 +623,11 @@ const HomePage = () => {
                   </div>
                   
                   {/* Screen Content */}
-                  <div className="mt-4 relative overflow-hidden rounded-2xl bg-gray-50">
+                  <div className="mt-4 relative overflow-hidden rounded-2xl bg-[#1e2738]">
                     {/* Dashboard Preview */}
                     <div className="p-4">
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm font-semibold text-[#2F3D57]">Dashboard</span>
+                        <span className="text-sm font-semibold text-white">Dashboard</span>
                         <div className="flex gap-2">
                           {[1,2,3].map(i => (
                             <div key={i} className="w-6 h-6 rounded-full bg-gray-200"></div>
@@ -645,32 +639,32 @@ const HomePage = () => {
                       <div className="grid grid-cols-3 gap-3 mb-4">
                         {/* Card 1 - 2D Plan */}
                         <motion.div 
-                          className="bg-[#2F3D57]/5 border border-[#2F3D57]/20 rounded-xl p-3 cursor-pointer"
+                          className="bg-[#2F3D57]/5 border border-white/20 rounded-xl p-3 cursor-pointer"
                           whileHover={{ scale: 1.05, y: -5 }}
                           onClick={() => setMainView('2d')}
                         >
-                          <div className="bg-white rounded-lg p-2 mb-2">
-                            <div className="border-2 border-[#2F3D57] rounded h-16 p-1">
-                              <div className="bg-[#ED7600]/20 border border-[#2F3D57] h-1/2 mb-0.5"></div>
+                          <div className="bg-[#2F3D57] rounded-lg p-2 mb-2">
+                            <div className="border-2 border-white rounded h-16 p-1">
+                              <div className="bg-[#ED7600]/20 border border-white h-1/2 mb-0.5"></div>
                               <div className="flex gap-0.5 h-1/2">
-                                <div className="bg-[#2F3D57]/10 border border-[#2F3D57] flex-1"></div>
-                                <div className="bg-[#2F3D57]/20 border border-[#2F3D57] flex-1"></div>
+                                <div className="bg-[#2F3D57]/10 border border-white flex-1"></div>
+                                <div className="bg-[#2F3D57]/20 border border-white flex-1"></div>
                               </div>
                             </div>
                           </div>
-                          <span className="text-[10px] font-semibold text-[#2F3D57]">2D Plan</span>
+                          <span className="text-[10px] font-semibold text-white">2D Plan</span>
                         </motion.div>
                         
                         {/* Card 2 - 3D Model */}
                         <motion.div 
-                          className="bg-[#2F3D57]/5 border border-[#2F3D57]/20 rounded-xl p-3 cursor-pointer"
+                          className="bg-[#2F3D57]/5 border border-white/20 rounded-xl p-3 cursor-pointer"
                           whileHover={{ scale: 1.05, y: -5 }}
                           onClick={() => setMainView('3d')}
                         >
-                          <div className="bg-white rounded-lg p-2 mb-2 h-16 flex items-center justify-center">
+                          <div className="bg-[#2F3D57] rounded-lg p-2 mb-2 h-16 flex items-center justify-center">
                             <img src={homepagePic3} alt="3D" className="w-full h-full object-contain" />
                           </div>
-                          <span className="text-[10px] font-semibold text-[#2F3D57]">3D Model</span>
+                          <span className="text-[10px] font-semibold text-white">3D Model</span>
                         </motion.div>
                         
                         {/* Card 3 - Features */}
@@ -679,25 +673,25 @@ const HomePage = () => {
                           whileHover={{ scale: 1.05, y: -5 }}
                           onClick={handleGenerateNow}
                         >
-                          <div className="bg-white rounded-lg p-2 mb-2 h-16 flex items-center justify-center">
-                            <FaCube className="text-[#ED7600] text-2xl" />
+                          <div className="bg-[#2F3D57] rounded-lg p-2 mb-2 h-16 flex items-center justify-center">
+                            <FaCube className="text-[#ED7600] text-xl" />
                           </div>
-                          <span className="text-[10px] font-semibold text-[#2F3D57]">Try Now</span>
+                          <span className="text-[10px] font-semibold text-white">Try Now</span>
                         </motion.div>
                       </div>
                       
                       {/* Stats Row */}
                       <div className="flex gap-2">
-                        <div className="flex-1 bg-white rounded-xl p-3 text-center shadow-sm">
-                          <div className="text-lg font-bold text-[#ED7600]">500+</div>
+                        <div className="flex-1 bg-[#2F3D57] rounded-xl p-3 text-center shadow-sm">
+                          <div className="text-base font-bold text-[#ED7600]">500+</div>
                           <div className="text-[9px] text-gray-500">Floor Plans</div>
                         </div>
-                        <div className="flex-1 bg-white rounded-xl p-3 text-center shadow-sm">
-                          <div className="text-lg font-bold text-[#2F3D57]">50+</div>
+                        <div className="flex-1 bg-[#2F3D57] rounded-xl p-3 text-center shadow-sm">
+                          <div className="text-base font-bold text-white">50+</div>
                           <div className="text-[9px] text-gray-500">Societies</div>
                         </div>
-                        <div className="flex-1 bg-white rounded-xl p-3 text-center shadow-sm">
-                          <div className="text-lg font-bold text-[#ED7600]">1000+</div>
+                        <div className="flex-1 bg-[#2F3D57] rounded-xl p-3 text-center shadow-sm">
+                          <div className="text-base font-bold text-[#ED7600]">1000+</div>
                           <div className="text-[9px] text-gray-500">Users</div>
                         </div>
                       </div>
@@ -707,7 +701,7 @@ const HomePage = () => {
                 
                 {/* Floating Cards Around Device */}
                 <motion.div 
-                  className="absolute -right-12 top-8 bg-white rounded-xl shadow-xl p-3 w-32"
+                  className="absolute -right-12 top-8 bg-[#2F3D57] rounded-xl shadow-xl p-3 w-32"
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                 >
@@ -723,7 +717,7 @@ const HomePage = () => {
                 </motion.div>
                 
                 <motion.div 
-                  className="absolute -left-8 bottom-16 bg-white rounded-xl shadow-xl p-3 w-28"
+                  className="absolute -left-8 bottom-16 bg-[#2F3D57] rounded-xl shadow-xl p-3 w-28"
                   animate={{ y: [0, 8, 0] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 0.3 }}
                 >
@@ -772,12 +766,6 @@ const HomePage = () => {
             animate={{ scale: [1.1, 1, 1.1] }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
           />
-          
-          {/* Section Counter */}
-          <SectionCounter number="02" light />
-          
-          {/* Scroll Indicator */}
-          <ScrollIndicator onClick={() => scrollToSection('features-section')} light />
 
           <div className="container mx-auto px-6 relative z-10 flex items-center justify-center">
             {/* Left Side - Text Content (appears on scroll) - Absolute positioned */}
@@ -791,13 +779,13 @@ const HomePage = () => {
                 AI-Powered Design
               </motion.span>
               
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 tracking-tight">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 tracking-tight">
                 <span className="block text-white">CREATE FLOOR PLANS,</span>
                 <span className="block text-[#ED7600]">VISUALIZE IN 3D,</span>
                 <span className="block text-white">CHECK COMPLIANCE.</span>
               </h2>
               
-              <p className="text-base text-gray-300 mb-8 leading-relaxed">
+              <p className="text-sm text-gray-300 mb-8 leading-relaxed">
                 Move beyond simple sketches. Visualize your
                 dream home and check compliance instantly
                 with our AI-powered platform.
@@ -814,7 +802,7 @@ const HomePage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-[#2F3D57]/20 rounded-lg flex items-center justify-center">
                     <FaClipboardCheck className="text-white" />
                   </div>
                   <div>
@@ -860,7 +848,7 @@ const HomePage = () => {
 
                 {/* Floating Info Cards */}
                 <motion.div 
-                  className="absolute -left-16 top-[20%] bg-white rounded-2xl shadow-xl p-4 z-30 hidden lg:block border border-gray-100 animate-float-slow"
+                  className="absolute -left-16 top-[20%] bg-[#2F3D57] rounded-2xl shadow-xl p-4 z-30 hidden lg:block border border-gray-100 animate-float-slow"
                   initial={{ opacity: 0, x: -30 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
@@ -871,14 +859,14 @@ const HomePage = () => {
                       <FaCube className="text-white text-sm" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-[#2F3D57]">3D Ready</p>
+                      <p className="text-sm font-bold text-white">3D Ready</p>
                       <p className="text-xs text-gray-500">One-click render</p>
                     </div>
                   </div>
                 </motion.div>
                 
                 <motion.div 
-                  className="absolute -right-12 top-[25%] bg-white rounded-2xl shadow-xl p-4 z-30 hidden lg:block border border-gray-100 animate-float-slower"
+                  className="absolute -right-12 top-[25%] bg-[#2F3D57] rounded-2xl shadow-xl p-4 z-30 hidden lg:block border border-gray-100 animate-float-slower"
                   initial={{ opacity: 0, x: 30 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
@@ -889,7 +877,7 @@ const HomePage = () => {
                       <FaClipboardCheck className="text-white text-sm" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-[#2F3D57]">Compliant</p>
+                      <p className="text-sm font-bold text-white">Compliant</p>
                       <p className="text-xs text-gray-500">Auto-verified</p>
                     </div>
                   </div>
@@ -920,7 +908,7 @@ const HomePage = () => {
 
                 {/* Main Floor Plan Card */}
                 <motion.div
-                  className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100"
+                  className="relative bg-[#2F3D57] rounded-3xl shadow-2xl overflow-hidden border border-gray-100"
                   initial={{ opacity: 0, y: 30, rotateX: 5 }}
                   whileInView={{ opacity: 1, y: 0, rotateX: 1 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
@@ -937,7 +925,7 @@ const HomePage = () => {
                     <div className="grid grid-cols-3 gap-3">
                       {/* Main Room - Living Room */}
                       <motion.div 
-                        className="col-span-2 relative bg-gradient-to-br from-[#ED7600]/15 to-[#ED7600]/5 rounded-xl p-4 h-36 flex items-center justify-center border-2 border-[#2F3D57] cursor-pointer overflow-hidden group"
+                        className="col-span-2 relative bg-gradient-to-br from-[#ED7600]/15 to-[#ED7600]/5 rounded-xl p-4 h-36 flex items-center justify-center border-2 border-white cursor-pointer overflow-hidden group"
                         whileHover={{ scale: 1.01, boxShadow: "0 8px 25px rgba(237,118,0,0.12)" }}
                         transition={{ duration: 0.2 }}
                         whileTap={{ scale: 0.98 }}
@@ -948,7 +936,7 @@ const HomePage = () => {
                           animate={{ x: ['-200%', '200%'] }}
                           transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
                         />
-                        <span className="text-base font-bold text-[#2F3D57] relative z-10">LIVING ROOM</span>
+                        <span className="text-sm font-bold text-white relative z-10">LIVING ROOM</span>
                         <motion.div className="absolute bottom-2 right-2 bg-[#ED7600] text-white text-[9px] px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity font-medium"
                           style={{ position: 'relative' }} // Fix framer-motion positioning
                         >
@@ -959,40 +947,40 @@ const HomePage = () => {
                       {/* Side Column */}
                       <div className="space-y-3">
                         <motion.div 
-                          className="relative bg-gradient-to-br from-[#2F3D57]/10 to-[#2F3D57]/5 rounded-xl p-2 h-[66px] flex items-center justify-center border-2 border-[#2F3D57] cursor-pointer"
+                          className="relative bg-gradient-to-br from-[#2F3D57]/10 to-[#2F3D57]/5 rounded-xl p-2 h-[66px] flex items-center justify-center border-2 border-white cursor-pointer"
                           style={{ position: 'relative' }} // Fix framer-motion positioning
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={handleGenerateNow}
                         >
-                          <span className="text-xs font-bold text-[#2F3D57]">BEDROOM</span>
+                          <span className="text-xs font-bold text-white">BEDROOM</span>
                         </motion.div>
                         <motion.div 
-                          className="relative bg-gradient-to-br from-[#2F3D57]/15 to-[#2F3D57]/5 rounded-xl p-2 h-[66px] flex items-center justify-center border-2 border-[#2F3D57] cursor-pointer"
+                          className="relative bg-gradient-to-br from-[#2F3D57]/15 to-[#2F3D57]/5 rounded-xl p-2 h-[66px] flex items-center justify-center border-2 border-white cursor-pointer"
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={handleGenerateNow}
                         >
-                          <span className="text-xs font-bold text-[#2F3D57]">BATH</span>
+                          <span className="text-xs font-bold text-white">BATH</span>
                         </motion.div>
                       </div>
                       
                       {/* Bottom Row */}
                       <motion.div 
-                        className="relative bg-gradient-to-br from-[#2F3D57]/8 to-transparent rounded-xl p-3 flex items-center justify-center border-2 border-[#2F3D57] cursor-pointer"
+                        className="relative bg-gradient-to-br from-[#2F3D57]/8 to-transparent rounded-xl p-3 flex items-center justify-center border-2 border-white cursor-pointer"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleGenerateNow}
                       >
-                        <span className="text-xs font-bold text-[#2F3D57]">KITCHEN</span>
+                        <span className="text-xs font-bold text-white">KITCHEN</span>
                       </motion.div>
                       <motion.div 
-                        className="relative bg-gradient-to-br from-[#ED7600]/10 to-transparent rounded-xl p-3 flex items-center justify-center border-2 border-[#2F3D57] cursor-pointer"
+                        className="relative bg-gradient-to-br from-[#ED7600]/10 to-transparent rounded-xl p-3 flex items-center justify-center border-2 border-white cursor-pointer"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleGenerateNow}
                       >
-                        <span className="text-xs font-bold text-[#2F3D57]">DINING</span>
+                        <span className="text-xs font-bold text-white">DINING</span>
                       </motion.div>
                       <motion.div 
                         className="relative bg-gradient-to-br from-[#ED7600]/8 to-transparent rounded-xl p-3 flex items-center justify-center border-2 border-[#ED7600] border-dashed cursor-pointer group"
@@ -1035,19 +1023,13 @@ const HomePage = () => {
       </section>
 
       {/* ===== SECTION 3: FEATURES ===== */}
-      <section id="features-section" className="min-h-screen relative py-24 bg-[#f8f9fa] overflow-hidden">
+      <section id="features-section" className="min-h-screen relative py-24 bg-[#2F3D57] overflow-hidden">
         {/* Dot Grid */}
         <div className="absolute inset-0 opacity-[0.3]" style={{
-          backgroundImage: 'radial-gradient(circle, #2F3D57 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
           backgroundSize: '40px 40px'
         }}></div>
         
-        {/* Section Counter */}
-        <SectionCounter number="03" />
-        
-        {/* Scroll Indicator */}
-        <ScrollIndicator onClick={() => scrollToSection('ads-section')} />
-          
           <div className="container mx-auto relative z-10">
             <AnimatedSection className="text-center mb-16">
               <motion.span 
@@ -1058,10 +1040,10 @@ const HomePage = () => {
               >
                 What We Offer
               </motion.span>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#2F3D57] leading-tight">
+              <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white leading-tight">
                 Platform <span className="text-gradient">Features</span>
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-base text-gray-300 max-w-3xl mx-auto leading-relaxed">
                 Everything you need to design, validate, and approve your architectural project
               </p>
               <div className="w-24 h-1 bg-gradient-to-r from-[#ED7600] to-[#FF9933] mx-auto mt-6 rounded-full"></div>
@@ -1079,7 +1061,7 @@ const HomePage = () => {
                 return (
                   <motion.div 
                     key={index} 
-                    className="group relative bg-white p-8 rounded-3xl border border-gray-100 shadow-lg hover:shadow-2xl transition-all duration-500"
+                    className="group relative bg-[#2F3D57] p-8 rounded-3xl border border-gray-100 shadow-2xl shadow-black/50 hover:shadow-2xl transition-all duration-500"
                     variants={scaleIn}
                     whileHover={{ y: -8, transition: { duration: 0.3 } }}
                   >
@@ -1088,15 +1070,15 @@ const HomePage = () => {
                     
                     <div className="relative z-10">
                       <motion.div 
-                        className="w-16 h-16 bg-gradient-to-br from-[#ED7600] to-[#FF9933] rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange-500/20"
+                        className="w-16 h-16 bg-gradient-to-br from-[#ED7600] to-[#FF9933] rounded-2xl flex items-center justify-center mb-6 shadow-2xl shadow-black/50 shadow-orange-500/20"
                         whileHover={{ rotate: [0, -10, 10, 0], transition: { duration: 0.5 } }}
                       >
-                        <IconComponent className="text-white text-2xl" />
+                        <IconComponent className="text-white text-xl" />
                       </motion.div>
-                      <h3 className="text-2xl font-bold mb-4 text-[#2F3D57] group-hover:text-[#ED7600] transition-colors">
+                      <h3 className="text-xl font-bold mb-4 text-white group-hover:text-[#ED7600] transition-colors">
                         {feature.title}
                       </h3>
-                      <p className="text-gray-600 leading-relaxed text-lg">{feature.description}</p>
+                      <p className="text-gray-300 leading-relaxed text-base">{feature.description}</p>
                     </div>
                     
                     {/* Animated border on hover */}
@@ -1116,9 +1098,6 @@ const HomePage = () => {
           backgroundSize: '40px 40px'
         }}></div>
         
-        {/* Section Counter */}
-        <SectionCounter number="04" light />
-        
         {/* Background decoration */}
         <div className="absolute top-20 right-0 w-96 h-96 bg-[#ED7600]/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 left-0 w-72 h-72 bg-[#FF9933]/10 rounded-full blur-3xl"></div>
@@ -1133,10 +1112,10 @@ const HomePage = () => {
               >
                 Discover Properties
               </motion.span>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white leading-tight">
+              <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white leading-tight">
                 Featured <span className="text-[#ED7600]">Advertisements</span>
               </h2>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-base text-gray-300 max-w-3xl mx-auto leading-relaxed">
                 Click on any advertisement to visit the website
               </p>
               <div className="w-24 h-1 bg-gradient-to-r from-[#ED7600] to-[#FF9933] mx-auto mt-6 rounded-full"></div>
@@ -1161,7 +1140,7 @@ const HomePage = () => {
                 {featuredAds.map((ad, index) => (
                   <motion.div 
                     key={ad._id} 
-                    className="group relative rounded-3xl shadow-lg overflow-hidden cursor-pointer bg-white"
+                    className="group relative rounded-3xl shadow-2xl shadow-black/50 overflow-hidden cursor-pointer bg-[#2F3D57]"
                     variants={scaleIn}
                     whileHover={{ y: -8, transition: { duration: 0.3 } }}
                     onClick={() => handleAdClick(ad)}
@@ -1170,7 +1149,7 @@ const HomePage = () => {
                     <div className="absolute inset-0 bg-gradient-to-br from-[#ED7600] to-[#FF9933] rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10 blur-sm scale-105"></div>
                     
                     {/* Advertisement Poster/Banner */}
-                    <div className="relative w-full h-[400px] overflow-hidden bg-gray-50 rounded-3xl">
+                    <div className="relative w-full h-[400px] overflow-hidden bg-[#1e2738] rounded-3xl">
                       {ad.featured_image ? (
                         <motion.img 
                           src={ad.featured_image} 
@@ -1183,14 +1162,14 @@ const HomePage = () => {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                          <FaBullhorn className="text-6xl text-gray-400" />
+                          <FaBullhorn className="text-5xl text-gray-400" />
                         </div>
                       )}
                       
                       {/* Hover overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
                         <motion.span 
-                          className="px-6 py-2 bg-white/90 backdrop-blur-sm rounded-full text-[#2F3D57] font-semibold flex items-center gap-2"
+                          className="px-6 py-2 bg-[#2F3D57]/90 backdrop-blur-sm rounded-full text-white font-semibold flex items-center gap-2"
                           initial={{ y: 20, opacity: 0 }}
                           whileHover={{ y: 0, opacity: 1 }}
                         >
@@ -1207,10 +1186,10 @@ const HomePage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <div className="text-6xl text-white/30 mb-4 flex justify-center">
+                <div className="text-5xl text-white/30 mb-4 flex justify-center">
                   <FaBuilding />
                 </div>
-                <h3 className="text-2xl font-bold text-white/70 mb-2">No Featured Properties Available</h3>
+                <h3 className="text-xl font-bold text-white/70 mb-2">No Featured Properties Available</h3>
                 <p className="text-gray-400">Check back later for exciting property opportunities!</p>
               </motion.div>
             )}
@@ -1218,7 +1197,7 @@ const HomePage = () => {
       </section>
 
       {/* ===== CALL TO ACTION SECTION ===== */}
-      <section className="relative py-32 bg-gradient-to-b from-[#2F3D57] via-[#3d4f6f] to-white overflow-hidden">
+      <section className="relative py-32 bg-[#2F3D57] overflow-hidden">
         {/* Decorative Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div 
@@ -1250,13 +1229,13 @@ const HomePage = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-8">
               Are you ready to take the first step and<br />
               <span className="text-[#ED7600]">start your journey today?</span>
             </h2>
             <motion.button
               onClick={handleGenerateNow}
-              className="px-10 py-5 bg-[#ED7600] text-white rounded-full font-semibold text-lg shadow-2xl shadow-orange-500/30 hover:bg-[#d66a00] transition-all"
+              className="px-10 py-5 bg-[#ED7600] text-white rounded-full font-semibold text-base shadow-2xl shadow-orange-500/30 hover:bg-[#d66a00] transition-all"
               whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -1273,7 +1252,7 @@ const HomePage = () => {
             {/* Close Button */}
             <button
               onClick={() => setShowDetailModal(false)}
-              className="absolute -top-12 right-0 text-white hover:text-gray-300 text-3xl font-bold z-10"
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 text-2xl font-bold z-10"
             >
               ✖
             </button>
@@ -1346,7 +1325,7 @@ const HomePage = () => {
                     <>
                       <motion.button
                         onClick={goToPrevAd}
-                        className="group relative overflow-hidden p-2.5 bg-gradient-to-r from-gray-100/80 to-gray-50/80 hover:from-[#ED7600] hover:to-[#FF9933] rounded-xl text-[#2F3D57] hover:text-white transition-all duration-500 backdrop-blur-sm border border-gray-200/50"
+                        className="group relative overflow-hidden p-2.5 bg-gradient-to-r from-gray-100/80 to-gray-50/80 hover:from-[#ED7600] hover:to-[#FF9933] rounded-xl text-white hover:text-white transition-all duration-500 backdrop-blur-sm border border-gray-200/50"
                         title="Previous Ad"
                         whileHover={{ scale: 1.02, rotateY: -3 }}
                         whileTap={{ scale: 0.95 }}
@@ -1369,7 +1348,7 @@ const HomePage = () => {
                       
                       <motion.button
                         onClick={goToNextAd}
-                        className="group relative overflow-hidden p-2.5 bg-gradient-to-r from-gray-100/80 to-gray-50/80 hover:from-[#ED7600] hover:to-[#FF9933] rounded-xl text-[#2F3D57] hover:text-white transition-all duration-500 backdrop-blur-sm border border-gray-200/50"
+                        className="group relative overflow-hidden p-2.5 bg-gradient-to-r from-gray-100/80 to-gray-50/80 hover:from-[#ED7600] hover:to-[#FF9933] rounded-xl text-white hover:text-white transition-all duration-500 backdrop-blur-sm border border-gray-200/50"
                         title="Next Ad"
                         whileHover={{ scale: 1.02, rotateY: 3 }}
                         whileTap={{ scale: 0.95 }}
@@ -1422,7 +1401,7 @@ const HomePage = () => {
                       }}
                       className={`relative overflow-hidden rounded-full transition-all duration-500 ${
                         index === currentAdIndex 
-                          ? 'h-2.5 w-8 bg-gradient-to-r from-[#ED7600] via-[#FF9933] to-[#FFD700] shadow-lg shadow-orange-500/40' 
+                          ? 'h-2.5 w-8 bg-gradient-to-r from-[#ED7600] via-[#FF9933] to-[#FFD700] shadow-2xl shadow-black/50 shadow-orange-500/40' 
                           : 'h-2 w-2 bg-gradient-to-r from-gray-300/60 to-gray-400/60 hover:from-gray-400/80 hover:to-gray-500/80 backdrop-blur-sm'
                       }`}
                       whileHover={{ 
@@ -1497,7 +1476,7 @@ const HomePage = () => {
                 
                 <div className="relative z-10">
                   <motion.h3 
-                    className="font-bold text-lg mb-3 text-transparent bg-clip-text bg-gradient-to-r from-[#2F3D57] via-[#1e2a3a] to-[#2F3D57] break-words hyphens-auto leading-tight"
+                    className="font-bold text-base mb-3 text-transparent bg-clip-text bg-gradient-to-r from-[#2F3D57] via-[#1e2a3a] to-[#2F3D57] break-words hyphens-auto leading-tight"
                     style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1507,7 +1486,7 @@ const HomePage = () => {
                   </motion.h3>
                   
                   <motion.p 
-                    className="text-gray-600 mb-4 text-sm leading-relaxed"
+                    className="text-gray-300 mb-4 text-sm leading-relaxed"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
@@ -1640,12 +1619,12 @@ const HomePage = () => {
               whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
               transition={{ duration: 0.5 }}
             >
-              <FaBullhorn className="text-2xl drop-shadow-lg" />
+              <FaBullhorn className="text-xl drop-shadow-2xl shadow-black/50" />
             </motion.div>
             
             {/* Floating notification badge */}
             <motion.div
-              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white shadow-lg"
+              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white shadow-2xl shadow-black/50"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               whileHover={{ scale: 1.2 }}
@@ -1656,7 +1635,7 @@ const HomePage = () => {
             
             {/* Sparkle effect */}
             <motion.div
-              className="absolute top-2 right-2 w-1 h-1 bg-white rounded-full"
+              className="absolute top-2 right-2 w-1 h-1 bg-[#2F3D57] rounded-full"
               animate={{ 
                 opacity: [0, 1, 0],
                 scale: [0, 1, 0]

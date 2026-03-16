@@ -1,3 +1,5 @@
+import useSWR from 'swr';
+import debounce from 'lodash.debounce';
 import React, { useState, useEffect } from "react";
 import { Search, Filter, Edit2, Trash2, CheckCircle, RefreshCw, X, Save, MapPin, Users, Building, DollarSign, Mail, Calendar, Eye, Phone, Globe, Hash, Shield, AlertCircle } from "lucide-react";
 import { getSocietyRegistrations, getPendingSocietyRegistrations } from "../../services/authService";
@@ -121,13 +123,13 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
         <div className="p-8">
           {/* Header */}
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
+          <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
                 {society.name ? society.name.charAt(0).toUpperCase() : 'S'}
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-gray-900">{society.name || 'Unnamed Society'}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{society.name || 'Unnamed Society'}</h2>
                 <p className="text-gray-600 mt-1">Registration ID: {society._id}</p>
               </div>
             </div>
@@ -144,29 +146,29 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
             {/* Basic Information */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <Building className="mr-2 text-blue-600" size={20} />
                   Basic Information
                 </h3>
                 <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Society Name</label>
+                    <label className="text-xs font-medium text-gray-600">Society Name</label>
                     <p className="text-gray-900 font-medium">{society.name || 'N/A'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Type</label>
+                    <label className="text-xs font-medium text-gray-600">Type</label>
                     <p className="text-gray-900">{society.type || 'N/A'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Registration Number</label>
+                    <label className="text-xs font-medium text-gray-600">Registration Number</label>
                     <p className="text-gray-900 font-mono">{society.regNo || 'N/A'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Authority</label>
+                    <label className="text-xs font-medium text-gray-600">Authority</label>
                     <p className="text-gray-900">{society.authority || 'N/A'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Status</label>
+                    <label className="text-xs font-medium text-gray-600">Status</label>
                     <div className="mt-1">
                       <StatusBadge status={society.status || 'pending'} />
                     </div>
@@ -178,23 +180,23 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
             {/* Contact Information */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <Mail className="mr-2 text-green-600" size={20} />
                   Contact Information
                 </h3>
                 <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
                   <div>
-                    <label className="text-sm font-medium text-gray-600">User Email</label>
+                    <label className="text-xs font-medium text-gray-600">User Email</label>
                     <p className="text-blue-600 hover:text-blue-800">
                       <a href={`mailto:${society.user_email}`}>{society.user_email || 'N/A'}</a>
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Contact Number</label>
+                    <label className="text-xs font-medium text-gray-600">Contact Number</label>
                     <p className="text-gray-900">{society.contact || 'N/A'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Website</label>
+                    <label className="text-xs font-medium text-gray-600">Website</label>
                     {society.website ? (
                       <p className="text-blue-600 hover:text-blue-800">
                         <a 
@@ -217,21 +219,21 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
             {/* Additional Information */}
             <div className="md:col-span-2 space-y-6">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <Calendar className="mr-2 text-purple-600" size={20} />
                   Additional Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-blue-50 p-4 rounded-lg">
-                    <label className="text-sm font-medium text-blue-700">Established Date</label>
+                    <label className="text-xs font-medium text-blue-700">Established Date</label>
                     <p className="text-blue-900 font-medium">{formatDate(society.established)}</p>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <label className="text-sm font-medium text-green-700">Registration Date</label>
+                    <label className="text-xs font-medium text-green-700">Registration Date</label>
                     <p className="text-green-900 font-medium">{formatDate(society.created_at)}</p>
                   </div>
                   <div className="bg-purple-50 p-4 rounded-lg">
-                    <label className="text-sm font-medium text-purple-700">Available Plots</label>
+                    <label className="text-xs font-medium text-purple-700">Available Plots</label>
                     <p className="text-purple-900 font-medium">{formatPlots(society.plots)}</p>
                   </div>
                 </div>
@@ -241,19 +243,19 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
             {/* Project Status Information */}
             <div className="md:col-span-2 space-y-6">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <AlertCircle className="mr-2 text-orange-600" size={20} />
                   Project Status
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-orange-50 p-4 rounded-lg">
-                    <label className="text-sm font-medium text-orange-700">Land Acquisition Status</label>
+                    <label className="text-xs font-medium text-orange-700">Land Acquisition Status</label>
                     <p className="text-orange-900 font-medium capitalize">
                       {society.land_acquisition_status || 'Not Specified'}
                     </p>
                   </div>
                   <div className="bg-teal-50 p-4 rounded-lg">
-                    <label className="text-sm font-medium text-teal-700">Procurement Status</label>
+                    <label className="text-xs font-medium text-teal-700">Procurement Status</label>
                     <p className="text-teal-900 font-medium capitalize">
                       {society.procurement_status || 'Not Specified'}
                     </p>
@@ -266,12 +268,12 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
             {society.noc_issued !== undefined && (
               <div className="md:col-span-2 space-y-6">
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <Shield className="mr-2 text-indigo-600" size={20} />
                     Compliance Information
                   </h3>
                   <div className="bg-indigo-50 p-4 rounded-lg">
-                    <label className="text-sm font-medium text-indigo-700">NOC Status</label>
+                    <label className="text-xs font-medium text-indigo-700">NOC Status</label>
                     <p className="text-indigo-900 font-medium">
                       {society.noc_issued ? '✅ NOC Issued' : '❌ NOC Not Issued'}
                     </p>
@@ -284,12 +286,12 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
             {society.city && (
               <div className="md:col-span-2 space-y-6">
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <MapPin className="mr-2 text-red-600" size={20} />
                     Location Details
                   </h3>
                   <div className="bg-red-50 p-4 rounded-lg">
-                    <label className="text-sm font-medium text-red-700">City</label>
+                    <label className="text-xs font-medium text-red-700">City</label>
                     <p className="text-red-900 font-medium">{society.city}</p>
                   </div>
                 </div>
@@ -387,13 +389,13 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 backdrop-blur-md">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
         <div className="p-8">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
             <div className="flex items-center space-x-3">
               <div className="p-3 rounded-xl bg-blue-100">
                 <Edit2 className="text-blue-600" size={24} />
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-gray-900">
                   Edit Society Registration
                 </h2>
                 <p className="text-gray-600 mt-1">
@@ -419,13 +421,13 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Society Information Section */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center">
                 <Building className="mr-2 text-green-600" size={20} />
                 Society Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                  <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                     <Building className="mr-2 text-gray-500" size={16} />
                     Society Name *
                   </label>
@@ -441,7 +443,7 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                  <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                     <Hash className="mr-2 text-gray-500" size={16} />
                     Type *
                   </label>
@@ -458,7 +460,7 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                  <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                     <Hash className="mr-2 text-gray-500" size={16} />
                     Registration Number *
                   </label>
@@ -474,7 +476,7 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                  <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                     <Calendar className="mr-2 text-gray-500" size={16} />
                     Established Date *
                   </label>
@@ -489,7 +491,7 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                  <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                     <Shield className="mr-2 text-gray-500" size={16} />
                     Authority *
                   </label>
@@ -507,7 +509,7 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                  <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                     <Phone className="mr-2 text-gray-500" size={16} />
                     Contact Number *
                   </label>
@@ -523,7 +525,7 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                  <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                     <Globe className="mr-2 text-gray-500" size={16} />
                     Website *
                   </label>
@@ -539,7 +541,7 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                  <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                     <MapPin className="mr-2 text-gray-500" size={16} />
                     Available Plots *
                   </label>
@@ -555,7 +557,7 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                  <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                     <MapPin className="mr-2 text-gray-500" size={16} />
                     City *
                   </label>
@@ -574,13 +576,13 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
 
             {/* Project Status Section */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center">
                 <AlertCircle className="mr-2 text-orange-600" size={20} />
                 Project Status
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                  <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                     <Building className="mr-2 text-gray-500" size={16} />
                     Land Acquisition Status
                   </label>
@@ -599,7 +601,7 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                  <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                     <DollarSign className="mr-2 text-gray-500" size={16} />
                     Procurement Status
                   </label>
@@ -618,11 +620,11 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                  <label className="flex items-center text-xs font-semibold text-gray-700 mb-2">
                     <Shield className="mr-2 text-gray-500" size={16} />
                     NOC Status
                   </label>
-                  <div className="flex items-center space-x-4">
+                  <div className="flex flex-wrap items-center gap-4">
                     <label className="flex items-center space-x-2 cursor-pointer">
                       <input
                         type="checkbox"
@@ -748,12 +750,12 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
       </td>
       <td className="py-4 px-6">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-base">
             {society.name ? society.name.charAt(0).toUpperCase() : 'S'}
           </div>
           <div>
-            <div className="font-semibold text-gray-900 text-lg">{society.name || 'Unnamed Society'}</div>
-            <div className="text-sm text-gray-500 flex items-center">
+            <div className="font-semibold text-gray-900 text-base">{society.name || 'Unnamed Society'}</div>
+            <div className="text-xs text-gray-500 flex items-center">
               <Hash className="mr-1" size={12} />
               {society._id?.slice(-8) || 'N/A'}
             </div>
@@ -766,7 +768,7 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
             <Building className="mr-2 text-gray-400" size={16} />
             <span className="font-medium">{society.type || 'N/A'}</span>
           </div>
-          <div className="flex items-center text-gray-600 text-sm">
+          <div className="flex items-center text-gray-600 text-xs">
             <Hash className="mr-2 text-gray-400" size={14} />
             {society.regNo || 'N/A'}
           </div>
@@ -780,7 +782,7 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
               {getAuthorityIcon(society.authority)} {society.authority || 'N/A'}
             </span>
           </div>
-          <div className="flex items-center text-gray-600 text-sm">
+          <div className="flex items-center text-gray-600 text-xs">
             <Calendar className="mr-2 text-gray-400" size={14} />
             Est. {formatDate(society.established)}
           </div>
@@ -790,16 +792,16 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
         <div className="space-y-2">
           <div className="flex items-center text-gray-700">
             <Mail className="mr-2 text-gray-400" size={16} />
-            <span className="text-blue-600 hover:text-blue-800 cursor-pointer text-sm">
+            <span className="text-blue-600 hover:text-blue-800 cursor-pointer text-xs">
               {society.user_email || 'N/A'}
             </span>
           </div>
-          <div className="flex items-center text-gray-600 text-sm">
+          <div className="flex items-center text-gray-600 text-xs">
             <Phone className="mr-2 text-gray-400" size={14} />
             {society.contact || 'N/A'}
           </div>
           {society.website && (
-            <div className="flex items-center text-gray-600 text-sm">
+            <div className="flex items-center text-gray-600 text-xs">
               <Globe className="mr-2 text-gray-400" size={14} />
               <a 
                 href={society.website.startsWith('http') ? society.website : `https://${society.website}`}
@@ -815,8 +817,8 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
       </td>
       <td className="py-4 px-6">
         <div className="text-gray-700">
-          <div className="font-medium text-sm mb-1">Available Plots:</div>
-          <div className="text-sm bg-gray-100 px-2 py-1 rounded text-center">
+          <div className="font-medium text-xs mb-1">Available Plots:</div>
+          <div className="text-xs bg-gray-100 px-2 py-1 rounded text-center">
             {formatPlots(society.plots)}
           </div>
         </div>
@@ -957,7 +959,7 @@ function Pagination({ currentPage, setCurrentPage, totalPages, totalItems, socie
 
   return (
     <div className="flex items-center justify-between py-3 px-4 border-t">
-      <div className="text-gray-600 text-sm">
+      <div className="text-gray-600 text-xs">
         Showing {startItem} to {endItem} of {totalItems} societies
       </div>
       <div className="space-x-2">
@@ -1191,8 +1193,8 @@ export default function SocietyVerificationDashboard() {
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Society Management</h1>
-          <p className="text-lg text-gray-600">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Society Management</h1>
+          <p className="text-base text-gray-600">
             Manage and verify registered housing societies with comprehensive tools.
           </p>
         </div>
@@ -1202,8 +1204,8 @@ export default function SocietyVerificationDashboard() {
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-600 text-sm font-semibold">Total Registrations</p>
-                <p className="text-3xl font-bold text-blue-800">{societies.length}</p>
+                <p className="text-blue-600 text-xs font-semibold">Total Registrations</p>
+                <p className="text-2xl font-bold text-blue-800">{societies.length}</p>
               </div>
               <div className="bg-blue-200 p-3 rounded-xl">
                 <Building className="text-blue-600" size={24} />
@@ -1214,8 +1216,8 @@ export default function SocietyVerificationDashboard() {
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-2xl border border-yellow-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-yellow-600 text-sm font-semibold">Pending Approval</p>
-                <p className="text-3xl font-bold text-yellow-800">
+                <p className="text-yellow-600 text-xs font-semibold">Pending Approval</p>
+                <p className="text-2xl font-bold text-yellow-800">
                   {societies.filter(society => society.status === 'pending').length}
                 </p>
               </div>
@@ -1228,8 +1230,8 @@ export default function SocietyVerificationDashboard() {
           <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-600 text-sm font-semibold">Approved</p>
-                <p className="text-3xl font-bold text-green-800">
+                <p className="text-green-600 text-xs font-semibold">Approved</p>
+                <p className="text-2xl font-bold text-green-800">
                   {societies.filter(society => society.status === 'approved').length}
                 </p>
               </div>
@@ -1242,8 +1244,8 @@ export default function SocietyVerificationDashboard() {
           <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-2xl border border-red-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-red-600 text-sm font-semibold">Rejected</p>
-                <p className="text-3xl font-bold text-red-800">
+                <p className="text-red-600 text-xs font-semibold">Rejected</p>
+                <p className="text-2xl font-bold text-red-800">
                   {societies.filter(society => society.status === 'rejected').length}
                 </p>
               </div>
@@ -1278,25 +1280,25 @@ export default function SocietyVerificationDashboard() {
             <div className="flex space-x-2">
               <button
                 onClick={() => handleBulkStatusUpdate('approved')}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-medium"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-xs font-medium"
               >
                 ✓ Approve Selected
               </button>
               <button
                 onClick={() => handleBulkStatusUpdate('rejected')}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-sm font-medium"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-xs font-medium"
               >
                 ✗ Reject Selected
               </button>
               <button
                 onClick={() => handleBulkStatusUpdate('pending')}
-                className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200 text-sm font-medium"
+                className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200 text-xs font-medium"
               >
                 ⏳ Mark Pending
               </button>
               <button
                 onClick={handleBulkDelete}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 text-xs font-medium"
               >
                 🗑️ Delete Selected
               </button>
@@ -1326,19 +1328,19 @@ export default function SocietyVerificationDashboard() {
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <span className="text-lg text-gray-600 font-medium">Loading societies...</span>
+              <span className="text-base text-gray-600 font-medium">Loading societies...</span>
             </div>
           </div>
         )}
 
         {/* Enhanced Table */}
         {!loading && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden flex flex-col">
+            <div className="overflow-x-auto w-full max-w-full">
+              <table className="w-full min-w-[900px] max-w-none text-left ">
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                   <tr>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       <input
                         type="checkbox"
                         checked={selectAll}
@@ -1346,13 +1348,13 @@ export default function SocietyVerificationDashboard() {
                         className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                       />
                     </th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Society</th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Type & Reg No</th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Authority & Date</th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Contact Info</th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Available Plots</th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="py-4 px-6 text-center text-sm font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Society</th>
+                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type & Reg No</th>
+                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Authority & Date</th>
+                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Contact Info</th>
+                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Available Plots</th>
+                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                    <th className="py-4 px-6 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -1360,7 +1362,7 @@ export default function SocietyVerificationDashboard() {
                     <tr>
                       <td colSpan={8} className="text-center py-16">
                         <Building className="mx-auto text-gray-400 mb-4" size={48} />
-                        <h3 className="text-xl font-semibold text-gray-600 mb-2">No society registrations found</h3>
+                        <h3 className="text-lg font-semibold text-gray-600 mb-2">No society registrations found</h3>
                         <p className="text-gray-500">
                           {search ? 'Try adjusting your search criteria.' : 'No society registrations available at the moment.'}
                         </p>

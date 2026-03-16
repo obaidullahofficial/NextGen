@@ -1,4 +1,4 @@
-﻿import React from "react";
+﻿import React, { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import GoogleOAuthProvider from './components/auth/GoogleOAuthProvider';
 import { AdminDataProvider } from './context/AdminDataContext';
@@ -34,17 +34,21 @@ import FloorPlanStart from './pages/user/FloorPlanStart';
 import AboutUsPage from './pages/user/AboutUsPage';
 import { FloorPlanGenerator as FloorPlanGen } from './pages/FloorPlanGeneration';
 import FloorPlanCustomization from './pages/FloorPlanGeneration/FloorPlanCustomization';
+import { preloadSocietyProfiles } from './services/societyService';
 
-// Admin imports
-import Sidebar from "./components/admin/sidebar";
-import Layout from "./components/admin/layout";
-import Dashboard from "./pages/admin/dashboard";
-import UserManagementDashboard from "./pages/admin/userManagementDashboard";
-import SocietyManagement from "./pages/admin/SocietyManagement";
-import ReviewManagement from "./pages/admin/ReviewManagement";  
-import ReportManagement from "./pages/admin/ReportManagement";
-import AdvertisementManagement from "./pages/admin/AdvertisementManagement";
-import AdvertisementPlanManagement from "./pages/admin/AdvertisementPlanManagement";
+// Preload the society profiles as soon as the app starts
+preloadSocietyProfiles();
+
+// Admin imports (Lazy Loaded for Performance)
+const Sidebar = lazy(() => import("./components/admin/sidebar"));
+const Layout = lazy(() => import("./components/admin/layout"));
+const Dashboard = lazy(() => import("./pages/admin/dashboard"));
+const UserManagementDashboard = lazy(() => import("./pages/admin/userManagementDashboard"));
+const SocietyManagement = lazy(() => import("./pages/admin/SocietyManagement"));
+const ReviewManagement = lazy(() => import("./pages/admin/ReviewManagement"));
+const ReportManagement = lazy(() => import("./pages/admin/ReportManagement"));
+const AdvertisementManagement = lazy(() => import("./pages/admin/AdvertisementManagement"));
+const AdvertisementPlanManagement = lazy(() => import("./pages/admin/AdvertisementPlanManagement"));
 
 // Payment imports
 import PaymentSuccess from './pages/payment/PaymentSuccess';
@@ -54,9 +58,13 @@ import PaymentCancel from './pages/payment/PaymentCancel';
 const AdminLayout = ({ children }) => (
   <AdminDataProvider>
     <div className="flex flex-col lg:flex-row min-h-screen">
-      <Sidebar />
+      <Suspense fallback={<div className="flex items-center justify-center p-8">Loading Sidebar...</div>}>
+        <Sidebar />
+      </Suspense>
       <div className="flex-1 w-full lg:w-auto overflow-x-hidden">
-        <Layout>{children}</Layout>
+        <Suspense fallback={<div className="flex items-center justify-center h-full text-lg">Loading Admin Module...</div>}>
+          <Layout>{children}</Layout>
+        </Suspense>
       </div>
     </div>
   </AdminDataProvider>

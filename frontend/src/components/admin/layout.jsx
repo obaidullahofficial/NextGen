@@ -3,7 +3,7 @@ import { Bell, UserCircle } from "lucide-react";
 
 const NavBar = () => (
   <nav
-    className="w-full text-white flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 shadow-md sticky top-0 z-50"
+    className="w-full text-white flex flex-wrap justify-between items-center gap-4 px-4 sm:px-6 py-3 sm:py-4 shadow-md sticky top-0 z-50"
     style={{ backgroundColor: "#2f3d57" }}
   >
     <div className="text-lg sm:text-xl font-bold">Admin Dashboard</div>

@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import useSWR from "swr";
+import debounce from "lodash.debounce";
 import { 
   Edit2, 
   Trash2, 
@@ -147,8 +149,8 @@ function AddUserModal({ isOpen, onClose, onUserAdded }) {
               <UserPlus size={20} className="text-blue-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Add New User</h2>
-              <p className="text-sm text-gray-500">Create a new user account</p>
+              <h2 className="text-lg font-bold text-gray-900">Add New User</h2>
+              <p className="text-xs text-gray-500">Create a new user account</p>
             </div>
           </div>
           <button
@@ -165,13 +167,13 @@ function AddUserModal({ isOpen, onClose, onUserAdded }) {
           {error && (
             <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
               <AlertCircle size={16} className="text-red-500" />
-              <span className="text-sm text-red-700">{error}</span>
+              <span className="text-xs text-red-700">{error}</span>
             </div>
           )}
 
           {/* Username */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-2">
               Username
             </label>
             <input
@@ -187,7 +189,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }) {
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-2">
               Email
             </label>
             <input
@@ -203,7 +205,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }) {
 
           {/* Role */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-2">
               Role
             </label>
             <select
@@ -220,7 +222,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }) {
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-2">
               Password
             </label>
             <input
@@ -236,7 +238,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }) {
 
           {/* Confirm Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-2">
               Confirm Password
             </label>
             <input
@@ -299,8 +301,8 @@ function ViewUserModal({ isOpen, onClose, user }) {
               <Eye size={20} className="text-blue-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">User Details</h2>
-              <p className="text-sm text-gray-500">View user information</p>
+              <h2 className="text-lg font-bold text-gray-900">User Details</h2>
+              <p className="text-xs text-gray-500">View user information</p>
             </div>
           </div>
           <button
@@ -319,29 +321,29 @@ function ViewUserModal({ isOpen, onClose, user }) {
 
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-500">Username</label>
-              <p className="text-lg font-semibold text-gray-900">{user.username}</p>
+              <label className="block text-xs font-medium text-gray-500">Username</label>
+              <p className="text-base font-semibold text-gray-900">{user.username}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-500">Email</label>
+              <label className="block text-xs font-medium text-gray-500">Email</label>
               <p className="text-gray-900">{user.email}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-500">Role</label>
+              <label className="block text-xs font-medium text-gray-500">Role</label>
               <RoleBadge role={user.role} />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-500">User ID</label>
-              <p className="text-sm text-gray-600 font-mono">{user._id}</p>
+              <label className="block text-xs font-medium text-gray-500">User ID</label>
+              <p className="text-xs text-gray-600 font-mono">{user._id}</p>
             </div>
 
             {user.society_id && (
               <div>
-                <label className="block text-sm font-medium text-gray-500">Society ID</label>
-                <p className="text-sm text-gray-600 font-mono">{user.society_id}</p>
+                <label className="block text-xs font-medium text-gray-500">Society ID</label>
+                <p className="text-xs text-gray-600 font-mono">{user.society_id}</p>
               </div>
             )}
           </div>
@@ -464,8 +466,8 @@ function EditUserModal({ isOpen, onClose, user, onUserUpdated }) {
               <Edit2 size={20} className="text-green-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Edit User</h2>
-              <p className="text-sm text-gray-500">Update user information</p>
+              <h2 className="text-lg font-bold text-gray-900">Edit User</h2>
+              <p className="text-xs text-gray-500">Update user information</p>
             </div>
           </div>
           <button
@@ -482,13 +484,13 @@ function EditUserModal({ isOpen, onClose, user, onUserUpdated }) {
           {error && (
             <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
               <AlertCircle size={16} className="text-red-500" />
-              <span className="text-sm text-red-700">{error}</span>
+              <span className="text-xs text-red-700">{error}</span>
             </div>
           )}
 
           {/* Username */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-2">
               Username
             </label>
             <input
@@ -503,7 +505,7 @@ function EditUserModal({ isOpen, onClose, user, onUserUpdated }) {
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-2">
               Email
             </label>
             <input
@@ -518,7 +520,7 @@ function EditUserModal({ isOpen, onClose, user, onUserUpdated }) {
 
           {/* Role */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-2">
               Role
             </label>
             <select
@@ -535,7 +537,7 @@ function EditUserModal({ isOpen, onClose, user, onUserUpdated }) {
 
           {/* Password (Optional) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-2">
               New Password (Optional)
             </label>
             <input
@@ -628,8 +630,8 @@ function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
               <Trash2 size={20} className="text-red-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Delete User</h2>
-              <p className="text-sm text-gray-500">This action cannot be undone</p>
+              <h2 className="text-lg font-bold text-gray-900">Delete User</h2>
+              <p className="text-xs text-gray-500">This action cannot be undone</p>
             </div>
           </div>
           <button
@@ -645,7 +647,7 @@ function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
           {error && (
             <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
               <AlertCircle size={16} className="text-red-500" />
-              <span className="text-sm text-red-700">{error}</span>
+              <span className="text-xs text-red-700">{error}</span>
             </div>
           )}
 
@@ -654,7 +656,7 @@ function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
           </p>
           
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-            <p className="text-sm text-yellow-800">
+            <p className="text-xs text-yellow-800">
               ⚠️ This will permanently remove the user and all associated data.
             </p>
           </div>
@@ -722,7 +724,7 @@ function Avatar({ name, avatar, role }) {
         {avatar ? (
           <img src={avatar} alt={name} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-sm font-bold">
+          <span className="text-xs font-bold">
             {name ? name.charAt(0).toUpperCase() : "?"}
           </span>
         )}
@@ -802,11 +804,11 @@ function UserRow({ user, index, selectedUsers, onSelectUser, onViewUser, onEditU
 
       {/* User Info */}
       <td className="py-4 px-6">
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center gap-4">
           <Avatar name={user.username} avatar={null} role={user.role} />
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-gray-900 truncate">{user.username}</div>
-            <div className="text-sm text-gray-500 truncate">{user.email}</div>
+            <div className="text-xs text-gray-500 truncate">{user.email}</div>
             <div className="text-xs text-gray-400">ID: {user._id?.slice(-8) || 'N/A'}</div>
           </div>
         </div>
@@ -839,7 +841,7 @@ function UserRow({ user, index, selectedUsers, onSelectUser, onViewUser, onEditU
                   onViewUser(user);
                   setIsMenuOpen(false);
                 }}
-                className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center space-x-3 w-full px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <Eye size={16} />
                 <span>View Details</span>
@@ -849,7 +851,7 @@ function UserRow({ user, index, selectedUsers, onSelectUser, onViewUser, onEditU
                   onEditUser(user);
                   setIsMenuOpen(false);
                 }}
-                className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center space-x-3 w-full px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <Edit2 size={16} />
                 <span>Edit User</span>
@@ -860,7 +862,7 @@ function UserRow({ user, index, selectedUsers, onSelectUser, onViewUser, onEditU
                   onDeleteUser(user);
                   setIsMenuOpen(false);
                 }}
-                className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                className="flex items-center space-x-3 w-full px-4 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
               >
                 <Trash2 size={16} />
                 <span>Delete User</span>
@@ -888,8 +890,8 @@ function StatsCard({ icon: Icon, title, value, change, color = "blue" }) {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
+          <p className="text-xs font-medium text-gray-600">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
         </div>
         <div className={`w-12 h-12 rounded-lg ${colorClasses[color]} flex items-center justify-center`}>
           <Icon size={24} className="text-white" />
@@ -903,13 +905,41 @@ function StatsCard({ icon: Icon, title, value, change, color = "blue" }) {
 // 🔹 Dashboard Component
 //
 export default function UserManagementDashboard() {
-  const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  
+
+  // Debounce search input for backend querying
+  const debouncedSearchUpdate = useMemo(
+    () => debounce((val) => setDebouncedSearch(val), 500),
+    []
+  );
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    debouncedSearchUpdate(e.target.value);
+    setCurrentPage(1); // reset to first page on search
+  };
+
+  const { data: usersData, error, isLoading: loading, mutate: refreshUsers } = useSWR(
+    `http://localhost:5000/api/users?page=1&limit=1000&search=${debouncedSearch}&role=${filterRole}`,
+    async (url) => {
+      const res = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+      });
+      const json = await res.json();
+      return json.success ? json.users : [];
+    },
+    { revalidateOnFocus: false }
+  );
+
+  const users = usersData || [];
+  const refreshing = false;
+
   // Modal states
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -921,35 +951,8 @@ export default function UserManagementDashboard() {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
-  // 🔹 Fetch users from backend
-  const fetchUsers = async () => {
-    try {
-      setRefreshing(true);
-      const res = await fetch("http://localhost:5000/api/users", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("token"),
-        },
-      });
-
-      const data = await res.json();
-
-      if (data.success && Array.isArray(data.users)) {
-        setUsers(data.users);
-      } else {
-        console.error("Failed:", data.message);
-      }
-    } catch (err) {
-      console.error("Error fetching users:", err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  // ✅ Refresh wrapped for callbacks
+  const fetchUsers = () => refreshUsers();
 
   // 🔹 CRUD Handlers
   const handleViewUser = (user) => {
@@ -1058,27 +1061,27 @@ export default function UserManagementDashboard() {
   const regularCount = users.filter(u => u.role === 'user').length;
 
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto">
         {/* 🔹 Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-              <p className="text-gray-600 mt-1 text-sm">Manage and monitor all system users</p>
+              <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+              <p className="text-gray-600 mt-1 text-xs">Manage and monitor all system users</p>
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={fetchUsers}
                 disabled={refreshing}
-                className="inline-flex items-center space-x-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                className="inline-flex items-center space-x-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs"
               >
                 <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
                 <span>Refresh</span>
               </button>
               <button 
                 onClick={() => setIsAddUserModalOpen(true)}
-                className="inline-flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm"
+                className="inline-flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-xs"
               >
                 <UserPlus size={14} />
                 <span>Add User</span>
@@ -1086,7 +1089,7 @@ export default function UserManagementDashboard() {
               {selectedUsers.length > 0 && (
                 <button 
                   onClick={handleBulkDelete}
-                  className="inline-flex items-center space-x-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm text-sm"
+                  className="inline-flex items-center space-x-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm text-xs"
                 >
                   <Trash2 size={14} />
                   <span>Delete ({selectedUsers.length})</span>
@@ -1128,19 +1131,19 @@ export default function UserManagementDashboard() {
         </div>
 
         {/* 🔹 Main Content */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
           {/* 🔹 Filters */}
           <div className="p-6 border-b border-gray-100 bg-gray-50">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-wrap items-center gap-4">
                 <div className="relative">
                   <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search users..."
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-10 pr-4 py-3 border border-gray-200 rounded-lg w-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onChange={handleSearchChange}
+                    className="w-full sm:w-64 md:w-full md:w-80 max-w-full pl-10 pr-4 py-2 sm:py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
                   />
                 </div>
                 <div className="relative">
@@ -1157,15 +1160,15 @@ export default function UserManagementDashboard() {
                   </select>
                 </div>
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-xs text-gray-600">
                 {filteredUsers.length} of {totalUsers} users
               </div>
             </div>
           </div>
 
           {/* 🔹 Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto w-full max-w-full">
+            <table className="w-full min-w-[900px] max-w-none text-left ">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -1206,7 +1209,7 @@ export default function UserManagementDashboard() {
                       <div className="flex flex-col items-center space-y-2">
                         <Users size={48} className="text-gray-300" />
                         <span className="text-gray-500">No users found.</span>
-                        <span className="text-sm text-gray-400">Try adjusting your search or filters.</span>
+                        <span className="text-xs text-gray-400">Try adjusting your search or filters.</span>
                       </div>
                     </td>
                   </tr>
@@ -1232,7 +1235,7 @@ export default function UserManagementDashboard() {
           {filteredUsers.length > 0 && (
             <div className="p-6 bg-gray-50 border-t border-gray-100">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
+                <div className="text-xs text-gray-600">
                   Showing <span className="font-semibold">{(currentPage - 1) * usersPerPage + 1}</span> to{" "}
                   <span className="font-semibold">{Math.min(currentPage * usersPerPage, filteredUsers.length)}</span> of{" "}
                   <span className="font-semibold">{filteredUsers.length}</span> users
@@ -1242,7 +1245,7 @@ export default function UserManagementDashboard() {
                   <button
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage((p) => p - 1)}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
                       currentPage === 1
                         ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                         : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
@@ -1259,7 +1262,7 @@ export default function UserManagementDashboard() {
                         <button
                           key={pageNum}
                           onClick={() => setCurrentPage(pageNum)}
-                          className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
                             currentPage === pageNum
                               ? "bg-blue-600 text-white"
                               : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
@@ -1274,7 +1277,7 @@ export default function UserManagementDashboard() {
                   <button
                     disabled={currentPage === totalPages || totalPages === 0}
                     onClick={() => setCurrentPage((p) => p + 1)}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
                       currentPage === totalPages || totalPages === 0
                         ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                         : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"

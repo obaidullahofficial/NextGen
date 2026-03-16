@@ -1,3 +1,5 @@
+import useSWR from 'swr';
+import debounce from 'lodash.debounce';
 import React, { useState, useEffect } from "react";
 import { 
   Users, 
@@ -123,7 +125,7 @@ const Dashboard = () => {
       <div style={styles.loadingContainer}>
         <div style={styles.spinner}></div>
         <p>Loading dashboard data...</p>
-        <p style={{ fontSize: '14px', color: '#888', marginTop: '8px' }}>
+        <p style={{ fontSize: '13px', color: '#888', marginTop: '8px' }}>
           Loading all admin data in background...
         </p>
       </div>
@@ -232,7 +234,7 @@ const Dashboard = () => {
 
       {/* Data Freshness Indicator */}
       <div style={styles.dataFreshness}>
-        <p style={{ fontSize: '12px', color: '#888', textAlign: 'center' }}>
+        <p style={{ fontSize: '11px', color: '#888', textAlign: 'center' }}>
           Last updated: {lastUpdated.users ? new Date(lastUpdated.users).toLocaleTimeString() : 'Loading...'}
           {' | '}
           <button 
@@ -242,7 +244,7 @@ const Dashboard = () => {
               border: 'none', 
               color: '#007bff', 
               cursor: 'pointer',
-              fontSize: '12px',
+              fontSize: '11px',
               textDecoration: 'underline'
             }}
           >
@@ -270,7 +272,7 @@ const Card = ({ title, value, change, icon: Icon, color, subtitle }) => (
     {change && (
       <p style={{ 
         color: change.startsWith("+") ? "#4CAF50" : change.includes("⭐") ? "#FF9800" : "#666",
-        fontSize: "14px",
+        fontSize: "13px",
         margin: "8px 0 0 0"
       }}>
         {change}
@@ -346,7 +348,7 @@ const styles = {
     marginBottom: "32px"
   },
   heading: {
-    fontSize: "30px",
+    fontSize: "27px",
     fontWeight: "700",
     color: "#1a1a1a",
     margin: "0 0 6px 0"
@@ -354,7 +356,7 @@ const styles = {
   subheading: {
     margin: "0",
     color: "#666",
-    fontSize: "14px"
+    fontSize: "13px"
   },
   refreshButton: {
     display: "flex",
@@ -366,7 +368,7 @@ const styles = {
     border: "none",
     borderRadius: "6px",
     cursor: "pointer",
-    fontSize: "13px",
+    fontSize: "12px",
     fontWeight: "500"
   },
   cardsGrid: {
@@ -388,20 +390,20 @@ const styles = {
     alignItems: "flex-start"
   },
   cardTitle: {
-    fontSize: "13px",
+    fontSize: "12px",
     color: "#666",
     margin: "0 0 6px 0",
     fontWeight: "500",
     textTransform: "uppercase"
   },
   cardValue: {
-    fontSize: "24px",
+    fontSize: "22px",
     fontWeight: "700",
     color: "#1a1a1a",
     margin: "0"
   },
   cardSubtitle: {
-    fontSize: "11px",
+    fontSize: "10px",
     color: "#888",
     margin: "3px 0 0 0"
   },
@@ -426,7 +428,7 @@ const styles = {
     boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
   },
   statsCardTitle: {
-    fontSize: "16px",
+    fontSize: "14px",
     fontWeight: "600",
     color: "#1a1a1a",
     margin: "0 0 12px 0"
@@ -452,12 +454,12 @@ const styles = {
     color: "#495057"
   },
   statLabel: {
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#666",
     margin: "0"
   },
   statValue: {
-    fontSize: "16px",
+    fontSize: "14px",
     fontWeight: "600",
     color: "#1a1a1a",
     margin: "2px 0 0 0"
@@ -469,7 +471,7 @@ const styles = {
     boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
   },
   sectionTitle: {
-    fontSize: "18px",
+    fontSize: "16px",
     marginBottom: "14px",
     fontWeight: "600",
     color: "#1a1a1a"
@@ -505,14 +507,14 @@ const styles = {
   },
   activityMessage: {
     margin: "0 0 6px 0",
-    fontSize: "13px",
+    fontSize: "12px",
     color: "#1a1a1a",
     fontWeight: "500"
   },
   activityMeta: {
     display: "flex",
     gap: "10px",
-    fontSize: "11px",
+    fontSize: "10px",
     color: "#666"
   },
   activityTime: {

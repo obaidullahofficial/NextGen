@@ -1,3 +1,5 @@
+import useSWR from 'swr';
+import debounce from 'lodash.debounce';
 import React, { useState, useEffect } from 'react';
 import { FiEye } from 'react-icons/fi';
 import advertisementAPI from '../../services/advertisementAPI';
@@ -230,22 +232,22 @@ const AdvertisementManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#2F3D57] mb-2">Advertisement Management</h1>
+          <h1 className="text-2xl font-bold text-[#2F3D57] mb-2">Advertisement Management</h1>
           <p className="text-gray-600">Review and approve advertisement requests from users</p>
         </div>
 
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between text-red-800">
             <div className="flex items-center gap-2">
-              <span className="text-xl">⚠</span>
+              <span className="text-lg">⚠</span>
               <span>{error}</span>
             </div>
             <button 
               onClick={() => setError('')}
-              className="text-red-600 hover:text-red-800 font-bold text-xl leading-none"
+              className="text-red-600 hover:text-red-800 font-bold text-lg leading-none"
               aria-label="Close"
             >
               ×
@@ -256,12 +258,12 @@ const AdvertisementManagement = () => {
         {success && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between text-green-800">
             <div className="flex items-center gap-2">
-              <span className="text-xl">✓</span>
+              <span className="text-lg">✓</span>
               <span>{success}</span>
             </div>
             <button 
               onClick={() => setSuccess('')}
-              className="text-green-600 hover:text-green-800 font-bold text-xl leading-none"
+              className="text-green-600 hover:text-green-800 font-bold text-lg leading-none"
               aria-label="Close"
             >
               ×
@@ -313,7 +315,7 @@ const AdvertisementManagement = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
                 {pendingAds.map(ad => (
-                  <div key={ad._id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg hover:border-[#ED7600] transition-all duration-300">
+                  <div key={ad._id} className="bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col hover:shadow-lg hover:border-[#ED7600] transition-all duration-300">
                     <div className="relative">
                       <img
                         src={ad.featured_image || '/placeholder-ad.jpg'}
@@ -321,20 +323,20 @@ const AdvertisementManagement = () => {
                         className="w-full h-48 object-cover"
                         onError={(e) => { e.target.src = '/placeholder-ad.jpg'; }}
                       />
-                      <div className="absolute top-2 right-2 bg-gradient-to-r from-[#2F3D57] to-[#1e2a3a] text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+                      <div className="absolute top-2 right-2 bg-gradient-to-r from-[#2F3D57] to-[#1e2a3a] text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
                         {ad.plan_name}
                       </div>
                     </div>
                     
                     <div className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{ad.title}</h3>
+                      <h3 className="text-base font-semibold text-gray-900 mb-2">{ad.title}</h3>
                       {ad.link_url && (
-                        <a href={ad.link_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 text-sm truncate block mb-3">
+                        <a href={ad.link_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 text-xs truncate block mb-3">
                           {ad.link_url}
                         </a>
                       )}
                       
-                      <div className="space-y-2 text-sm">
+                      <div className="space-y-2 text-xs">
                         <div className="flex justify-between">
                           <span className="text-gray-500">User:</span>
                           <span className="text-gray-900 font-medium">{ad.user_email}</span>
@@ -393,20 +395,20 @@ const AdvertisementManagement = () => {
                 <p className="text-gray-500">No advertisements found</p>
               </div>
             ) : (
-              <div className="overflow-x-auto shadow-md rounded-lg">
-                <table className="min-w-max w-full bg-white">
+              <div className="overflow-x-auto w-full max-w-full shadow-md rounded-lg">
+                <table className="w-full min-w-[900px] max-w-none text-left max bg-white">
                   <thead>
                     <tr className="bg-gradient-to-r from-[#2F3D57] to-[#1e2a3a] text-white">
-                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[180px]">Title</th>
-                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[150px]">User</th>
-                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[120px]">Society</th>
-                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[100px]">Plan</th>
-                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[90px]">Price</th>
-                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[100px]">Payment</th>
-                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[100px]">Status</th>
-                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[140px]">Dates</th>
-                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[80px]">Views</th>
-                      <th className="px-4 py-4 text-left font-semibold text-sm uppercase tracking-wider min-w-[120px]">Actions</th>
+                      <th className="px-4 py-4 text-left font-semibold text-xs uppercase tracking-wider min-w-[180px]">Title</th>
+                      <th className="px-4 py-4 text-left font-semibold text-xs uppercase tracking-wider min-w-[150px]">User</th>
+                      <th className="px-4 py-4 text-left font-semibold text-xs uppercase tracking-wider min-w-[120px]">Society</th>
+                      <th className="px-4 py-4 text-left font-semibold text-xs uppercase tracking-wider min-w-[100px]">Plan</th>
+                      <th className="px-4 py-4 text-left font-semibold text-xs uppercase tracking-wider min-w-[90px]">Price</th>
+                      <th className="px-4 py-4 text-left font-semibold text-xs uppercase tracking-wider min-w-[100px]">Payment</th>
+                      <th className="px-4 py-4 text-left font-semibold text-xs uppercase tracking-wider min-w-[100px]">Status</th>
+                      <th className="px-4 py-4 text-left font-semibold text-xs uppercase tracking-wider min-w-[140px]">Dates</th>
+                      <th className="px-4 py-4 text-left font-semibold text-xs uppercase tracking-wider min-w-[80px]">Views</th>
+                      <th className="px-4 py-4 text-left font-semibold text-xs uppercase tracking-wider min-w-[120px]">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -414,17 +416,17 @@ const AdvertisementManagement = () => {
                       <tr key={ad._id} className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 transition-all duration-200">
                         <td className="px-4 py-4">
                           <div className="max-w-[180px]">
-                            <div className="font-semibold text-gray-900 text-sm truncate" title={ad.title}>{ad.title}</div>
+                            <div className="font-semibold text-gray-900 text-xs truncate" title={ad.title}>{ad.title}</div>
                             {ad.link_url && <div className="text-xs text-blue-600 hover:text-blue-800 truncate mt-1" title={ad.link_url}>{ad.link_url}</div>}
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-600 max-w-[150px] truncate" title={ad.user_email}>{ad.user_email}</td>
-                        <td className="px-4 py-4 text-sm text-gray-700 font-medium truncate max-w-[120px]" title={ad.society_name || ad.society_id}>{ad.society_name || ad.society_id || 'N/A'}</td>
+                        <td className="px-4 py-4 text-xs text-gray-600 max-w-[150px] truncate" title={ad.user_email}>{ad.user_email}</td>
+                        <td className="px-4 py-4 text-xs text-gray-700 font-medium truncate max-w-[120px]" title={ad.society_name || ad.society_id}>{ad.society_name || ad.society_id || 'N/A'}</td>
                         <td className="px-4 py-4">
                           <span className="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded-full whitespace-nowrap">{ad.plan_name}</span>
                         </td>
                         <td className="px-4 py-4">
-                          <span className="text-[#ED7600] font-bold text-sm whitespace-nowrap">Rs {ad.price}</span>
+                          <span className="text-[#ED7600] font-bold text-xs whitespace-nowrap">Rs {ad.price}</span>
                         </td>
                         <td className="px-4 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wide shadow-sm whitespace-nowrap ${
@@ -462,7 +464,7 @@ const AdvertisementManagement = () => {
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-1.5 text-gray-700 whitespace-nowrap">
                             <FiEye className="text-blue-500" size={16} />
-                            <span className="font-semibold text-sm">{ad.impressions || 0}</span>
+                            <span className="font-semibold text-xs">{ad.impressions || 0}</span>
                           </div>
                         </td>
                         <td className="px-4 py-4">
@@ -505,7 +507,7 @@ const AdvertisementManagement = () => {
               >
                 ← Previous
               </button>
-              <span className="text-gray-700 font-semibold text-base bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
+              <span className="text-gray-700 font-semibold text-sm bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
                 Page {page} of {pagination.total_pages}
               </span>
               <button
@@ -524,13 +526,13 @@ const AdvertisementManagement = () => {
         <div className="fixed inset-0 bg-[#2F3D57]/80 flex items-center justify-center z-50 p-4" onClick={closeModal}>
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-[#2F3D57] text-white">
-              <h2 className="text-2xl font-bold">
+              <h2 className="text-xl font-bold">
                 {modalAction === 'approve' && 'Approve Advertisement'}
                 {modalAction === 'reject' && 'Reject Advertisement'}
                 {modalAction === 'edit' && 'Edit Advertisement'}
                 {modalAction === 'delete' && 'Delete Advertisement'}
               </h2>
-              <button className="text-white hover:text-gray-300 text-3xl leading-none" onClick={closeModal}>&times;</button>
+              <button className="text-white hover:text-gray-300 text-2xl leading-none" onClick={closeModal}>&times;</button>
             </div>
 
             <div className="p-6">
@@ -542,7 +544,7 @@ const AdvertisementManagement = () => {
                     className="w-full max-h-64 object-cover rounded-lg mb-4"
                     onError={(e) => { e.target.src = '/placeholder-ad.jpg'; }}
                   />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{selectedAd.title}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{selectedAd.title}</h3>
                   <p className="text-gray-600">
                     {selectedAd.plan_name} plan - Rs {selectedAd.price}
                   </p>
@@ -551,7 +553,7 @@ const AdvertisementManagement = () => {
 
               {modalAction === 'reject' && (
                 <div className="mb-4">
-                  <label htmlFor="admin_notes" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="admin_notes" className="block text-xs font-medium text-gray-700 mb-2">
                     Rejection Reason <span className="text-red-500">*</span>
                   </label>
                   <textarea
@@ -569,7 +571,7 @@ const AdvertisementManagement = () => {
               {modalAction === 'edit' && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-2">
                       Title <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -581,7 +583,7 @@ const AdvertisementManagement = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-2">
                       Link URL
                     </label>
                     <input
@@ -593,7 +595,7 @@ const AdvertisementManagement = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-2">
                       Featured Image URL
                     </label>
                     <input
@@ -613,7 +615,7 @@ const AdvertisementManagement = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-2">
                       Status <span className="text-red-500">*</span>
                     </label>
                     <select
@@ -629,7 +631,7 @@ const AdvertisementManagement = () => {
                   </div>
 
                   <div className="bg-gray-100 border border-gray-300 rounded-lg p-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-2">
                       Payment Status (Read-only)
                     </label>
                     <input
