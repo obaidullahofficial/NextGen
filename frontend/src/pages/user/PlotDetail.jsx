@@ -334,51 +334,51 @@ const PlotDetail = () => {
       </div>
 
       {/* Dashboard Container Wrapper */}
-      <div className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow bg-gray-50/50">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow bg-white">
         
         {/* Debug indicator */}
         {!plotData && (
-           <div className="mb-6 p-4 bg-yellow-100 border border-yellow-300 rounded-xl text-sm text-yellow-800 flex items-center gap-3">
+           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 flex items-center gap-3">
              <span className="text-xl">⚠️</span> 
              <span className="font-medium">Displaying sample data - unable to load plot details from server.</span>
            </div>
         )}
 
         {/* Dashboard Header */}
-        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                 Plot {displayData.plot_number || displayData.plot_id || plotId}
               </h1>
-              <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                 displayData.status === 'Available' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'
               }`}>
                 {displayData.status}
               </span>
             </div>
-            <p className="text-gray-500 flex items-center gap-2 font-medium">
-              <FiMapPin className="text-[#ED7600] text-lg" />
+            <p className="text-gray-500 flex items-center gap-2 font-medium text-sm">
+              <FiMapPin className="text-[#ED7600] text-base" />
               {societyData ? `${societyData.name}${societyData.location ? `, ${societyData.location}` : ''}` : 'Location details unavailable'}
             </p>
           </div>
           
           <div className="flex items-center">
-            <div className="bg-orange-50 px-6 py-3 border border-orange-100 rounded-xl text-right">
-              <span className="text-xs text-orange-600 font-bold uppercase tracking-wider mb-1 block">Asking Price</span>
-              <span className="text-2xl font-black text-[#ED7600]">{formattedPrice}</span>
+            <div className="text-right">
+              <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-0.5 block">Asking Price</span>
+              <span className="text-xl font-bold text-[#ED7600]">{formattedPrice}</span>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* LEFT COLUMN - MAIN INFO (8 Cols) */}
-          <div className="lg:col-span-8 space-y-8">
+          <div className="lg:col-span-8 space-y-6">
             
             {/* Image & Quick Stats Banner */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-              <div className="h-[350px] md:h-[450px] rounded-xl overflow-hidden bg-gray-100 relative group">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <div className="h-[250px] md:h-[350px] rounded-lg overflow-hidden bg-gray-100 relative group">
                 <img
                   src={displayData.image || plotImage}
                   alt={`Plot ${displayData.plot_number || plotId}`}
@@ -389,37 +389,37 @@ const PlotDetail = () => {
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent to-transparent opacity-80"></div>
-                <div className="absolute bottom-6 left-6 flex gap-3">
-                  <div className="bg-black/40 backdrop-blur-md text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 border border-white/20">
-                    <FiHome className="text-lg" /> {displayData.type}
+                <div className="absolute bottom-4 left-4 flex gap-2">
+                  <div className="bg-black/50 backdrop-blur-md text-white px-3 py-1.5 rounded text-xs font-medium flex items-center gap-1.5 border border-white/20">
+                    <FiHome className="text-sm" /> {displayData.type}
                   </div>
-                  <div className="bg-[#ED7600]/90 backdrop-blur-md text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg border border-orange-400">
+                  <div className="bg-[#ED7600]/90 backdrop-blur-md text-white px-3 py-1.5 rounded text-xs font-semibold shadow-sm border border-orange-400">
                     {displayData.marla_size || displayData.area}
                   </div>
                 </div>
               </div>
 
               {/* Key Dimensions Quick Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5">
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-orange-50 transition-colors">
-                  <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Plot Size</p>
-                  <p className="text-lg font-extrabold text-gray-900">{displayData.marla_size || displayData.area}</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <p className="text-xs text-gray-500 font-medium mb-1">Plot Size</p>
+                  <p className="text-base font-semibold text-gray-900">{displayData.marla_size || displayData.area}</p>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-orange-50 transition-colors">
-                  <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Dimensions</p>
-                  <p className="text-lg font-extrabold text-gray-900">{displayData.dimension_x}' × {displayData.dimension_y}'</p>
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <p className="text-xs text-gray-500 font-medium mb-1">Dimensions</p>
+                  <p className="text-base font-semibold text-gray-900">{displayData.dimension_x}' × {displayData.dimension_y}'</p>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-orange-50 transition-colors">
-                  <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Property Type</p>
-                  <p className="text-lg font-extrabold text-gray-900 truncate">{displayData.type}</p>
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <p className="text-xs text-gray-500 font-medium mb-1">Property Type</p>
+                  <p className="text-base font-semibold text-gray-900 truncate">{displayData.type}</p>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-orange-50 transition-colors">
-                  <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Compliance</p>
-                  <div className="flex items-center gap-1.5 mt-1">
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <p className="text-xs text-gray-500 font-medium mb-1">Compliance</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
                     {complianceRules ? (
-                      <span className="text-green-600 bg-green-100 px-2 py-0.5 rounded text-sm font-bold flex items-center gap-1 w-max"><FiCheckCircle /> Verified</span>
+                      <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-xs font-semibold flex items-center gap-1 w-max"><FiCheckCircle /> Verified</span>
                     ) : (
-                      <span className="text-gray-500 bg-gray-200 px-2 py-0.5 rounded text-sm font-bold flex items-center gap-1 w-max"><FiX /> Pending</span>
+                      <span className="text-gray-500 bg-gray-100 px-2 py-0.5 rounded text-xs font-semibold flex items-center gap-1 w-max"><FiX /> Pending</span>
                     )}
                   </div>
                 </div>
@@ -428,18 +428,16 @@ const PlotDetail = () => {
 
             {/* Description Card */}
             {displayData.description && displayData.description.length > 0 && (
-              <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3 pb-4 border-b border-gray-100">
-                   <div className="p-2 bg-orange-100 rounded-lg text-[#ED7600]">
-                     <HiOutlineDocumentText className="text-2xl" /> 
-                   </div>
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
+                   <HiOutlineDocumentText className="text-xl text-[#ED7600]" /> 
                    Overview & Features
                 </h3>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {displayData.description.map((item, index) => (
-                    <li key={index} className="flex flex-start gap-3 text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                      <FiCheckCircle className="text-[#ED7600] text-lg flex-shrink-0 mt-0.5" />
-                      <span className="leading-relaxed font-medium text-sm">{item}</span>
+                    <li key={index} className="flex items-start gap-2 text-gray-700">
+                      <FiCheckCircle className="text-[#ED7600] text-sm flex-shrink-0 mt-1" />
+                      <span className="text-sm leading-relaxed">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -448,55 +446,48 @@ const PlotDetail = () => {
 
             {/* Compliance Rules Dashboard Style */}
             {complianceRules && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-r from-[#2F3D57] to-[#1f2b40] p-8 text-white relative overflow-hidden">
-                  <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
-                     <MdOutlineArchitecture className="text-9xl" />
-                  </div>
-                  <div className="relative z-10 flex items-center gap-4 mb-2">
-                    <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
-                      <FiShield className="text-orange-400 text-3xl" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold">Building Regulations</h3>
-                      <p className="text-sm text-gray-300 font-medium mt-1">Official construction constraints for {complianceRules.marla_size} plots</p>
-                    </div>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-[#2F3D57] p-5 text-white flex items-center gap-3">
+                  <FiShield className="text-orange-400 text-2xl" />
+                  <div>
+                    <h3 className="text-lg font-semibold">Building Regulations</h3>
+                    <p className="text-xs text-gray-300 mt-0.5">Official construction constraints for {complianceRules.marla_size} plots</p>
                   </div>
                 </div>
                 
-                <div className="p-8 bg-gray-50/50">
+                <div className="p-5">
                   {/* Quick Reference Mini Cards */}
-                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Crucial Constraints</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                      <p className="text-xs text-gray-500 font-bold mb-1">Max Ground Coverage</p>
-                      <p className="text-2xl font-black text-gray-900">{complianceRules.max_ground_coverage}%</p>
+                  <h4 className="text-sm font-semibold text-gray-800 mb-3">Key Constraints</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 shadow-sm top-stats">
+                      <p className="text-xs text-gray-500 font-medium mb-1">Max Coverage</p>
+                      <p className="text-base font-semibold text-gray-900">{complianceRules.max_ground_coverage}%</p>
                     </div>
-                    <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                      <p className="text-xs text-gray-500 font-bold mb-1">Front Setback</p>
-                      <p className="text-2xl font-black text-gray-900">{complianceRules.front_setback} ft</p>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 shadow-sm top-stats">
+                      <p className="text-xs text-gray-500 font-medium mb-1">Front Setback</p>
+                      <p className="text-base font-semibold text-gray-900">{complianceRules.front_setback} ft</p>
                     </div>
-                    <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                      <p className="text-xs text-gray-500 font-bold mb-1">Rear Setback</p>
-                      <p className="text-2xl font-black text-gray-900">{complianceRules.rear_setback} ft</p>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 shadow-sm top-stats">
+                      <p className="text-xs text-gray-500 font-medium mb-1">Rear Setback</p>
+                      <p className="text-base font-semibold text-gray-900">{complianceRules.rear_setback} ft</p>
                     </div>
-                    <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                      <p className="text-xs text-gray-500 font-bold mb-1">Building Type</p>
-                      <p className="text-base font-black text-gray-900 truncate" title={complianceRules.building_type_allowed}>{complianceRules.building_type_allowed}</p>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 shadow-sm top-stats">
+                      <p className="text-xs text-gray-500 font-medium mb-1">Building Type</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate" title={complianceRules.building_type_allowed}>{complianceRules.building_type_allowed}</p>
                     </div>
                   </div>
 
                   {/* Detailed Instructions */}
-                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Detailed Instructions</h4>
-                  <div className="grid grid-cols-1 gap-3">
+                  <h4 className="text-sm font-semibold text-gray-800 mb-3">Construction Guidelines</h4>
+                  <div className="space-y-2">
                     {generateComplianceInstructions(complianceRules).map((instruction, index) => (
-                      <div key={index} className="flex items-center gap-4 p-4 bg-white rounded-xl border border-orange-100 shadow-sm hover:border-orange-300 transition-colors">
-                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                          <span className="text-orange-600 font-bold text-sm">{index + 1}</span>
+                      <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <div className="w-6 h-6 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
+                          <span className="text-orange-600 font-semibold text-xs">{index + 1}</span>
                         </div>
-                        <p className="text-sm text-gray-700 font-medium">
+                        <p className="text-sm text-gray-700">
                           {instruction.split('**').map((part, i) => 
-                              i % 2 === 1 ? <span key={i} className="font-bold text-gray-900 bg-gray-100 px-1.5 py-0.5 rounded mx-0.5">{part}</span> : part
+                              i % 2 === 1 ? <span key={i} className="font-semibold text-gray-900">{part}</span> : part
                             )}
                         </p>
                       </div>
@@ -509,55 +500,52 @@ const PlotDetail = () => {
           </div>
 
           {/* RIGHT COLUMN - SIDEBAR (4 Cols) */}
-          <div className="lg:col-span-4 space-y-8">
+          <div className="lg:col-span-4 space-y-6">
             
             {/* Action Center */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-28">
-              <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
-                <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600">
-                  <HiOutlineTemplate className="text-xl" /> 
-                </div>
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+              <h3 className="text-base font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
+                <HiOutlineTemplate className="text-lg text-blue-600" /> 
                 Architectural Actions
               </h3>
               
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <button 
                   onClick={handleGenerateFloorPlan}
-                  className="w-full flex items-center justify-between group bg-[#ED7600] hover:bg-[#d46000] text-white py-4 px-5 rounded-xl font-bold transition-all shadow-md shadow-orange-200"
+                  className="w-full flex items-center justify-center gap-2 bg-[#ED7600] hover:bg-[#d46000] text-white py-2.5 px-4 rounded-lg font-medium transition-colors text-sm shadow-sm opacity-95 hover:opacity-100"
                 >
-                  <span className="flex items-center gap-3"><MdOutlineArchitecture className="text-2xl" /> Generate Floor Plan</span>
-                  <span className="bg-white/20 p-1.5 rounded-lg group-hover:translate-x-1 transition-transform">→</span>
+                  <MdOutlineArchitecture className="text-lg" /> Generate Floor Plan
                 </button>
 
                 <button
                   onClick={handleViewApprovedFloorplan}
                   disabled={!hasApprovedFloorplanJson}
-                  className={`w-full flex items-center justify-between py-4 px-5 rounded-xl font-bold transition-all shadow-sm ${
+                  className={`w-full flex items-center justify-between py-2.5 px-4 rounded-lg font-medium transition-colors text-sm border ${
                     hasApprovedFloorplanJson
-                      ? 'bg-[#2F3D57] hover:bg-[#1f2b40] text-white'
-                      : 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200'
+                      ? 'bg-[#2F3D57] hover:bg-[#1f2b40] text-white border-transparent shadow-sm'
+                      : 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200'
                   }`}
                 >
-                  <span className="flex items-center gap-3"><FiEye className="text-xl" /> View Base Template</span>
+                  <span className="flex items-center gap-2"><FiEye className="text-base" /> View Base Template</span>
                   {hasApprovedFloorplanJson && <FiCheckCircle className="text-green-400" />}
                 </button>
 
                 <button
                   onClick={handleDownloadPdf}
                   disabled={!hasApprovedFloorplanPdf}
-                  className={`w-full flex items-center justify-between py-4 px-5 rounded-xl font-bold transition-all shadow-sm ${
+                  className={`w-full flex items-center justify-between py-2.5 px-4 rounded-lg font-medium transition-colors text-sm border ${
                     hasApprovedFloorplanPdf
-                      ? 'bg-white border-2 border-green-600 text-green-700 hover:bg-green-50'
-                      : 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200'
+                      ? 'bg-white border-green-600 text-green-700 hover:bg-green-50 shadow-sm'
+                      : 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200'
                   }`}
                 >
-                  <span className="flex items-center gap-3"><FiDownload className="text-xl" /> Download PDF Map</span>
+                  <span className="flex items-center gap-2"><FiDownload className="text-base" /> Download PDF Map</span>
                   {hasApprovedFloorplanPdf && <FiCheckCircle className="text-green-600" />}
                 </button>
 
                 {(!hasApprovedFloorplanJson || !hasApprovedFloorplanPdf) && (
-                  <div className="mt-6 p-4 bg-amber-50 border border-amber-100 text-amber-800 rounded-xl text-sm font-medium leading-relaxed flex gap-3">
-                    <span className="text-amber-500 text-lg mt-0.5">⚠️</span>
+                  <div className="mt-4 p-3 bg-amber-50 border border-amber-100 text-amber-800 rounded-lg text-xs flex gap-2">
+                    <span className="text-amber-500">⚠️</span>
                     <p>Specific approved template files have not been uploaded for this block yet.</p>
                   </div>
                 )}
@@ -566,45 +554,40 @@ const PlotDetail = () => {
 
             {/* Society Details Card */}
             {societyData && (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
-                   <div className="p-1.5 bg-gray-100 rounded-lg text-gray-600">
-                     <FiMapPin className="text-xl" /> 
-                   </div>
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <h3 className="text-base font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
+                   <FiMapPin className="text-lg text-gray-500" /> 
                    Society Details
                 </h3>
                 
-                <div className="space-y-4">
-                  <div className="pb-4 border-b border-gray-50 flex justify-between gap-4">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Estate</p>
-                    <p className="font-bold text-gray-900 text-right">{societyData.name}</p>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <p className="text-gray-500">Estate</p>
+                    <p className="font-medium text-gray-900 text-right">{societyData.name}</p>
                   </div>
                   
                   {societyData.contact_name && (
-                    <div className="pb-4 border-b border-gray-50 flex justify-between gap-4">
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">Contact</p>
-                      <div className="flex items-center gap-2 text-gray-900 font-bold bg-gray-50 px-3 py-1.5 rounded-lg">
-                        <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs">
-                          {societyData.contact_name.charAt(0).toUpperCase()}
-                        </div>
+                    <div className="flex justify-between gap-4 items-center">
+                      <p className="text-gray-500">Contact</p>
+                      <div className="flex items-center gap-2 text-gray-900 font-medium">
                         {societyData.contact_name}
                       </div>
                     </div>
                   )}
                   
                   {societyData.contact_number && (
-                    <div className="pb-4 border-b border-gray-50 flex justify-between gap-4">
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Phone</p>
-                      <a href={`tel:${societyData.contact_number}`} className="flex items-center gap-2 text-[#ED7600] font-bold hover:underline">
-                        <FiPhone /> {societyData.contact_number}
+                    <div className="flex justify-between gap-4">
+                      <p className="text-gray-500">Phone</p>
+                      <a href={`tel:${societyData.contact_number}`} className="flex items-center gap-1 text-[#ED7600] font-medium hover:underline">
+                        <FiPhone className="text-xs" /> {societyData.contact_number}
                       </a>
                     </div>
                   )}
                   
                   {societyData.location && (
-                    <div className="pt-2">
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Address</p>
-                      <p className="text-gray-700 text-sm leading-relaxed font-medium bg-gray-50 p-3 rounded-lg border border-gray-100">{societyData.location}</p>
+                    <div className="pt-2 border-t border-gray-50 mt-2">
+                      <p className="text-gray-500 mb-1">Address</p>
+                      <p className="text-gray-700">{societyData.location}</p>
                     </div>
                   )}
                 </div>
@@ -613,11 +596,11 @@ const PlotDetail = () => {
 
             {/* Amenities */}
             {societyData?.amenities && societyData.amenities.length > 0 && (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900 mb-5 pb-4 border-b border-gray-100">Amenities</h3>
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <h3 className="text-base font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-100">Amenities</h3>
                 <div className="flex flex-wrap gap-2">
                   {societyData.amenities.map((amenity, index) => (
-                    <span key={index} className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors cursor-default">
+                    <span key={index} className="px-2.5 py-1 bg-gray-50 border border-gray-200 text-gray-600 rounded text-xs font-medium">
                       {amenity}
                     </span>
                   ))}
