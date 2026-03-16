@@ -1111,6 +1111,32 @@ export default function SocietyVerificationDashboard() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedSocieties.size === 0) {
+      alert('Please select societies to delete');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete ${selectedSocieties.size} selected societies? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const promises = Array.from(selectedSocieties).map(id =>
+        societyRegistrationAPI.delete(id)
+      );
+
+      await Promise.all(promises);
+      alert(`Successfully deleted ${selectedSocieties.size} societies`);
+      setSelectedSocieties(new Set());
+      setSelectAll(false);
+      fetchSocieties();
+    } catch (err) {
+      console.error('Error in bulk delete:', err);
+      alert('Some deletions failed. Please try again.');
+    }
+  };
+
   // Update society status function
   const updateSocietyStatus = async (societyId, newStatus) => {
     try {

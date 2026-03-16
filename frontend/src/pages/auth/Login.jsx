@@ -466,11 +466,12 @@ const Login = () => {
     // Enhanced validation with real-time feedback
     const validateField = (field, value, formType = 'signup') => {
         switch (field) {
-            case 'email':
+            case 'email': {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!value) return 'Email is required';
                 if (!emailRegex.test(value)) return 'Please enter a valid email address';
                 return '';
+            }
             case 'password':
                 if (!value) return 'Password is required';
                 if (formType === 'signup') {

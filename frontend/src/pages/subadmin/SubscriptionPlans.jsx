@@ -28,6 +28,7 @@ const SubscriptionPlans = () => {
         setCurrentSubscription(subResult.data);
       }
     } catch (err) {
+      console.error(err);
       setError('Failed to load data');
     } finally {
       setLoading(false);
@@ -55,6 +56,7 @@ const SubscriptionPlans = () => {
         setError(result.error || 'Failed to subscribe');
       }
     } catch (err) {
+      console.error(err);
       setError('An error occurred while subscribing');
     } finally {
       setSubscribing(false);
@@ -79,6 +81,7 @@ const SubscriptionPlans = () => {
         setError(result.error || 'Failed to cancel subscription');
       }
     } catch (err) {
+      console.error(err);
       setError('An error occurred while cancelling');
     }
   };
@@ -148,6 +151,7 @@ const SubscriptionPlans = () => {
                 <span className="text-gray-600">Expires:</span>
                 <span className="text-gray-900">{formatDate(currentSubscription.expiry_date)}</span>
               </div>
+              <div className="flex justify-between items-center">
                 <span className="text-gray-400">Status:</span>
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   currentSubscription.status === 'active' ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'
@@ -238,8 +242,9 @@ const SubscriptionPlans = () => {
           <div className="text-center py-12 text-gray-600">
             <p>No subscription plans available at the moment.</p>
             <p className="mt-2">Please check back later.</p>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
