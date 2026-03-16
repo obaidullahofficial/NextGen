@@ -159,9 +159,9 @@ const SocietyPlots = () => {
     // Handle loading state
     if (loading) {
         return (
-            <div className="bg-white min-h-screen">
+            <div className="bg-white min-h-screen flex flex-col">
                 <Navbar />
-                <div className="container mx-auto px-4 py-16 text-center">
+                <div className="flex-grow container mx-auto px-4 py-16 flex flex-col items-center justify-center text-center">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#ED7600]"></div>
                     <p className="mt-4 text-lg text-gray-600">Loading plots...</p>
                 </div>
@@ -173,9 +173,9 @@ const SocietyPlots = () => {
     // Handle error state
     if (error) {
         return (
-            <div className="bg-white min-h-screen">
+            <div className="bg-white min-h-screen flex flex-col">
                 <Navbar />
-                <div className="container mx-auto px-4 py-16 text-center">
+                <div className="flex-grow container mx-auto px-4 py-16 flex flex-col items-center justify-center text-center">
                     <h1 className="text-4xl font-bold text-red-600">Error Loading Plots</h1>
                     <p className="mt-4 text-lg text-gray-600">{error}</p>
                     <button
@@ -193,9 +193,9 @@ const SocietyPlots = () => {
     // Handle case where society is not found
     if (!currentSociety) {
         return (
-            <div className="bg-white min-h-screen">
+            <div className="bg-white min-h-screen flex flex-col">
                 <Navbar />
-                <div className="container mx-auto px-4 py-16 text-center">
+                <div className="flex-grow container mx-auto px-4 py-16 flex flex-col items-center justify-center text-center">
                     <h1 className="text-4xl font-bold text-gray-800">Society Not Found</h1>
                     <p className="mt-4 text-lg text-gray-600">The society you are looking for does not exist.</p>
                     <button

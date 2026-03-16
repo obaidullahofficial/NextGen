@@ -312,11 +312,11 @@ const PlotDetail = () => {
 
   if (loading) {
     return (
-      <div className="bg-white min-h-screen text-[#2F3D57] font-sans">
+      <div className="bg-white min-h-screen text-[#2F3D57] font-sans flex flex-col">
         <div className="sticky top-0 z-50">
           <Navbar />
         </div>
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex-grow flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading plot details...</p>
@@ -328,206 +328,283 @@ const PlotDetail = () => {
   }
 
   return (
-    <div className="bg-white min-h-screen text-[#2F3D57] font-sans">
+    <div className="bg-white min-h-screen text-[#2F3D57] font-sans flex flex-col">
       <div className="sticky top-0 z-50">
         <Navbar />
       </div>
 
-      {/* Container */}
-      <div className="w-full max-w-[1500px] mx-auto px-4 py-10">
-        {/* Debug indicator - remove in production */}
+      {/* Dashboard Container Wrapper */}
+      <div className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow bg-gray-50/50">
+        
+        {/* Debug indicator */}
         {!plotData && (
-          <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 rounded text-sm text-yellow-800">
-            ⚠️ Displaying sample data - unable to load plot details
-          </div>
+           <div className="mb-6 p-4 bg-yellow-100 border border-yellow-300 rounded-xl text-sm text-yellow-800 flex items-center gap-3">
+             <span className="text-xl">⚠️</span> 
+             <span className="font-medium">Displaying sample data - unable to load plot details from server.</span>
+           </div>
         )}
-        
-        <button 
-          onClick={() => navigate(-1)} 
-          className="mb-6 flex items-center text-[#ED7600] hover:text-[#d46000]"
-        >
-          <span className="mr-2">←</span> Back to Plots
-        </button>
-        
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="md:col-span-2 bg-[#F9FAFB] rounded-xl shadow-md p-6 space-y-6">
-            {/* Image */}
-            <div className="h-[280px] rounded-md overflow-hidden bg-gray-200">
-              <img
-                src={displayData.image || plotImage}
-                alt={`Plot ${displayData.plot_number || plotId}`}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = plotImage;
-                }}
-              />
+
+        {/* Dashboard Header */}
+        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                Plot {displayData.plot_number || displayData.plot_id || plotId}
+              </h1>
+              <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                displayData.status === 'Available' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'
+              }`}>
+                {displayData.status}
+              </span>
+            </div>
+            <p className="text-gray-500 flex items-center gap-2 font-medium">
+              <FiMapPin className="text-[#ED7600] text-lg" />
+              {societyData ? `${societyData.name}${societyData.location ? `, ${societyData.location}` : ''}` : 'Location details unavailable'}
+            </p>
+          </div>
+          
+          <div className="flex items-center">
+            <div className="bg-orange-50 px-6 py-3 border border-orange-100 rounded-xl text-right">
+              <span className="text-xs text-orange-600 font-bold uppercase tracking-wider mb-1 block">Asking Price</span>
+              <span className="text-2xl font-black text-[#ED7600]">{formattedPrice}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* LEFT COLUMN - MAIN INFO (8 Cols) */}
+          <div className="lg:col-span-8 space-y-8">
+            
+            {/* Image & Quick Stats Banner */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+              <div className="h-[350px] md:h-[450px] rounded-xl overflow-hidden bg-gray-100 relative group">
+                <img
+                  src={displayData.image || plotImage}
+                  alt={`Plot ${displayData.plot_number || plotId}`}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = plotImage;
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent to-transparent opacity-80"></div>
+                <div className="absolute bottom-6 left-6 flex gap-3">
+                  <div className="bg-black/40 backdrop-blur-md text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 border border-white/20">
+                    <FiHome className="text-lg" /> {displayData.type}
+                  </div>
+                  <div className="bg-[#ED7600]/90 backdrop-blur-md text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg border border-orange-400">
+                    {displayData.marla_size || displayData.area}
+                  </div>
+                </div>
+              </div>
+
+              {/* Key Dimensions Quick Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5">
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-orange-50 transition-colors">
+                  <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Plot Size</p>
+                  <p className="text-lg font-extrabold text-gray-900">{displayData.marla_size || displayData.area}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-orange-50 transition-colors">
+                  <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Dimensions</p>
+                  <p className="text-lg font-extrabold text-gray-900">{displayData.dimension_x}' × {displayData.dimension_y}'</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-orange-50 transition-colors">
+                  <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Property Type</p>
+                  <p className="text-lg font-extrabold text-gray-900 truncate">{displayData.type}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-orange-50 transition-colors">
+                  <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Compliance</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    {complianceRules ? (
+                      <span className="text-green-600 bg-green-100 px-2 py-0.5 rounded text-sm font-bold flex items-center gap-1 w-max"><FiCheckCircle /> Verified</span>
+                    ) : (
+                      <span className="text-gray-500 bg-gray-200 px-2 py-0.5 rounded text-sm font-bold flex items-center gap-1 w-max"><FiX /> Pending</span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Plot Info */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <p className="text-[#ED7600] font-semibold text-sm">Plot Number: {displayData.plot_number || displayData.plot_id || plotId}</p>
-                <h2 className="text-2xl font-bold">{formattedPrice}</h2>
+            {/* Description Card */}
+            {displayData.description && displayData.description.length > 0 && (
+              <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3 pb-4 border-b border-gray-100">
+                   <div className="p-2 bg-orange-100 rounded-lg text-[#ED7600]">
+                     <HiOutlineDocumentText className="text-2xl" /> 
+                   </div>
+                   Overview & Features
+                </h3>
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {displayData.description.map((item, index) => (
+                    <li key={index} className="flex flex-start gap-3 text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                      <FiCheckCircle className="text-[#ED7600] text-lg flex-shrink-0 mt-0.5" />
+                      <span className="leading-relaxed font-medium text-sm">{item}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <div className="text-sm text-gray-600 space-y-4">
-                <div>
-                  <p className="uppercase text-xs font-medium">Status</p>
-                  <p className={`font-semibold text-base ${
-                    displayData.status === 'Available' ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {displayData.status}
-                  </p>
+            )}
+
+            {/* Compliance Rules Dashboard Style */}
+            {complianceRules && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-gradient-to-r from-[#2F3D57] to-[#1f2b40] p-8 text-white relative overflow-hidden">
+                  <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
+                     <MdOutlineArchitecture className="text-9xl" />
+                  </div>
+                  <div className="relative z-10 flex items-center gap-4 mb-2">
+                    <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+                      <FiShield className="text-orange-400 text-3xl" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold">Building Regulations</h3>
+                      <p className="text-sm text-gray-300 font-medium mt-1">Official construction constraints for {complianceRules.marla_size} plots</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="uppercase text-xs font-medium">Type</p>
-                  <p className="font-semibold text-base text-[#2F3D57]">{displayData.type}</p>
+                
+                <div className="p-8 bg-gray-50/50">
+                  {/* Quick Reference Mini Cards */}
+                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Crucial Constraints</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                      <p className="text-xs text-gray-500 font-bold mb-1">Max Ground Coverage</p>
+                      <p className="text-2xl font-black text-gray-900">{complianceRules.max_ground_coverage}%</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                      <p className="text-xs text-gray-500 font-bold mb-1">Front Setback</p>
+                      <p className="text-2xl font-black text-gray-900">{complianceRules.front_setback} ft</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                      <p className="text-xs text-gray-500 font-bold mb-1">Rear Setback</p>
+                      <p className="text-2xl font-black text-gray-900">{complianceRules.rear_setback} ft</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                      <p className="text-xs text-gray-500 font-bold mb-1">Building Type</p>
+                      <p className="text-base font-black text-gray-900 truncate" title={complianceRules.building_type_allowed}>{complianceRules.building_type_allowed}</p>
+                    </div>
+                  </div>
+
+                  {/* Detailed Instructions */}
+                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Detailed Instructions</h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    {generateComplianceInstructions(complianceRules).map((instruction, index) => (
+                      <div key={index} className="flex items-center gap-4 p-4 bg-white rounded-xl border border-orange-100 shadow-sm hover:border-orange-300 transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-orange-600 font-bold text-sm">{index + 1}</span>
+                        </div>
+                        <p className="text-sm text-gray-700 font-medium">
+                          {instruction.split('**').map((part, i) => 
+                              i % 2 === 1 ? <span key={i} className="font-bold text-gray-900 bg-gray-100 px-1.5 py-0.5 rounded mx-0.5">{part}</span> : part
+                            )}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <p className="uppercase text-xs font-medium">Plot Size</p>
-                  <p className="font-semibold text-base text-[#2F3D57]">{displayData.marla_size || displayData.area}</p>
+              </div>
+            )}
+
+          </div>
+
+          {/* RIGHT COLUMN - SIDEBAR (4 Cols) */}
+          <div className="lg:col-span-4 space-y-8">
+            
+            {/* Action Center */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-28">
+              <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
+                <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600">
+                  <HiOutlineTemplate className="text-xl" /> 
                 </div>
-                <div>
-                  <p className="uppercase text-xs font-medium">Dimensions</p>
-                  <p className="font-semibold text-base text-[#2F3D57]">
-                    {displayData.dimension_x} ft × {displayData.dimension_y} ft
-                  </p>
-                </div>
-                {societyData && (
-                  <div>
-                    <p className="uppercase text-xs font-medium">Society</p>
-                    <p className="font-semibold text-base text-[#2F3D57]">{societyData.name}</p>
+                Architectural Actions
+              </h3>
+              
+              <div className="space-y-4">
+                <button 
+                  onClick={handleGenerateFloorPlan}
+                  className="w-full flex items-center justify-between group bg-[#ED7600] hover:bg-[#d46000] text-white py-4 px-5 rounded-xl font-bold transition-all shadow-md shadow-orange-200"
+                >
+                  <span className="flex items-center gap-3"><MdOutlineArchitecture className="text-2xl" /> Generate Floor Plan</span>
+                  <span className="bg-white/20 p-1.5 rounded-lg group-hover:translate-x-1 transition-transform">→</span>
+                </button>
+
+                <button
+                  onClick={handleViewApprovedFloorplan}
+                  disabled={!hasApprovedFloorplanJson}
+                  className={`w-full flex items-center justify-between py-4 px-5 rounded-xl font-bold transition-all shadow-sm ${
+                    hasApprovedFloorplanJson
+                      ? 'bg-[#2F3D57] hover:bg-[#1f2b40] text-white'
+                      : 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200'
+                  }`}
+                >
+                  <span className="flex items-center gap-3"><FiEye className="text-xl" /> View Base Template</span>
+                  {hasApprovedFloorplanJson && <FiCheckCircle className="text-green-400" />}
+                </button>
+
+                <button
+                  onClick={handleDownloadPdf}
+                  disabled={!hasApprovedFloorplanPdf}
+                  className={`w-full flex items-center justify-between py-4 px-5 rounded-xl font-bold transition-all shadow-sm ${
+                    hasApprovedFloorplanPdf
+                      ? 'bg-white border-2 border-green-600 text-green-700 hover:bg-green-50'
+                      : 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200'
+                  }`}
+                >
+                  <span className="flex items-center gap-3"><FiDownload className="text-xl" /> Download PDF Map</span>
+                  {hasApprovedFloorplanPdf && <FiCheckCircle className="text-green-600" />}
+                </button>
+
+                {(!hasApprovedFloorplanJson || !hasApprovedFloorplanPdf) && (
+                  <div className="mt-6 p-4 bg-amber-50 border border-amber-100 text-amber-800 rounded-xl text-sm font-medium leading-relaxed flex gap-3">
+                    <span className="text-amber-500 text-lg mt-0.5">⚠️</span>
+                    <p>Specific approved template files have not been uploaded for this block yet.</p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Description */}
-            <div className="bg-white rounded-lg p-5 text-[#2F3D57]">
-              <h3 className="text-[#ED7600] text-xl font-semibold mb-2">Description</h3>
-              <ul className="text-sm space-y-2 list-disc list-inside leading-6">
-                {(displayData.description || []).map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Compliance Rules Section */}
-            {complianceRules && (
-              <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-5 border-l-4 border-orange-500">
-                <div className="flex items-center gap-2 mb-4">
-                  <FiShield className="text-orange-600 text-2xl" />
-                  <h3 className="text-xl font-semibold text-gray-800">Building Guidelines & Instructions</h3>
-                </div>
-                <p className="text-sm text-gray-600 mb-6">
-                  Official building compliance requirements for <span className="font-bold text-orange-600">{complianceRules.marla_size}</span> plots in this society
-                </p>
-                
-                {/* Building Instructions */}
-                <div className="bg-white rounded-lg p-5 mb-4">
-                  <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <HiOutlineDocumentText className="text-orange-600" />
-                    Instructions for Building Construction
-                  </h4>
-                  <ul className="space-y-2 text-sm leading-relaxed">
-                    {generateComplianceInstructions(complianceRules).map((instruction, index) => (
-                      <li key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-orange-50 transition-colors">
-                        <span className="text-orange-600 flex-shrink-0 mt-1">•</span>
-                        <div className="flex-1">
-                          <p className="text-gray-700 leading-relaxed">
-                            {instruction.split('**').map((part, i) => 
-                              i % 2 === 1 ? (
-                                <span key={i} className="font-bold text-orange-600">{part}</span>
-                              ) : (
-                                part
-                              )
-                            )}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Quick Reference Cards */}
-                <div className="bg-white rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                    <FiCheckCircle className="text-green-600" />
-                    Quick Reference - Key Requirements
-                  </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 text-xs">
-                    <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
-                      <p className="text-orange-600 font-semibold mb-1">Ground Coverage</p>
-                      <p className="text-gray-700 font-bold">{complianceRules.max_ground_coverage}% Max</p>
-                    </div>
-                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                      <p className="text-blue-600 font-semibold mb-1">Front Setback</p>
-                      <p className="text-gray-700 font-bold">{complianceRules.front_setback}' Min</p>
-                    </div>
-                    <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                      <p className="text-green-600 font-semibold mb-1">Rear Setback</p>
-                      <p className="text-gray-700 font-bold">{complianceRules.rear_setback}' Min</p>
-                    </div>
-                    <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
-                      <p className="text-purple-600 font-semibold mb-1">Building Type</p>
-                      <p className="text-gray-700 font-bold">{complianceRules.building_type_allowed}</p>
-                    </div>
-                    {(complianceRules.bedrooms > 0 || complianceRules.bathrooms > 0) && (
-                      <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
-                        <p className="text-indigo-600 font-semibold mb-1">Rooms Required</p>
-                        <p className="text-gray-700 font-bold">
-                          {[complianceRules.bedrooms > 0 && `${complianceRules.bedrooms}BR`, 
-                            complianceRules.bathrooms > 0 && `${complianceRules.bathrooms}BA`
-                          ].filter(Boolean).join(', ')}
-                        </p>
-                      </div>
-                    )}
-                    {complianceRules.roomConnections && complianceRules.roomConnections.length > 0 && (
-                      <div className="bg-pink-50 rounded-lg p-3 border border-pink-200">
-                        <p className="text-pink-600 font-semibold mb-1">Connections</p>
-                        <p className="text-gray-700 font-bold">{complianceRules.roomConnections.length} Rules</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
-            {/* Society Contact */}
+            {/* Society Details Card */}
             {societyData && (
-              <div className="bg-[#F1F3F7] p-5 rounded-xl shadow-sm">
-                <h3 className="text-lg font-semibold text-[#ED7600] mb-3">Contact Society</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs uppercase text-gray-500">Society Name</p>
-                    <p className="font-medium">{societyData.name}</p>
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
+                   <div className="p-1.5 bg-gray-100 rounded-lg text-gray-600">
+                     <FiMapPin className="text-xl" /> 
+                   </div>
+                   Society Details
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="pb-4 border-b border-gray-50 flex justify-between gap-4">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Estate</p>
+                    <p className="font-bold text-gray-900 text-right">{societyData.name}</p>
                   </div>
+                  
                   {societyData.contact_name && (
-                    <div>
-                      <p className="text-xs uppercase text-gray-500">Contact Person</p>
-                      <p className="font-medium">{societyData.contact_name}</p>
+                    <div className="pb-4 border-b border-gray-50 flex justify-between gap-4">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">Contact</p>
+                      <div className="flex items-center gap-2 text-gray-900 font-bold bg-gray-50 px-3 py-1.5 rounded-lg">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs">
+                          {societyData.contact_name.charAt(0).toUpperCase()}
+                        </div>
+                        {societyData.contact_name}
+                      </div>
                     </div>
                   )}
+                  
                   {societyData.contact_number && (
-                    <div>
-                      <p className="text-xs uppercase text-gray-500">Phone</p>
-                      <div className="flex items-center gap-2">
-                        <FiPhone className="text-[#ED7600]" />
-                        <p className="font-medium">{societyData.contact_number}</p>
-                      </div>
+                    <div className="pb-4 border-b border-gray-50 flex justify-between gap-4">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Phone</p>
+                      <a href={`tel:${societyData.contact_number}`} className="flex items-center gap-2 text-[#ED7600] font-bold hover:underline">
+                        <FiPhone /> {societyData.contact_number}
+                      </a>
                     </div>
                   )}
+                  
                   {societyData.location && (
-                    <div>
-                      <p className="text-xs uppercase text-gray-500">Location</p>
-                      <div className="flex items-center gap-2">
-                        <FiMapPin className="text-[#ED7600]" />
-                        <p className="font-medium">{societyData.location}</p>
-                      </div>
+                    <div className="pt-2">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Address</p>
+                      <p className="text-gray-700 text-sm leading-relaxed font-medium bg-gray-50 p-3 rounded-lg border border-gray-100">{societyData.location}</p>
                     </div>
                   )}
                 </div>
@@ -536,109 +613,21 @@ const PlotDetail = () => {
 
             {/* Amenities */}
             {societyData?.amenities && societyData.amenities.length > 0 && (
-              <div className="bg-[#F1F3F7] p-5 rounded-xl shadow-sm">
-                <h3 className="text-lg font-semibold text-[#ED7600] mb-3">Society Amenities</h3>
-                <ul className="list-disc list-inside text-sm text-[#2F3D57] space-y-1">
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <h3 className="text-lg font-bold text-gray-900 mb-5 pb-4 border-b border-gray-100">Amenities</h3>
+                <div className="flex flex-wrap gap-2">
                   {societyData.amenities.map((amenity, index) => (
-                    <li key={index}>{amenity}</li>
+                    <span key={index} className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors cursor-default">
+                      {amenity}
+                    </span>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
-
-            {/* Buttons Section */}
-            <div className="space-y-4">
-              <button 
-                onClick={handleGenerateFloorPlan}
-                className="w-full flex items-center gap-2 justify-center bg-[#ED7600] hover:bg-[#d46000] text-white py-3 rounded-lg text-sm font-medium transition-all shadow-md"
-              >
-                <MdOutlineArchitecture className="text-xl" />
-                Generate Floor Plan
-              </button>
-
-              <button
-                onClick={handleViewApprovedFloorplan}
-                disabled={!hasApprovedFloorplanJson}
-                className={`w-full flex items-center gap-2 justify-center py-3 rounded-lg text-sm font-medium transition-all shadow-md ${
-                  hasApprovedFloorplanJson
-                    ? 'bg-[#2F3D57] hover:bg-[#1f2b40] text-white'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                <FiEye className="text-lg" />
-                View Approved Floorplan
-              </button>
-
-              <button
-                onClick={handleDownloadPdf}
-                disabled={!hasApprovedFloorplanPdf}
-                className={`w-full flex items-center gap-2 justify-center py-2 rounded-lg text-sm font-medium transition-all ${
-                  hasApprovedFloorplanPdf
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                <FiDownload className="text-base" />
-                Download Approved Floorplan
-              </button>
-
-              {(!hasApprovedFloorplanJson || !hasApprovedFloorplanPdf) && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <p className="text-xs text-amber-700 font-medium">
-                    Approved template files are not fully available for this plot yet.
-                  </p>
-                </div>
-              )}
-              
-              {complianceRules && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                  <div className="flex items-center gap-2 text-green-700">
-                    <FiCheckCircle className="text-lg" />
-                    <p className="text-xs font-medium">
-                      Compliance rules available for this plot size
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+            
           </div>
         </div>
       </div>
-
-      {showPdfViewer && hasApprovedFloorplanPdf && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-5xl h-[85vh] shadow-2xl flex flex-col overflow-hidden">
-            <div className="px-4 py-3 border-b flex items-center justify-between bg-gray-50">
-              <h3 className="text-lg font-semibold text-[#2F3D57]">
-                Approved Floorplan PDF
-              </h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleDownloadPdf}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-green-600 text-white text-sm hover:bg-green-700"
-                >
-                  <FiDownload />
-                  Download
-                </button>
-                <button
-                  onClick={() => setShowPdfViewer(false)}
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-md border hover:bg-gray-100"
-                  aria-label="Close PDF viewer"
-                >
-                  <FiX />
-                </button>
-              </div>
-            </div>
-
-            <iframe
-              src={displayData.pdf_template}
-              title="Approved Floorplan PDF"
-              className="flex-1 w-full"
-            />
-          </div>
-        </div>
-      )}
-
       <Footer />
     </div>
   );
