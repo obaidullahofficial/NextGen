@@ -61,10 +61,10 @@ const Footer = () => {
                 Architecture District, AD 12345
               </p>
               <p className="flex items-center">
-                <FaPhone className="mr-2 text-[#ED7600]" /> +1 (555) 123-4567
+                <FaPhone className="mr-2 text-[#ED7600]" /> +923005750363
               </p>
-              <p className="flex items-center">
-                <FaEnvelope className="mr-2 text-[#ED7600]" /> info@nextgenarchitect.com
+              <p className="flex items-center break-all">
+                <FaEnvelope className="mr-2 text-[#ED7600] shrink-0" /> nextgenarchitect.support@gmail.com
               </p>
             </address>
           </div>

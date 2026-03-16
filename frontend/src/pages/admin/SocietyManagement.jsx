@@ -119,7 +119,7 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 backdrop-blur-md">
+    <div className="fixed inset-0 bg-gray-900/40 flex items-center justify-center p-4 z-50 backdrop-blur-md">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
         <div className="p-8">
           {/* Header */}
@@ -303,7 +303,7 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
           <div className="flex justify-end mt-8 pt-6 border-t border-gray-200">
             <button
               onClick={onClose}
-              className="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-200 font-semibold"
+              className="px-3 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-200 font-semibold"
             >
               Close
             </button>
@@ -386,7 +386,7 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 backdrop-blur-md">
+    <div className="fixed inset-0 bg-gray-900/40 flex items-center justify-center p-4 z-50 backdrop-blur-md">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
         <div className="p-8">
           <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
@@ -644,7 +644,7 @@ function SocietyModal({ isOpen, onClose, society, onSave }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-semibold"
+                className="px-3 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-semibold"
               >
                 Cancel
               </button>
@@ -740,7 +740,7 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
 
   return (
     <tr className="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100">
-      <td className="py-4 px-6">
+      <td className="py-4 px-3">
         <input
           type="checkbox"
           checked={isSelected}
@@ -748,9 +748,9 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
           className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
         />
       </td>
-      <td className="py-4 px-6">
+      <td className="py-4 px-3">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-base">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-base">
             {society.name ? society.name.charAt(0).toUpperCase() : 'S'}
           </div>
           <div>
@@ -762,7 +762,7 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
           </div>
         </div>
       </td>
-      <td className="py-4 px-6">
+      <td className="py-4 px-3">
         <div className="space-y-2">
           <div className="flex items-center text-gray-700">
             <Building className="mr-2 text-gray-400" size={16} />
@@ -774,7 +774,7 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
           </div>
         </div>
       </td>
-      <td className="py-4 px-6">
+      <td className="py-4 px-3">
         <div className="space-y-2">
           <div className="flex items-center text-gray-700">
             <Shield className="mr-2 text-gray-400" size={16} />
@@ -788,11 +788,11 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
           </div>
         </div>
       </td>
-      <td className="py-4 px-6">
+      <td className="py-4 px-3">
         <div className="space-y-2">
           <div className="flex items-center text-gray-700">
             <Mail className="mr-2 text-gray-400" size={16} />
-            <span className="text-blue-600 hover:text-blue-800 cursor-pointer text-xs">
+            <span className="text-blue-600 hover:text-blue-800 cursor-pointer text-xs break-all">
               {society.user_email || 'N/A'}
             </span>
           </div>
@@ -807,7 +807,7 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
                 href={society.website.startsWith('http') ? society.website : `https://${society.website}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 hover:underline truncate"
+                className="text-blue-600 hover:text-blue-800 hover:underline break-all line-clamp-2"
               >
                 {society.website}
               </a>
@@ -815,7 +815,7 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
           )}
         </div>
       </td>
-      <td className="py-4 px-6">
+      <td className="py-4 px-3">
         <div className="text-gray-700">
           <div className="font-medium text-xs mb-1">Available Plots:</div>
           <div className="text-xs bg-gray-100 px-2 py-1 rounded text-center">
@@ -823,7 +823,7 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
           </div>
         </div>
       </td>
-      <td className="py-4 px-6">
+      <td className="py-4 px-3">
         <div className="space-y-2">
           <StatusBadge status={society.status || 'pending'} />
           <div className="text-xs text-gray-500">
@@ -853,7 +853,7 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
           )}
           
           {/* Status Update Buttons */}
-          <div className="flex space-x-1">
+          <div className="flex flex-wrap gap-1">
             {society.status !== 'approved' && (
               <button
                 onClick={() => handleStatusChange('approved')}
@@ -884,8 +884,8 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
           </div>
         </div>
       </td>
-      <td className="py-4 px-6">
-        <div className="flex items-center justify-center space-x-2">
+      <td className="py-4 px-3">
+        <div className="flex items-center justify-center space-x-1">
           <button
             onClick={handleView}
             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200 group"
@@ -1337,10 +1337,10 @@ export default function SocietyVerificationDashboard() {
         {!loading && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden flex flex-col">
             <div className="overflow-x-auto w-full max-w-full">
-              <table className="w-full min-w-[900px] max-w-none text-left ">
+              <table className="w-full text-left ">
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                   <tr>
-                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    <th className="py-4 px-3 text-left text-[11px] font-semibold text-gray-700 uppercase">
                       <input
                         type="checkbox"
                         checked={selectAll}
@@ -1348,13 +1348,13 @@ export default function SocietyVerificationDashboard() {
                         className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                       />
                     </th>
-                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Society</th>
-                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type & Reg No</th>
-                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Authority & Date</th>
-                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Contact Info</th>
-                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Available Plots</th>
-                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="py-4 px-6 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                    <th className="py-4 px-3 text-left text-[11px] font-semibold text-gray-700 uppercase">Society</th>
+                    <th className="py-4 px-3 text-left text-[11px] font-semibold text-gray-700 uppercase">Type & Reg No</th>
+                    <th className="py-4 px-3 text-left text-[11px] font-semibold text-gray-700 uppercase">Authority & Date</th>
+                    <th className="py-4 px-3 text-left text-[11px] font-semibold text-gray-700 uppercase">Contact Info</th>
+                    <th className="py-4 px-3 text-left text-[11px] font-semibold text-gray-700 uppercase">Available Plots</th>
+                    <th className="py-4 px-3 text-left text-[11px] font-semibold text-gray-700 uppercase">Status</th>
+                    <th className="py-4 px-3 text-center text-[11px] font-semibold text-gray-700 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
