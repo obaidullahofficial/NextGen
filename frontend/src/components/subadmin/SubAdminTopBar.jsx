@@ -26,7 +26,7 @@ const SubAdminTopBar = () => {
   }, []);
 
   return (
-    <header className="h-16 px-6 border-b border-gray-200 bg-white flex items-center justify-between shadow-sm">
+    <header className="h-16 pl-14 pr-4 sm:px-6 border-b border-gray-200 bg-white flex items-center justify-between shadow-sm">
       <div className="flex flex-col justify-center">
         <span className="text-xs font-semibold tracking-wide text-gray-400 uppercase">
           Societies Dashboard
@@ -34,12 +34,12 @@ const SubAdminTopBar = () => {
         
       </div>
 
-      <div className="flex items-center gap-3 ml-auto">
-        <div className="flex flex-col items-end mr-1">
+      <div className="flex items-center gap-2 sm:gap-3 ml-auto min-w-0">
+        <div className="flex flex-col items-end mr-1 min-w-0">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
             Society
           </span>
-          <span className="text-sm font-medium text-gray-800 max-w-[200px] truncate">
+          <span className="text-sm font-medium text-gray-800 max-w-[120px] sm:max-w-[200px] truncate">
             {loading ? "Loading..." : societyName || "Not set"}
           </span>
         </div>

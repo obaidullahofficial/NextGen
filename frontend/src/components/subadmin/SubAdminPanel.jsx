@@ -51,7 +51,7 @@ const SubAdminPanel = ({ activeTab, setActiveTab }) => {
       {/* Mobile Menu Button */}
       <button
         onClick={toggleMobileMenu}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-[#2F3D57] text-white"
+        className="lg:hidden fixed top-3 left-3 z-50 p-2 rounded-md bg-[#2F3D57] text-white shadow-lg"
         aria-label="Toggle menu"
       >
         {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
@@ -67,7 +67,7 @@ const SubAdminPanel = ({ activeTab, setActiveTab }) => {
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-0 left-0 h-screen w-64 bg-[#2F3D57] text-white flex flex-col z-40
+        fixed top-0 left-0 h-dvh w-72 bg-[#2F3D57] text-white flex flex-col z-40
         transition-transform duration-300 ease-in-out
         lg:sticky lg:translate-x-0
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}

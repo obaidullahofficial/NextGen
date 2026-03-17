@@ -340,7 +340,7 @@ const FloorPlanManager = () => {
 
   return (
     <div className="flex-1 overflow-auto bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-      <div className="p-8">
+      <div className="p-4 sm:p-6 md:p-8">
         <div className="max-w-7xl mx-auto">
           {/* Notification Toast */}
           {notification && (
@@ -366,9 +366,9 @@ const FloorPlanManager = () => {
           
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-3xl font-extrabold text-gray-800 tracking-tight">
+                <h2 className="text-2xl md:text-3xl font-extrabold text-gray-800 tracking-tight">
                   Society Floor Plans
                 </h2>
                 <p className="text-gray-600 mt-2">

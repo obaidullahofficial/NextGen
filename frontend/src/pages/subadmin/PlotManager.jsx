@@ -236,10 +236,10 @@ const PlotManager = () => {
   const sold = plots.filter((p) => p.status === "Sold").length;
 
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-br from-[#f5f7fa] to-[#e6e9f0] text-[#2F3D57]">
+    <div className="p-4 sm:p-6 min-h-screen bg-gradient-to-br from-[#f5f7fa] to-[#e6e9f0] text-[#2F3D57]">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-[#2F3D57]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#2F3D57]">
           <FaChartLine className="inline mr-2 text-[#ED7600]" />
           Residential Plot Management Dashboard
         </h1>

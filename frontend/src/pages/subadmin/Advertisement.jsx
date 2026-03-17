@@ -236,10 +236,10 @@ const Advertisement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-h-screen bg-white p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Create Advertisement</h1>
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3">Create Advertisement</h1>
           <p className="text-gray-600">Select a plan, upload your image, and submit for admin approval</p>
         </div>
 
@@ -258,7 +258,7 @@ const Advertisement = () => {
         )}
 
         {/* Plan Selection */}
-        <div className="bg-gray-50 rounded-2xl shadow-xl p-8 mb-8 border border-gray-200">
+        <div className="bg-gray-50 rounded-2xl shadow-xl p-4 sm:p-8 mb-8 border border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Step 1: Select a Plan</h2>
           {loadingPlans ? (
             <div className="text-center py-8 text-gray-600">Loading plans...</div>
@@ -293,7 +293,7 @@ const Advertisement = () => {
         </div>
 
         {/* Advertisement Form */}
-        <div className="bg-gray-50 rounded-2xl shadow-xl p-8 mb-8 border border-gray-200">
+        <div className="bg-gray-50 rounded-2xl shadow-xl p-4 sm:p-8 mb-8 border border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Step 2: Advertisement Details</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>

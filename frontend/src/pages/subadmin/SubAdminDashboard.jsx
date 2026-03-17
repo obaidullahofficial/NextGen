@@ -34,11 +34,11 @@ const SubadminDashboard = () => {
   };
 
   return (
-    <div className="subadmin-panel-typography flex w-full h-screen overflow-hidden bg-gray-50">
+    <div className="subadmin-panel-typography flex w-full min-h-screen bg-gray-50">
       <SubAdminPanel activeTab={activeTab} setActiveTab={handleTabChange} />
-      <div className="flex-1 h-full flex flex-col overflow-hidden bg-white ml-0 lg:ml-0 w-full">
+      <div className="flex-1 min-w-0 min-h-screen flex flex-col overflow-hidden bg-white w-full">
         <SubAdminTopBar />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 min-h-0 overflow-auto">
           <Outlet />
         </div>
       </div>

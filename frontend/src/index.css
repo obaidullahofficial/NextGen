@@ -458,3 +458,132 @@ canvas, video, iframe, .no-transition {
 .subadmin-panel-typography .MuiTableCell-root {
   font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans" !important;
 }
+
+/* Compact visual density for subadmin panel at 100% zoom */
+.subadmin-panel-typography {
+  font-size: 0.92rem;
+}
+
+.subadmin-panel-typography .text-4xl {
+  font-size: 1.9rem !important;
+  line-height: 2.2rem !important;
+}
+
+.subadmin-panel-typography .text-3xl {
+  font-size: 1.55rem !important;
+  line-height: 1.95rem !important;
+}
+
+.subadmin-panel-typography .text-2xl {
+  font-size: 1.3rem !important;
+  line-height: 1.7rem !important;
+}
+
+.subadmin-panel-typography .text-xl {
+  font-size: 1.12rem !important;
+}
+
+.subadmin-panel-typography .text-lg {
+  font-size: 1rem !important;
+}
+
+.subadmin-panel-typography .p-8 {
+  padding: 1.5rem !important;
+}
+
+.subadmin-panel-typography .p-6 {
+  padding: 1rem !important;
+}
+
+.subadmin-panel-typography .p-4 {
+  padding: 0.85rem !important;
+}
+
+.subadmin-panel-typography .py-3 {
+  padding-top: 0.62rem !important;
+  padding-bottom: 0.62rem !important;
+}
+
+.subadmin-panel-typography .px-6 {
+  padding-left: 1.1rem !important;
+  padding-right: 1.1rem !important;
+}
+
+.subadmin-panel-typography .gap-8 {
+  gap: 1.5rem !important;
+}
+
+.subadmin-panel-typography .gap-6 {
+  gap: 1rem !important;
+}
+
+.subadmin-panel-typography .h-16 {
+  height: 3.5rem !important;
+}
+
+.subadmin-panel-typography table {
+  font-size: 0.82rem;
+}
+
+.subadmin-panel-typography .MuiTypography-root {
+  font-size: 0.95em !important;
+}
+
+.subadmin-panel-typography .MuiButton-root,
+.subadmin-panel-typography button {
+  font-size: 0.9rem;
+}
+
+/* Extra compact pass (~5%) for sidebar, table rows, and cards */
+.subadmin-panel-typography aside nav button {
+  padding-top: 0.52rem !important;
+  padding-bottom: 0.52rem !important;
+  font-size: 0.86rem;
+}
+
+.subadmin-panel-typography aside nav button svg {
+  font-size: 0.96rem !important;
+}
+
+.subadmin-panel-typography thead th,
+.subadmin-panel-typography tbody td,
+.subadmin-panel-typography .MuiTableCell-root {
+  padding-top: 0.58rem !important;
+  padding-bottom: 0.58rem !important;
+}
+
+.subadmin-panel-typography .rounded-xl.p-6,
+.subadmin-panel-typography .rounded-2xl.p-6,
+.subadmin-panel-typography .rounded-lg.p-6,
+.subadmin-panel-typography .shadow-lg.p-6,
+.subadmin-panel-typography .shadow-xl.p-6 {
+  padding: 0.92rem !important;
+}
+
+.subadmin-panel-typography .rounded-xl.p-4,
+.subadmin-panel-typography .rounded-2xl.p-4,
+.subadmin-panel-typography .rounded-lg.p-4 {
+  padding: 0.78rem !important;
+}
+
+/* Slightly smaller subadmin UI (about 5%) on desktop */
+@media (min-width: 1024px) {
+  .subadmin-panel-typography {
+    zoom: 0.95;
+  }
+
+  .subadmin-panel-typography aside {
+    min-height: 105.2632dvh;
+  }
+}
+
+@supports not (zoom: 1) {
+  @media (min-width: 1024px) {
+    .subadmin-panel-typography {
+      transform: scale(0.95);
+      transform-origin: top left;
+      width: 105.2632%;
+    }
+  }
+}
+

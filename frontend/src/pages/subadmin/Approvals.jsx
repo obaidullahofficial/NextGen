@@ -321,7 +321,7 @@ const Approvals = () => {
   });
 
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-br from-[#f5f7fa] to-[#e6e9f0] text-[#2F3D57]">
+    <div className="p-4 sm:p-6 min-h-screen bg-gradient-to-br from-[#f5f7fa] to-[#e6e9f0] text-[#2F3D57]">
       {/* Modal for viewing details */}
       {showModal && selectedApproval && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -434,8 +434,8 @@ const Approvals = () => {
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-[#2F3D57]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#2F3D57]">
           Floor Plan Approval Dashboard
         </h1>
         <div className="flex items-center gap-2">

@@ -688,7 +688,7 @@ const ComplianceManagement = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
       {/* Alert */}
       {alert.show && (
         <div className={`fixed top-4 right-4 z-50 max-w-md rounded-lg shadow-2xl ${
@@ -723,9 +723,9 @@ const ComplianceManagement = () => {
       )}
 
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Compliance Management</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Compliance Management</h1>
           <p className="text-gray-600 mt-2">Manage Pakistan building regulations for different plot sizes</p>
         </div>
         {!showForm && (
