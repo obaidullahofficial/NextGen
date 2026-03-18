@@ -5,6 +5,17 @@ import { FiX, FiUpload, FiImage, FiUser, FiMapPin, FiHome, FiEdit2, FiLoader, Fi
 import { FaCoins } from 'react-icons/fa';
 
 const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
+  const formatPhoneForInput = (phone) => {
+    if (!phone) return '';
+
+    const digits = String(phone).replace(/\D/g, '');
+    if (/^92\d{10}$/.test(digits)) return digits.slice(2);
+    if (/^0\d{10}$/.test(digits)) return digits.slice(1);
+    if (/^\d{10}$/.test(digits)) return digits;
+
+    return String(phone);
+  };
+
   const [profile, setProfile] = useState({
     name: '',
     description: '',
@@ -79,7 +90,7 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
             ? result.profile.available_plots 
             : [],
           price_range: result.profile.price_range || '',
-          contact_number: result.profile.contact_number || '',
+          contact_number: formatPhoneForInput(result.profile.contact_number || ''),
           head_office_address: result.profile.head_office_address || '',
           amenities: {
             gatedCommunity: result.profile.amenities?.includes('Gated Community') || false,
@@ -124,15 +135,35 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   const handleInputChange = (field, value) => {
+    if (field === 'contact_number') {
+      const sanitizedValue = sanitizePhoneInput(value);
+
+      setProfile(prev => ({
+        ...prev,
+        [field]: sanitizedValue
+      }));
+
+      validatePakistanPhone(sanitizedValue);
+      return;
+    }
+
     setProfile(prev => ({
       ...prev,
       [field]: value
     }));
-    
-    // Validate phone number for Pakistan
-    if (field === 'contact_number') {
-      validatePakistanPhone(value);
+  };
+
+  const sanitizePhoneInput = (phone) => {
+    let digits = String(phone || '').replace(/\D/g, '');
+
+    if (digits.startsWith('92') && digits.length >= 12) {
+      digits = digits.slice(2);
     }
+    if (digits.startsWith('0') && digits.length >= 11) {
+      digits = digits.slice(1);
+    }
+
+    return digits.slice(0, 10);
   };
 
   const validatePakistanPhone = (phone) => {
@@ -141,34 +172,31 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
       return true;
     }
     
-    // Remove all spaces, dashes, and parentheses
-    const cleaned = phone.replace(/[\s\-()]/g, '');
-    
-    // Pakistani phone number patterns:
-    // +92XXXXXXXXXX (13 digits with +92)
-    // 92XXXXXXXXXX (12 digits starting with 92)
-    // 03XXXXXXXXX (11 digits starting with 0)
-    const patterns = [
-      /^\+92[0-9]{10}$/, // +92XXXXXXXXXX
-      /^92[0-9]{10}$/, // 92XXXXXXXXXX
-      /^0[0-9]{10}$/ // 0XXXXXXXXXX
-    ];
-    
-    const isValid = patterns.some(pattern => pattern.test(cleaned));
-    
-    if (!isValid) {
-      if (cleaned.length < 10) {
-        setPhoneError('Invalid format or length (too short)');
-      } else if (cleaned.length > 13) {
-        setPhoneError('Invalid format or length (too long)');
-      } else {
-        setPhoneError('Invalid format');
-      }
-    } else {
+    const cleaned = String(phone || '').replace(/\D/g, '');
+    const isValid = /^\d{10}$/.test(cleaned);
+
+    if (isValid) {
       setPhoneError('');
+      return true;
     }
-    
-    return isValid;
+
+    setPhoneError('Enter exactly 10 digits (without +92), e.g. 4567893453');
+    return false;
+  };
+
+  const normalizePakistanPhone = (phone) => {
+    const cleaned = String(phone || '').replace(/\D/g, '');
+
+    if (cleaned.startsWith('+92')) {
+      return `0${cleaned.slice(3)}`;
+    }
+    if (cleaned.startsWith('92')) {
+      return `0${cleaned.slice(2)}`;
+    }
+    if (cleaned.length === 10) {
+      return `0${cleaned}`;
+    }
+    return cleaned;
   };
 
   const handleAmenityChange = (amenity) => {
@@ -313,6 +341,8 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
         setLoading(false);
         return;
       }
+
+      const normalizedContactNumber = normalizePakistanPhone(profile.contact_number);
       
       if (!logo && !logoPreview) {
         setMessage('Please upload a logo');
@@ -343,6 +373,8 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
               formData.append(`available_plots[${index}]`, plotSize);
             });
           }
+        } else if (key === 'contact_number') {
+          formData.append(key, normalizedContactNumber);
         } else {
           formData.append(key, profile[key]);
         }
@@ -402,7 +434,7 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden animate-slideUp">
           
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#2F3D57] to-[#ED7600] text-white p-6">
+          <div className="bg-linear-to-r from-[#2F3D57] to-[#ED7600] text-white p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold mb-1">Edit Society Profile</h2>
@@ -638,12 +670,18 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
                               className={`w-full pl-28 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#ED7600] focus:border-transparent transition-all duration-200 ${
                                 phoneError ? 'border-red-500' : 'border-gray-300'
                               }`}
-                              placeholder="XXX-XXXXXXX"
+                              placeholder="4567893453"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              maxLength={10}
                               required
                             />
                           </div>
                           {phoneError && (
                             <p className="text-xs text-red-500 mt-1">{phoneError}</p>
+                          )}
+                          {!phoneError && (
+                            <p className="text-xs text-gray-500 mt-1">Enter exactly 10 digits (without +92)</p>
                           )}
                         </div>
 
@@ -752,7 +790,7 @@ const SocietyProfileEditModal = ({ isOpen, onClose, onSuccess }) => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-8 py-3 bg-gradient-to-r from-[#2F3D57] to-[#ED7600] hover:from-[#1a2332] hover:to-[#d65c00] text-white font-bold rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+                      className="px-8 py-3 bg-linear-to-r from-[#2F3D57] to-[#ED7600] hover:from-[#1a2332] hover:to-[#d65c00] text-white font-bold rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
                     >
                       {loading ? (
                         <>

@@ -4,9 +4,36 @@ from utils.db import get_db
 from models.society_profile import society_profile_collection
 from models.user import user_collection
 import base64
+import re
 from datetime import datetime
 
 society_profile_bp = Blueprint('society_profile', __name__)
+
+
+def normalize_and_validate_pakistan_phone(phone_number):
+    """Validate Pakistan mobile numbers and normalize to 03XXXXXXXXX format."""
+    if not phone_number:
+        return False, None
+
+    cleaned = re.sub(r"[\s\-()]", "", phone_number)
+
+    # Accepted inputs:
+    # +92XXXXXXXXXX, 92XXXXXXXXXX, 0XXXXXXXXXX, XXXXXXXXXX
+    # For +92/92 formats, exactly 10 digits must follow the country code.
+    pattern = r"^(?:(?:\+92|92)\d{10}|0\d{10}|\d{10})$"
+    if not re.fullmatch(pattern, cleaned):
+        return False, None
+
+    if cleaned.startswith('+92'):
+        normalized = f"0{cleaned[3:]}"
+    elif cleaned.startswith('92'):
+        normalized = f"0{cleaned[2:]}"
+    elif len(cleaned) == 10:
+        normalized = f"0{cleaned}"
+    else:
+        normalized = cleaned
+
+    return True, normalized
 
 def get_user_id_from_email(email):
     """Helper function to get user_id from email"""
@@ -245,6 +272,14 @@ def create_or_update_society_profile():
         
         if not has_available_plots and not has_other_fields:
             return jsonify({"error": "At least one field must be provided"}), 400
+
+        if 'contact_number' in profile_data and profile_data['contact_number']:
+            is_valid_phone, normalized_phone = normalize_and_validate_pakistan_phone(profile_data['contact_number'])
+            if not is_valid_phone:
+                return jsonify({
+                    "error": "Invalid contact number. Use format: XXXXXXXXXX, 0XXXXXXXXXX, 92XXXXXXXXXX, or +92XXXXXXXXXX (10 digits after +92)."
+                }), 400
+            profile_data['contact_number'] = normalized_phone
         
         # Get user_id from email
         user_id = get_user_id_from_email(user_email)

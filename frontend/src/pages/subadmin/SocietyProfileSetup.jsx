@@ -7,6 +7,17 @@ import PopupModal from '../../components/common/PopupModal';
 const SocietyProfileSetup = () => {
   const navigate = useNavigate();
 
+  const formatPhoneForInput = (phone) => {
+    if (!phone) return '';
+
+    const digits = String(phone).replace(/\D/g, '');
+    if (/^92[0-9]{10}$/.test(digits)) return digits.slice(2);
+    if (/^0[0-9]{10}$/.test(digits)) return digits.slice(1);
+    if (/^3[0-9]{9}$/.test(digits)) return digits;
+
+    return String(phone);
+  };
+
   const [profile, setProfile] = useState({
     name: '',
     description: '',
@@ -87,7 +98,7 @@ const SocietyProfileSetup = () => {
             ? result.profile.available_plots 
             : [],
           price_range: result.profile.price_range || '',
-          contact_number: result.profile.contact_number || '',
+          contact_number: formatPhoneForInput(result.profile.contact_number || ''),
           contact_name: result.profile.contact_name || '',
           head_office_address: result.profile.head_office_address || '',
           amenities: {
@@ -136,15 +147,36 @@ const SocietyProfileSetup = () => {
   };
 
   const handleInputChange = (field, value) => {
+    if (field === 'contact_number') {
+      const sanitizedValue = sanitizePhoneInput(value);
+
+      setProfile(prev => ({
+        ...prev,
+        [field]: sanitizedValue
+      }));
+
+      validatePakistanPhone(sanitizedValue);
+      return;
+    }
+
     setProfile(prev => ({
       ...prev,
       [field]: value
     }));
-    
-    // Validate phone number for Pakistan
-    if (field === 'contact_number') {
-      validatePakistanPhone(value);
+  };
+
+  const sanitizePhoneInput = (phone) => {
+    let digits = String(phone || '').replace(/\D/g, '');
+
+    // Allow pasted numbers with country or trunk prefix and convert to 10-digit local part.
+    if (digits.startsWith('92') && digits.length >= 12) {
+      digits = digits.slice(2);
     }
+    if (digits.startsWith('0') && digits.length >= 11) {
+      digits = digits.slice(1);
+    }
+
+    return digits.slice(0, 10);
   };
 
   const validatePakistanPhone = (phone) => {
@@ -153,34 +185,33 @@ const SocietyProfileSetup = () => {
       return true;
     }
     
-    // Remove all spaces, dashes, and parentheses
-    const cleaned = phone.replace(/[\s\-()]/g, '');
-    
-    // Pakistani phone number patterns:
-    // +92XXXXXXXXXX (13 digits with +92)
-    // 92XXXXXXXXXX (12 digits starting with 92)
-    // 03XXXXXXXXX (11 digits starting with 0)
-    const patterns = [
-      /^\+92[0-9]{10}$/, // +92XXXXXXXXXX
-      /^92[0-9]{10}$/, // 92XXXXXXXXXX
-      /^0[0-9]{10}$/ // 0XXXXXXXXXX
-    ];
-    
-    const isValid = patterns.some(pattern => pattern.test(cleaned));
-    
-    if (!isValid) {
-      if (cleaned.length < 10) {
-        setPhoneError('Invalid format or length (too short)');
-      } else if (cleaned.length > 13) {
-        setPhoneError('Invalid format or length (too long)');
-      } else {
-        setPhoneError('Invalid format');
-      }
-    } else {
+    const cleaned = String(phone || '').replace(/\D/g, '');
+
+    // With +92 already shown in UI, user should enter exactly 10 digits.
+    const isValid = /^\d{10}$/.test(cleaned);
+
+    if (isValid) {
       setPhoneError('');
+      return true;
     }
-    
-    return isValid;
+
+    setPhoneError('Enter exactly 10 digits (without +92), e.g. 4567893453');
+    return false;
+  };
+
+  const normalizePakistanPhone = (phone) => {
+    const cleaned = String(phone || '').replace(/\D/g, '');
+
+    if (cleaned.startsWith('+923')) {
+      return `0${cleaned.slice(3)}`;
+    }
+    if (cleaned.startsWith('923')) {
+      return `0${cleaned.slice(2)}`;
+    }
+    if (cleaned.startsWith('3')) {
+      return `0${cleaned}`;
+    }
+    return cleaned;
   };
 
   const handleAmenityChange = (amenity) => {
@@ -317,6 +348,8 @@ const SocietyProfileSetup = () => {
         setLoading(false);
         return;
       }
+
+      const normalizedContactNumber = normalizePakistanPhone(profile.contact_number);
       
       if (!logo && !logoPreview) {
         setMessage('Please upload a logo');
@@ -347,6 +380,8 @@ const SocietyProfileSetup = () => {
               formData.append(`available_plots[${index}]`, plotSize);
             });
           }
+        } else if (key === 'contact_number') {
+          formData.append(key, normalizedContactNumber);
         } else {
           formData.append(key, profile[key]);
         }
@@ -644,8 +679,8 @@ const SocietyProfileSetup = () => {
                   fullWidth
                   required
                   error={!!phoneError}
-                  helperText={phoneError}
-                  placeholder="XXX-XXXXXXX"
+                  helperText={phoneError || 'Enter exactly 10 digits (without +92), e.g. 4567893453'}
+                  placeholder="4567893453"
                   InputProps={{
                     startAdornment: (
                       <Box sx={{ display: 'flex', alignItems: 'center', mr: 1, borderRight: '1px solid #ddd', pr: 1.5, gap: 0.5 }}>
@@ -658,6 +693,11 @@ const SocietyProfileSetup = () => {
                         <Typography sx={{ color: '#666', fontSize: '14px', fontWeight: 500 }}>+92</Typography>
                       </Box>
                     ),
+                    inputProps: {
+                      inputMode: 'numeric',
+                      pattern: '[0-9]*',
+                      maxLength: 10
+                    },
                     style: { borderRadius: 8 }
                   }}
                 />
