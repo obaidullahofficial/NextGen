@@ -834,12 +834,7 @@ const ComplianceManagement = () => {
             {formData.marla_size && (
               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                 <h3 className="text-sm font-semibold text-gray-800 mb-3">
-<<<<<<< HEAD
-                  📐 Plot Size Information
-=======
-                  ðŸ“ Plot Dimensions (Auto-filled)
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-                </h3>
+                  📐 Plot Size Information                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -864,17 +859,11 @@ const ComplianceManagement = () => {
                     />
                   </div>
                 </div>
-<<<<<<< HEAD
                 <p className="text-xs text-green-700 mt-3 font-medium">
                   ✅ These compliance rules apply to <strong>ALL {formData.marla_size} plots</strong> in your society, 
                   regardless of their specific dimensions (X, Y). 
                   If society wants to change plot dimensions, the total area ({formData.total_plot_area} sq ft) remains constant, 
-                  and the same compliance rules will apply automatically.
-=======
-                <p className="text-xs text-green-700 mt-2 font-medium">
-                  âœ… These dimensions are automatically filled based on standard {formData.marla_size} specifications
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-                </p>
+                  and the same compliance rules will apply automatically.                </p>
               </div>
             )}
 

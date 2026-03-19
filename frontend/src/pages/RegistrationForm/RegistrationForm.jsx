@@ -1,11 +1,5 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
-import { Box, Grid, TextField, Button, MenuItem, Typography, Alert, Paper, Divider, InputAdornment, FormControlLabel, Checkbox, CircularProgress } from "@mui/material";
-=======
-﻿import React, { useState, useEffect } from "react";
-import { Box, Grid, TextField, Button, MenuItem, Typography, Alert, Paper, Divider, Card, CardContent, InputAdornment, FormControlLabel, Checkbox } from "@mui/material";
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-import { useLocation, useNavigate } from "react-router-dom";
+import { Box, Grid, TextField, Button, MenuItem, Typography, Alert, Paper, Divider, InputAdornment, FormControlLabel, Checkbox, CircularProgress } from "@mui/material";import { useLocation, useNavigate } from "react-router-dom";
 import PopupModal from '../../components/common/PopupModal';
 import { societySignup } from '../../services/authService.js';
 import { useAuth } from '../../context/AuthContext';
@@ -475,8 +469,6 @@ const RegistrationForm = () => {
           )}
         </Box>
 
-<<<<<<< HEAD
-=======
         {/* Instructions Card */}
         <Box sx={{ p: 4, pb: 2, background: '#f8f9fa' }}>
           <Card sx={{ 
@@ -555,7 +547,6 @@ const RegistrationForm = () => {
           </Card>
         </Box>
 
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
         {/* Form Section */}
         <Box sx={{
           px: 4,

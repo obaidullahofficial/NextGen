@@ -1,11 +1,6 @@
-<<<<<<< HEAD
 import useSWR from 'swr';
 import debounce from 'lodash.debounce';
-import React, { useState, useEffect } from 'react';
-=======
-﻿import React, { useState, useEffect } from 'react';
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-import { FiEye } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';import { FiEye } from 'react-icons/fi';
 import advertisementAPI from '../../services/advertisementAPI';
 
 const AdvertisementManagement = () => {
@@ -249,12 +244,7 @@ const AdvertisementManagement = () => {
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between text-red-800">
             <div className="flex items-center gap-2">
-<<<<<<< HEAD
-              <span className="text-lg">⚠</span>
-=======
-              <span className="text-xl">âš </span>
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-              <span>{error}</span>
+              <span className="text-lg">⚠</span>              <span>{error}</span>
             </div>
             <button 
               onClick={() => setError('')}
@@ -269,12 +259,7 @@ const AdvertisementManagement = () => {
         {success && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between text-green-800">
             <div className="flex items-center gap-2">
-<<<<<<< HEAD
-              <span className="text-lg">✓</span>
-=======
-              <span className="text-xl">âœ“</span>
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-              <span>{success}</span>
+              <span className="text-lg">✓</span>              <span>{success}</span>
             </div>
             <button 
               onClick={() => setSuccess('')}

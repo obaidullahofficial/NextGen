@@ -424,7 +424,6 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
                     <Shield className="mr-2 text-indigo-600" size={20} />
                     Compliance Information
                   </h3>
-<<<<<<< HEAD
                   <div className="bg-indigo-50 p-4 rounded-lg space-y-3">
                     <div>
                       <label className="text-xs font-medium text-indigo-700">NOC Status</label>
@@ -466,15 +465,7 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
                       <p className="text-xs text-indigo-700 bg-indigo-100 px-3 py-2 rounded-md">
                         NOC is marked as issued, but no document is attached for this request.
                       </p>
-                    )}
-=======
-                  <div className="bg-indigo-50 p-4 rounded-lg">
-                    <label className="text-sm font-medium text-indigo-700">NOC Status</label>
-                    <p className="text-indigo-900 font-medium">
-                      {society.noc_issued ? 'âœ… NOC Issued' : 'âŒ NOC Not Issued'}
-                    </p>
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-                  </div>
+                    )}                  </div>
                 </div>
               </div>
             )}

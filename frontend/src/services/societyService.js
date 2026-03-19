@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 import { authenticatedRequest, API_URL } from './baseApiService.js';
 import { userProfileAPI } from './userProfileAPI.js';
-=======
-﻿import { authenticatedRequest, API_URL } from './baseApiService.js';
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-
 // ============================
 // SOCIETY PROFILE API FUNCTIONS
 // ============================

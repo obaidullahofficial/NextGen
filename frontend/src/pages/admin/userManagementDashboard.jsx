@@ -1,11 +1,6 @@
-<<<<<<< HEAD
 import React, { useState, useEffect, useMemo } from "react";
 import useSWR from "swr";
-import debounce from "lodash.debounce";
-=======
-﻿import React, { useState, useEffect } from "react";
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-import { 
+import debounce from "lodash.debounce";import { 
   Edit2, 
   Trash2, 
   Lock, 
@@ -660,14 +655,8 @@ function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
           </p>
           
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-<<<<<<< HEAD
             <p className="text-xs text-yellow-800">
-              ⚠️ This will permanently remove the user and all associated data.
-=======
-            <p className="text-sm text-yellow-800">
-              Ã¢Å¡Â Ã¯Â¸Â This will permanently remove the user and all associated data.
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-            </p>
+              ⚠️ This will permanently remove the user and all associated data.            </p>
           </div>
 
           <div className="flex items-center justify-end space-x-3">
@@ -960,41 +949,8 @@ export default function UserManagementDashboard() {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
-<<<<<<< HEAD
   // ✅ Refresh wrapped for callbacks
   const fetchUsers = () => refreshUsers();
-=======
-  // Ã°Å¸â€Â¹ Fetch users from backend
-  const fetchUsers = async () => {
-    try {
-      setRefreshing(true);
-      const res = await fetch("https://nextgen-ta95.onrender.com/api/users", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("token"),
-        },
-      });
-
-      const data = await res.json();
-
-      if (data.success && Array.isArray(data.users)) {
-        setUsers(data.users);
-      } else {
-        console.error("Failed:", data.message);
-      }
-    } catch (err) {
-      console.error("Error fetching users:", err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-
   // Ã°Å¸â€Â¹ CRUD Handlers
   const handleViewUser = (user) => {
     setSelectedUser(user);
@@ -1171,16 +1127,9 @@ export default function UserManagementDashboard() {
           </div>
         </div>
 
-<<<<<<< HEAD
         {/* 🔹 Main Content */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-          {/* 🔹 Filters */}
-=======
-        {/* Ã°Å¸â€Â¹ Main Content */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* Ã°Å¸â€Â¹ Filters */}
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-          <div className="p-6 border-b border-gray-100 bg-gray-50">
+          {/* 🔹 Filters */}          <div className="p-6 border-b border-gray-100 bg-gray-50">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
               <div className="flex flex-wrap items-center gap-4">
                 <div className="relative">
@@ -1213,16 +1162,9 @@ export default function UserManagementDashboard() {
             </div>
           </div>
 
-<<<<<<< HEAD
           {/* 🔹 Table */}
           <div className="overflow-x-auto w-full max-w-full">
-            <table className="w-full min-w-[900px] max-w-none text-left ">
-=======
-          {/* Ã°Å¸â€Â¹ Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-              <thead className="bg-gray-50 border-b border-gray-100">
+            <table className="w-full min-w-[900px] max-w-none text-left ">              <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     <input

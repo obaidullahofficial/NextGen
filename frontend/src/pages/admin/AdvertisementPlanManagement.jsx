@@ -1,11 +1,6 @@
-<<<<<<< HEAD
 import useSWR from 'swr';
 import debounce from 'lodash.debounce';
-import React, { useState, useEffect } from 'react';
-=======
-﻿import React, { useState, useEffect } from 'react';
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-import advertisementPlanAPI from '../../services/advertisementPlanAPI';
+import React, { useState, useEffect } from 'react';import advertisementPlanAPI from '../../services/advertisementPlanAPI';
 
 const AdvertisementPlanManagement = () => {
   const [plans, setPlans] = useState([]);
@@ -177,23 +172,13 @@ const AdvertisementPlanManagement = () => {
 
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-800">
-<<<<<<< HEAD
-            <span className="text-lg">⚠</span>
-=======
-            <span className="text-xl">âš </span>
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-            {error}
+            <span className="text-lg">⚠</span>            {error}
           </div>
         )}
 
         {success && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-800">
-<<<<<<< HEAD
-            <span className="text-lg">✓</span>
-=======
-            <span className="text-xl">âœ“</span>
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
-            {success}
+            <span className="text-lg">✓</span>            {success}
           </div>
         )}
 
