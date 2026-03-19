@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: nextgen-backend
+    env: python
+    plan: free
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && gunicorn -w 4 -b 0.0.0.0:$PORT app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        value: 6b30c0cdbdc749228ae16f07492b441310eac85611cbd607e1e110237218f89b
+      - key: FRONTEND_URL
+        value: https://next-gen-silk.vercel.app
+    directories:
+      - path: backend
+  
+  - type: static
+    name: nextgen-frontend
+    buildCommand: npm install && npm run build
+    startCommand: npx serve -s dist
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://nextgen-ta95.onrender.com/api
+      - key: VITE_GOOGLE_CLIENT_ID
+        value: 971195175228-3qgvsj72r28agj0e639me7qd6na6jbkp.apps.googleusercontent.com
+    directories:
+      - path: frontend
