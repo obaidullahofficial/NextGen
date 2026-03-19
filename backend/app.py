@@ -11,6 +11,7 @@ from routes.advertisement_routes import advertisement_bp  # Import advertisement
 from routes.society_registration_form_routes import society_registration_form_bp  # Import society registration form routes
 from datetime import timedelta
 import os
+import re
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -21,36 +22,55 @@ app = Flask(__name__)
 # Apply GZIP Compression for Admin performance optimizations
 Compress(app)
 
-# Configure CORS - Allow frontend domains for development and production
-allowed_origins = [
-    "http://localhost:5173", 
-    "http://localhost:5174", 
-    "http://localhost:5175", 
-    "http://localhost:5176",
-    "https://next-gen-silk.vercel.app",
-    "https://next-gen-rosy.vercel.app",
-    "https://nextgen-ta95.onrender.com"
-]
+# ============================================================
+# CORS Configuration with Flexible Origin Pattern Matching
+# ============================================================
+def cors_origin_matcher(origin):
+    """
+    Custom CORS origin matcher that allows:
+    - All localhost ports (development)
+    - All vercel.app subdomains (Vercel deployments)
+    - Specific production domains
+    - Environment-configured domains
+    """
+    if not origin:
+        return False
+    
+    # Development URLs
+    localhost_pattern = r'^http://localhost:\d+$'
+    if re.match(localhost_pattern, origin):
+        return True
+    
+    # Allow all Vercel preview/production deployments
+    if '.vercel.app' in origin or origin.endswith('.vercel.app'):
+        return True
+    
+    # Production deployment
+    if origin == 'https://nextgen-ta95.onrender.com':
+        return True
+    
+    # Environment-configured origins
+    frontend_url = os.getenv("FRONTEND_URL", "")
+    if frontend_url and origin == frontend_url:
+        return True
+    
+    # Extra CORS origins from environment (comma-separated)
+    extra_urls = os.getenv("EXTRA_CORS_ORIGINS", "")
+    if extra_urls:
+        for url in extra_urls.split(","):
+            url = url.strip()
+            if origin == url:
+                return True
+    
+    return False
 
-# Add environment-configured frontend URL if provided
-frontend_url = os.getenv("FRONTEND_URL")
-if frontend_url and frontend_url not in allowed_origins:
-    allowed_origins.append(frontend_url)
-
-# Add any additional URLs from env variable (comma-separated)
-extra_urls = os.getenv("EXTRA_CORS_ORIGINS", "")
-if extra_urls:
-    for url in extra_urls.split(","):
-        url = url.strip()
-        if url and url not in allowed_origins:
-            allowed_origins.append(url)
-
-CORS(app, 
-     origins=allowed_origins,
+CORS(app,
+     origins=cors_origin_matcher,
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"],
-     expose_headers=["Content-Type", "Authorization"])
+     expose_headers=["Content-Type", "Authorization"],
+     max_age=3600)
 
 # JWT Configuration
 app.config['JWT_SECRET_KEY'] = '6b30c0cdbdc749228ae16f07492b441310eac85611cbd607e1e110237218f89b'
