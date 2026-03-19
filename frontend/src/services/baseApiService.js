@@ -1,5 +1,5 @@
 // Base API service with common configuration and utilities
-export const API_URL = "https://nextgen-ta95.onrender.com/api";
+export const API_URL = import.meta.env.VITE_API_URL || "https://nextgen-ta95.onrender.com/api";
 
 /**
  * Helper function to get and validate authentication token

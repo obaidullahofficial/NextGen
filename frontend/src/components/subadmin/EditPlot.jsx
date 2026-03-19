@@ -157,8 +157,8 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
         return [
           `https://nextgen-ta95.onrender.com/uploads/${imageData}`,
           `https://nextgen-ta95.onrender.com/images/${imageData}`,
-          `http://localhost:3000/uploads/${imageData}`,
-          `http://localhost:8000/uploads/${imageData}`,
+          `https://nextgen-ta95.onrender.com/api/uploads/${imageData}`,
+          `https://nextgen-ta95.onrender.com/api/images/${imageData}`,
           `/uploads/${imageData}`, // Relative path
           `/images/${imageData}`, // Alternative relative path
           imageData // Raw filename as last resort

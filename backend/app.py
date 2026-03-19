@@ -18,23 +18,26 @@ load_dotenv()
 
 app = Flask(__name__)
 
-<<<<<<< HEAD
 # Apply GZIP Compression for Admin performance optimizations
 Compress(app)
 
-# Configure CORS - Allow all localhost ports for development
-=======
-# Configure CORS - Allow frontend domains
->>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
+# Configure CORS - Allow frontend domains for development and production
+allowed_origins = [
+    "http://localhost:5173", 
+    "http://localhost:5174", 
+    "http://localhost:5175", 
+    "http://localhost:5176",
+    "https://next-gen-silk.vercel.app",
+    "https://nextgen-ta95.onrender.com"
+]
+
+# Add environment-configured frontend URL if provided
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url and frontend_url not in allowed_origins:
+    allowed_origins.append(frontend_url)
+
 CORS(app, 
-     origins=[
-         "http://localhost:5173", 
-         "http://localhost:5174", 
-         "http://localhost:5175", 
-         "http://localhost:5176",
-         os.getenv("FRONTEND_URL", "http://localhost:5173"),
-         "https://next-gen-silk.vercel.app"
-     ],
+     origins=allowed_origins,
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"],

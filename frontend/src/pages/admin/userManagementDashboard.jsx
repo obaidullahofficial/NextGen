@@ -921,7 +921,7 @@ export default function UserManagementDashboard() {
   };
 
   const { data: usersData, error, isLoading: loading, mutate: refreshUsers } = useSWR(
-    `http://localhost:5000/api/users?page=1&limit=1000&search=${debouncedSearch}&role=${filterRole}`,
+    `https://nextgen-ta95.onrender.com/api/users?page=1&limit=1000&search=${debouncedSearch}&role=${filterRole}`,
     async (url) => {
       const res = await fetch(url, {
         headers: {
