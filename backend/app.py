@@ -28,6 +28,7 @@ allowed_origins = [
     "http://localhost:5175", 
     "http://localhost:5176",
     "https://next-gen-silk.vercel.app",
+    "https://next-gen-rosy.vercel.app",
     "https://nextgen-ta95.onrender.com"
 ]
 
@@ -35,6 +36,14 @@ allowed_origins = [
 frontend_url = os.getenv("FRONTEND_URL")
 if frontend_url and frontend_url not in allowed_origins:
     allowed_origins.append(frontend_url)
+
+# Add any additional URLs from env variable (comma-separated)
+extra_urls = os.getenv("EXTRA_CORS_ORIGINS", "")
+if extra_urls:
+    for url in extra_urls.split(","):
+        url = url.strip()
+        if url and url not in allowed_origins:
+            allowed_origins.append(url)
 
 CORS(app, 
      origins=allowed_origins,

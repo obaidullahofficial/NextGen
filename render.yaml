@@ -15,7 +15,9 @@ services:
       - key: JWT_SECRET_KEY
         value: 6b30c0cdbdc749228ae16f07492b441310eac85611cbd607e1e110237218f89b
       - key: FRONTEND_URL
-        value: https://next-gen-silk.vercel.app
+        value: https://next-gen-rosy.vercel.app
+      - key: EXTRA_CORS_ORIGINS
+        value: https://next-gen-silk.vercel.app,https://next-gen-rosy.vercel.app
     directories:
       - path: backend
   
