@@ -1,11 +1,11 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+﻿import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import KonvaFloorPlan from '../../components/FloorPlan/KonvaFloorPlan';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://nextgen-ta95.onrender.com/api';
 
 const FloorPlanGenerator = () => {
   const navigate = useNavigate();
@@ -124,7 +124,7 @@ const FloorPlanGenerator = () => {
         }
       } catch (err) {
         console.error('Failed to parse floor plan data from database:', err);
-        alert('❌ Could not load floor plan data from approval request.\n\nError: ' + err.message);
+        alert('Ã¢ÂÅ’ Could not load floor plan data from approval request.https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apinError: ' + err.message);
       }
       return;
     }
@@ -138,11 +138,11 @@ const FloorPlanGenerator = () => {
         
         if (!res.ok) {
           if (res.status === 404) {
-            alert('❌ Floor plan file not found!\n\nThe file was referenced in the database but does not exist on the server. The file may have been deleted or never uploaded properly.\n\nPlease ask the user to re-submit their floor plan.');
+            alert('Ã¢ÂÅ’ Floor plan file not found!https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apinThe file was referenced in the database but does not exist on the server. The file may have been deleted or never uploaded properly.https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apinPlease ask the user to re-submit their floor plan.');
           } else if (res.status === 403) {
-            alert('❌ Access denied to floor plan file.');
+            alert('Ã¢ÂÅ’ Access denied to floor plan file.');
           } else {
-            alert(`❌ Error loading floor plan: ${res.status} ${res.statusText}`);
+            alert(`Ã¢ÂÅ’ Error loading floor plan: ${res.status} ${res.statusText}`);
           }
           return;
         }
@@ -158,7 +158,7 @@ const FloorPlanGenerator = () => {
         setCurrentStep(3); // Jump directly to review/visualization step
       } catch (err) {
         console.error('Failed to import floor plan JSON:', err);
-        alert('❌ Could not load floor plan JSON from approval request.\n\nError: ' + err.message);
+        alert('Ã¢ÂÅ’ Could not load floor plan JSON from approval request.https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apinError: ' + err.message);
       }
     };
 
@@ -326,17 +326,17 @@ const FloorPlanGenerator = () => {
         const exceededPercentage = ((totalRoomArea / maxAllowedArea) * 100) - 100;
         
         alert(
-          `⚠️ AREA COVERAGE EXCEEDED!\n\n` +
-          `Total Room Area: ${totalRoomArea.toFixed(0)} sq ft\n` +
-          `Maximum Allowed (${maxGroundCoverage}% coverage): ${maxAllowedArea.toFixed(0)} sq ft\n` +
-          `Exceeded by: ${exceededBy.toFixed(0)} sq ft (${exceededPercentage.toFixed(1)}%)\n\n` +
-          `❌ Cannot generate floor plan with these compliance rules.\n\n` +
-          `Please contact your society administrator to adjust the compliance rules for ${complianceRules.marla_size} plots.\n\n` +
-          `Suggestions:\n` +
-          `• Reduce individual room areas\n` +
-          `• Reduce number of rooms\n` +
-          `• Increase ground coverage percentage\n` +
-          `• Increase plot dimensions`
+          `Ã¢Å¡Â Ã¯Â¸Â AREA COVERAGE EXCEEDED!https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apin` +
+          `Total Room Area: ${totalRoomArea.toFixed(0)} sq fthttps://nextgen-ta95.onrender.com/apin` +
+          `Maximum Allowed (${maxGroundCoverage}% coverage): ${maxAllowedArea.toFixed(0)} sq fthttps://nextgen-ta95.onrender.com/apin` +
+          `Exceeded by: ${exceededBy.toFixed(0)} sq ft (${exceededPercentage.toFixed(1)}%)https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apin` +
+          `Ã¢ÂÅ’ Cannot generate floor plan with these compliance rules.https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apin` +
+          `Please contact your society administrator to adjust the compliance rules for ${complianceRules.marla_size} plots.https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apin` +
+          `Suggestions:https://nextgen-ta95.onrender.com/apin` +
+          `Ã¢â‚¬Â¢ Reduce individual room areashttps://nextgen-ta95.onrender.com/apin` +
+          `Ã¢â‚¬Â¢ Reduce number of roomshttps://nextgen-ta95.onrender.com/apin` +
+          `Ã¢â‚¬Â¢ Increase ground coverage percentagehttps://nextgen-ta95.onrender.com/apin` +
+          `Ã¢â‚¬Â¢ Increase plot dimensions`
         );
         
         // Navigate back to prevent generation
@@ -1039,7 +1039,7 @@ const FloorPlanGenerator = () => {
 
       console.log('Sending updates to backend:', updateData);
 
-      const response = await fetch('http://localhost:5000/api/floorplan/update', {
+      const response = await fetch('https://nextgen-ta95.onrender.com/api/floorplan/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData)
@@ -1106,7 +1106,7 @@ const FloorPlanGenerator = () => {
   const generateVariations = async () => {
     // Simply trigger a fresh generation with current form data using GA
     // This ensures we always get 5 brand new diverse plans
-    console.log('🔄 Generating fresh floor plans with GA...');
+    console.log('Ã°Å¸â€â€ž Generating fresh floor plans with GA...');
     
     const selectedRooms = getSelectedRooms();
     if (selectedRooms.length === 0) {
@@ -1501,7 +1501,7 @@ const FloorPlanGenerator = () => {
       }
       
       // Add compliance/user-defined connections on top of the base chain
-      // (these are additional required connections, e.g. BEDROOM 1 → BATHROOM 1)
+      // (these are additional required connections, e.g. BEDROOM 1 Ã¢â€ â€™ BATHROOM 1)
       if (formData.roomConnections.length > 0) {
         const complianceConnects = formData.roomConnections
           .filter(conn => conn.from && conn.to && conn.from !== conn.to)
@@ -1617,7 +1617,7 @@ const FloorPlanGenerator = () => {
       console.log('Connections:', connects);
       console.log('Sending data to backend:', backendData);
 
-      const response = await fetch('http://localhost:5000/api/floorplan/generate', {
+      const response = await fetch('https://nextgen-ta95.onrender.com/api/floorplan/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(backendData)
@@ -1772,9 +1772,9 @@ const FloorPlanGenerator = () => {
               {/* Tab Navigation - Acts as header */}
               <div className="flex border-b border-gray-200 bg-gradient-to-r from-[#2F3D57] to-[#1e2a3a] flex-shrink-0">
                 {[
-                  { id: 'plot', label: 'Plot', icon: '📐' },
-                  { id: 'rooms', label: 'Rooms', icon: '🏠' },
-                  { id: 'connections', label: 'Links', icon: '🔗' }
+                  { id: 'plot', label: 'Plot', icon: 'Ã°Å¸â€œÂ' },
+                  { id: 'rooms', label: 'Rooms', icon: 'Ã°Å¸ÂÂ ' },
+                  { id: 'connections', label: 'Links', icon: 'Ã°Å¸â€â€”' }
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -1802,30 +1802,30 @@ const FloorPlanGenerator = () => {
                       {location.state?.fromPlotDetail && location.state?.complianceRules && (
                         <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
                           <div className="flex items-center gap-2 mb-1">
-                            <div className="w-5 h-5 bg-green-500 text-white rounded-full flex items-center justify-center text-xs">✓</div>
+                            <div className="w-5 h-5 bg-green-500 text-white rounded-full flex items-center justify-center text-xs">Ã¢Å“â€œ</div>
                             <span className="font-medium text-green-800 text-sm">Compliance Applied</span>
                           </div>
                           <p className="text-xs text-green-700 mb-2">
-                            {location.state.complianceRules.plot_dimension_x}×{location.state.complianceRules.plot_dimension_y} ft • {location.state.complianceRules.max_ground_coverage}% coverage
+                            {location.state.complianceRules.plot_dimension_x}Ãƒâ€”{location.state.complianceRules.plot_dimension_y} ft Ã¢â‚¬Â¢ {location.state.complianceRules.max_ground_coverage}% coverage
                           </p>
                           {/* Setback Details */}
                           {(location.state.complianceRules.front_setback > 0 || location.state.complianceRules.rear_setback > 0 || location.state.complianceRules.side_setback_left > 0 || location.state.complianceRules.side_setback_right > 0) && (
                             <div className="grid grid-cols-4 gap-1.5 mt-1">
                               <div className="bg-white/80 border border-green-200 rounded px-1.5 py-1 text-center">
                                 <p className="text-[10px] text-green-600 font-medium">Front</p>
-                                <p className="text-xs font-bold text-green-800">{location.state.complianceRules.front_setback}′</p>
+                                <p className="text-xs font-bold text-green-800">{location.state.complianceRules.front_setback}Ã¢â‚¬Â²</p>
                               </div>
                               <div className="bg-white/80 border border-green-200 rounded px-1.5 py-1 text-center">
                                 <p className="text-[10px] text-green-600 font-medium">Rear</p>
-                                <p className="text-xs font-bold text-green-800">{location.state.complianceRules.rear_setback}′</p>
+                                <p className="text-xs font-bold text-green-800">{location.state.complianceRules.rear_setback}Ã¢â‚¬Â²</p>
                               </div>
                               <div className="bg-white/80 border border-green-200 rounded px-1.5 py-1 text-center">
                                 <p className="text-[10px] text-green-600 font-medium">Left</p>
-                                <p className="text-xs font-bold text-green-800">{location.state.complianceRules.side_setback_left}′</p>
+                                <p className="text-xs font-bold text-green-800">{location.state.complianceRules.side_setback_left}Ã¢â‚¬Â²</p>
                               </div>
                               <div className="bg-white/80 border border-green-200 rounded px-1.5 py-1 text-center">
                                 <p className="text-[10px] text-green-600 font-medium">Right</p>
-                                <p className="text-xs font-bold text-green-800">{location.state.complianceRules.side_setback_right}′</p>
+                                <p className="text-xs font-bold text-green-800">{location.state.complianceRules.side_setback_right}Ã¢â‚¬Â²</p>
                               </div>
                             </div>
                           )}
@@ -1868,7 +1868,7 @@ const FloorPlanGenerator = () => {
                               {isCustomPlot ? 'Custom' : `${selectedPlotSize} Marla`}
                             </text>
                             <text x="80" y="60" textAnchor="middle" fontSize="9" fill="#6b7280">
-                              {isCustomPlot ? `${customDimensions.length}ft × ${customDimensions.width}ft` : `${plotDimensions.length}ft × ${plotDimensions.width}ft`}
+                              {isCustomPlot ? `${customDimensions.length}ft Ãƒâ€” ${customDimensions.width}ft` : `${plotDimensions.length}ft Ãƒâ€” ${plotDimensions.width}ft`}
                             </text>
                           </svg>
                         </div>
@@ -1911,7 +1911,7 @@ const FloorPlanGenerator = () => {
                               onClick={() => setPlotDimensions(dim)}
                               className="text-xs bg-white border border-[#ED7600]/30 px-2 py-1 rounded hover:bg-[#ED7600]/10 transition-colors"
                             >
-                              {dim.length}×{dim.width}
+                              {dim.length}Ãƒâ€”{dim.width}
                             </button>
                           ))}
                         </div>
@@ -1961,7 +1961,7 @@ const FloorPlanGenerator = () => {
                                 onClick={() => updateRoomConfiguration(roomType.key, 'count', Math.max(0, (formData.roomConfiguration[roomType.key]?.count || 0) - 1))}
                                 className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center text-sm"
                               >
-                                −
+                                Ã¢Ë†â€™
                               </button>
                               <span className="text-sm font-semibold text-[#2F3D57] min-w-[20px] text-center">
                                 {formData.roomConfiguration[roomType.key]?.count || 0}
@@ -2046,7 +2046,7 @@ const FloorPlanGenerator = () => {
                                 </option>
                               ))}
                             </select>
-                            <span className="text-gray-400 text-xs">↔</span>
+                            <span className="text-gray-400 text-xs">Ã¢â€ â€</span>
                             <select
                               value={connection.to}
                               onChange={(e) => updateRoomConnection(index, 'to', e.target.value)}
@@ -2127,7 +2127,7 @@ const FloorPlanGenerator = () => {
                     {isGenerating && generatingEngine === 'ga' ? (
                       <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <span>🧬 GA Generate</span>
+                      <span>Ã°Å¸Â§Â¬ GA Generate</span>
                     )}
                   </button>
                   <button
@@ -2139,7 +2139,7 @@ const FloorPlanGenerator = () => {
                     {isGenerating && generatingEngine === 'genai' ? (
                       <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <span>✨ AI Generate</span>
+                      <span>Ã¢Å“Â¨ AI Generate</span>
                     )}
                   </button>
                 </div>
@@ -2163,7 +2163,7 @@ const FloorPlanGenerator = () => {
                 <div className="flex items-center space-x-2">
                   <h2 className="text-sm font-semibold text-white">Floor Plan Preview</h2>
                   {generatedPlans.length > 0 && (
-                    <span className="text-xs text-gray-300">• {currentPlanIndex + 1}/{generatedPlans.length}</span>
+                    <span className="text-xs text-gray-300">Ã¢â‚¬Â¢ {currentPlanIndex + 1}/{generatedPlans.length}</span>
                   )}
                 </div>
                 
@@ -2267,7 +2267,7 @@ const FloorPlanGenerator = () => {
                         </div>
                         <div className="bg-gray-100 rounded px-2 py-1 text-center">
                           <span className="text-xs font-bold text-green-600">
-                            {generatedPlans[currentPlanIndex]?.actualLength || (isCustomPlot ? customDimensions.length : plotDimensions.length)}×{generatedPlans[currentPlanIndex]?.actualWidth || (isCustomPlot ? customDimensions.width : plotDimensions.width)}
+                            {generatedPlans[currentPlanIndex]?.actualLength || (isCustomPlot ? customDimensions.length : plotDimensions.length)}Ãƒâ€”{generatedPlans[currentPlanIndex]?.actualWidth || (isCustomPlot ? customDimensions.width : plotDimensions.width)}
                           </span>
                           <span className="text-[9px] text-gray-500 ml-1">ft</span>
                         </div>
@@ -2342,7 +2342,7 @@ const FloorPlanGenerator = () => {
             {generatedPlans.length > 0 && (
               <details className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden flex-shrink-0">
                 <summary className="px-3 py-2 cursor-pointer bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-xs">
-                  <span className="font-medium text-gray-700">⚙️ Advanced GA Parameters</span>
+                  <span className="font-medium text-gray-700">Ã¢Å¡â„¢Ã¯Â¸Â Advanced GA Parameters</span>
                   <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                   </svg>
@@ -2394,3 +2394,5 @@ const FloorPlanGenerator = () => {
 };
 
 export default FloorPlanGenerator;
+
+

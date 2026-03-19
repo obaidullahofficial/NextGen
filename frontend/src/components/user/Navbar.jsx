@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+﻿import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { FiMenu, FiX } from 'react-icons/fi';
@@ -102,7 +102,7 @@ const Navbar = () => {
               {/* Profile Picture */}
               {user.profileImage ? (
                 <img 
-                  src={`http://localhost:5000/api/file/${user.profileImage.replace(/^\//, '')}`}
+                  src={`https://nextgen-ta95.onrender.com/api/file/${user.profileImage.replace(/^\//, '')}`}
                   alt="Profile"
                   className="w-10 h-10 rounded-full object-cover border-2 border-white hover:border-[#ED7600] transition-colors cursor-pointer"
                   onError={(e) => {
@@ -299,3 +299,11 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
+
+
+
+
+
+
+

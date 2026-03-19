@@ -1,5 +1,5 @@
 // Frontend API service for Subscription and Subscription Plans
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://nextgen-ta95.onrender.com/api';
 
 class SubscriptionAPI {
   // Get authentication token from localStorage

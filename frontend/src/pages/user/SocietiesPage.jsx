@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../../components/user/Navbar';
 import Footer from '../../components/user/Footer';
@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAllSocietyProfiles } from '../../services/societyService.js';
 import reviewAPI from '../../services/reviewAPI';
 
-import societiesImg from '../../assets/societies.png';
+import societiesImg from '../../assets/Societies.png';
 
 // Animation variants
 const fadeInUp = {

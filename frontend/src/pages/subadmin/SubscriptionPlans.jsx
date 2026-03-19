@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import subscriptionAPI from '../../services/subscriptionAPI';
 
 const SubscriptionPlans = () => {
@@ -113,14 +113,14 @@ const SubscriptionPlans = () => {
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-300 rounded-lg flex items-center justify-between text-red-800">
             <span>{error}</span>
-            <button onClick={() => setError('')} className="text-2xl hover:text-red-600">×</button>
+            <button onClick={() => setError('')} className="text-2xl hover:text-red-600">Ã—</button>
           </div>
         )}
 
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-300 rounded-lg flex items-center justify-between text-green-800">
             <span>{success}</span>
-            <button onClick={() => setSuccess('')} className="text-2xl hover:text-green-300">×</button>
+            <button onClick={() => setSuccess('')} className="text-2xl hover:text-green-300">Ã—</button>
           </div>
         )}
 
@@ -206,12 +206,12 @@ const SubscriptionPlans = () => {
 
               <div className="space-y-3 mb-8">
                 <div className="flex items-center gap-3 text-gray-900">
-                  <span className="text-2xl">📢</span>
+                  <span className="text-2xl">ðŸ“¢</span>
                   <span className="font-semibold">{plan.ad_limit} Advertisements</span>
                 </div>
                 {plan.features && plan.features.map((feature, index) => (
                   <div key={index} className="flex items-center gap-3 text-gray-700">
-                  <span className="text-green-500 font-bold text-xl">✓</span>
+                  <span className="text-green-500 font-bold text-xl">âœ“</span>
                   <span>{feature}</span>
                 </div>
               ))}

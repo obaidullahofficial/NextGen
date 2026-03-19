@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Box, Typography, Alert } from '@mui/material';
 import { getSessionTimeRemaining, isSessionExpiringSoon } from '../../services/apiService';
 

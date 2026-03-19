@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 const PopupModal = ({ isOpen, onClose, title, message, type = "info" }) => {
   if (!isOpen) return null;
@@ -8,28 +8,28 @@ const PopupModal = ({ isOpen, onClose, title, message, type = "info" }) => {
       case 'success':
         return {
           iconBg: 'bg-green-100',
-          icon: '✓',
+          icon: 'âœ“',
           iconColor: 'text-green-600',
           borderColor: 'border-green-200'
         };
       case 'error':
         return {
           iconBg: 'bg-red-100',
-          icon: '✕',
+          icon: 'âœ•',
           iconColor: 'text-red-600',
           borderColor: 'border-red-200'
         };
       case 'warning':
         return {
           iconBg: 'bg-yellow-100',
-          icon: '⚠',
+          icon: 'âš ',
           iconColor: 'text-yellow-600',
           borderColor: 'border-yellow-200'
         };
       default:
         return {
           iconBg: 'bg-blue-100',
-          icon: 'ℹ',
+          icon: 'â„¹',
           iconColor: 'text-blue-600',
           borderColor: 'border-blue-200'
         };

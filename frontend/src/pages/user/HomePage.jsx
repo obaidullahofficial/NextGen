@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+﻿import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, useInView, useScroll, useTransform, useSpring } from 'framer-motion';
 import { FaBuilding, FaCube, FaClipboardCheck, FaShieldAlt, FaMapMarkerAlt, FaComments, FaBullhorn, FaPhone, FaEye, FaStar, FaRocket, FaArrowRight, FaChevronDown, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
@@ -997,7 +997,7 @@ const HomePage = () => {
                     
                     {/* Dimension Labels */}
                     <div className="flex justify-between mt-4 px-2">
-                      <span className="text-xs text-gray-400 font-medium">40 × 60 ft</span>
+                      <span className="text-xs text-gray-400 font-medium">40 Ã— 60 ft</span>
                       <span className="text-xs text-[#ED7600] font-semibold">2400 sq.ft</span>
                     </div>
                   </div>
@@ -1254,7 +1254,7 @@ const HomePage = () => {
               onClick={() => setShowDetailModal(false)}
               className="absolute -top-12 right-0 text-white hover:text-gray-300 text-2xl font-bold z-10"
             >
-              ✖
+              âœ–
             </button>
             
             {/* Advertisement Image */}
@@ -1335,7 +1335,7 @@ const HomePage = () => {
                           whileHover={{ x: -2 }}
                           transition={{ duration: 0.2 }}
                         >
-                          ←
+                          â†
                         </motion.span>
                         <div className="absolute inset-0 bg-gradient-to-r from-[#ED7600]/10 to-[#FF9933]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </motion.button>
@@ -1358,7 +1358,7 @@ const HomePage = () => {
                           whileHover={{ x: 2 }}
                           transition={{ duration: 0.2 }}
                         >
-                          →
+                          â†’
                         </motion.span>
                         <div className="absolute inset-0 bg-gradient-to-r from-[#ED7600]/10 to-[#FF9933]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </motion.button>
@@ -1376,7 +1376,7 @@ const HomePage = () => {
                   }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <span className="relative z-10 text-sm font-bold">✕</span>
+                  <span className="relative z-10 text-sm font-bold">âœ•</span>
                   <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-red-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </motion.button>
               </div>
@@ -1463,7 +1463,7 @@ const HomePage = () => {
                       whileHover={{ y: 0, opacity: 1 }}
                       transition={{ duration: 0.2 }}
                     >
-                      Click to explore →
+                      Click to explore â†’
                     </motion.div>
                   </motion.div>
                 </motion.div>

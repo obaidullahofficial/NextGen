@@ -1,4 +1,4 @@
-// components/Approvals.jsx
+﻿// components/Approvals.jsx
 import React,{ useState, useEffect } from "react";
 import { FaCheck, FaTimes, FaSearch, FaEye, FaEdit, FaDownload } from "react-icons/fa";
 import { Bar } from "react-chartjs-2";

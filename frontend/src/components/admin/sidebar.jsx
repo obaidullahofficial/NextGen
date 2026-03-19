@@ -1,6 +1,6 @@
-import React, { useContext, useState } from "react";
+﻿import React, { useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import logo from "../..//assets/Images/logo.png";
+import logo from "../../assets/images/logo.png";
 import { AuthContext } from '../../context/AuthContext';
 
 // Lucide icons

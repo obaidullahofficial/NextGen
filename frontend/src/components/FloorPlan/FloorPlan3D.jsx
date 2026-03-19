@@ -717,19 +717,19 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
   
   // Early return if no rooms to prevent unnecessary processing
   if (!rooms || rooms.length === 0) {
-    console.log('🚪 No rooms available for door generation');
+    console.log('ðŸšª No rooms available for door generation');
     return doors;
   }
   
   // Early return if bounds are invalid
   if (!bounds || typeof bounds.minX === 'undefined') {
-    console.log('🚪 Invalid bounds for door generation');
+    console.log('ðŸšª Invalid bounds for door generation');
     return doors;
   }
   
-  console.log('🚪 Enhanced door generation with detected doors:', detectedDoors.length);
-  console.log('🏠 Rooms available:', rooms.map(r => ({ id: r.id, name: r.name, type: r.type })));
-  console.log('📏 Bounds:', bounds);
+  console.log('ðŸšª Enhanced door generation with detected doors:', detectedDoors.length);
+  console.log('ðŸ  Rooms available:', rooms.map(r => ({ id: r.id, name: r.name, type: r.type })));
+  console.log('ðŸ“ Bounds:', bounds);
   
   // Process detected doors from the 2D floor plan with enhanced boundary detection
   detectedDoors.forEach((detectedDoor, index) => {
@@ -788,7 +788,7 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
       }
     });
     
-    console.log(`🚪 Door ${index} connects ${connectedRooms.length} rooms:`, 
+    console.log(`ðŸšª Door ${index} connects ${connectedRooms.length} rooms:`, 
                 connectedRooms.map(cr => cr.room.name || cr.room.id));
     
     // Enhanced door positioning for perfect wall boundary alignment
@@ -842,7 +842,7 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
         
         // Room3D positions walls relative to room center:
         // - roomX/roomZ is the center of the room (roomWorld.x + roomWorld.width/2)
-        // - Walls are positioned at ±world.height/2 or ±world.width/2 from center
+        // - Walls are positioned at Â±world.height/2 or Â±world.width/2 from center
         // So exterior doors should be positioned at the room boundary from its center
         const roomCenterX = roomWorld.x + roomWorld.width / 2;
         const roomCenterZ = roomWorld.z + roomWorld.height / 2;
@@ -899,7 +899,7 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
         }))
       });
       
-      console.log(`🚪 Created door connecting rooms: ${connectedRoomIds.join(' <-> ')}`);
+      console.log(`ðŸšª Created door connecting rooms: ${connectedRoomIds.join(' <-> ')}`);
     } else {
       // Fallback: create as exterior door for the closest room
       const closestRoom = rooms.reduce((closest, room) => {
@@ -937,11 +937,11 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
       case 'north': 
         return [0, 0, 0];        // Door faces north/south - default orientation
       case 'south': 
-        return [0, Math.PI, 0];  // Door faces north/south - flipped 180°
+        return [0, Math.PI, 0];  // Door faces north/south - flipped 180Â°
       case 'east': 
-        return [0, -Math.PI/2, 0]; // Door faces east/west - 90° CCW
+        return [0, -Math.PI/2, 0]; // Door faces east/west - 90Â° CCW
       case 'west': 
-        return [0, Math.PI/2, 0];  // Door faces east/west - 90° CW
+        return [0, Math.PI/2, 0];  // Door faces east/west - 90Â° CW
       default: 
         return [0, 0, 0];
     }
@@ -949,7 +949,7 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
   
   // Add main entrance door if no detected doors found
   if (doors.length === 0 && rooms.length > 0) {
-    console.log('🚪 No doors detected, creating intelligent door placement');
+    console.log('ðŸšª No doors detected, creating intelligent door placement');
     
     // Create a realistic door placement system based on architectural principles
     const roomConnections = [];
@@ -1113,7 +1113,7 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
       doorCount[room2.id]++;
       roomConnections.push([room1.id, room2.id]);
       
-      console.log(`🚪 Created smart door between ${room1.name || room1.id} and ${room2.name || room2.id}`);
+      console.log(`ðŸšª Created smart door between ${room1.name || room1.id} and ${room2.name || room2.id}`);
     });
     
     // Add main entrance door to a logical entry room (only if needed)
@@ -1146,12 +1146,12 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
           }]
         });
         
-        console.log(`🚪 Created entrance door for ${entryRoom.name || entryRoom.id}`);
+        console.log(`ðŸšª Created entrance door for ${entryRoom.name || entryRoom.id}`);
       }
     }
   }
   
-  console.log(`🚪 Generated ${doors.length} doors total`);
+  console.log(`ðŸšª Generated ${doors.length} doors total`);
   
   // Log door distribution for debugging
   const doorsByRoom = {};
@@ -1161,7 +1161,7 @@ const generateSmartDoors = (rooms, bounds, detectedDoors = []) => {
     });
   });
   
-  console.log(`🚪 Door distribution:`, doorsByRoom);
+  console.log(`ðŸšª Door distribution:`, doorsByRoom);
   return doors;
 };
 
@@ -1171,24 +1171,24 @@ const generateSmartWindows = (rooms, bounds, detectedWindows = []) => {
   
   // Early return if no rooms to prevent unnecessary processing
   if (!rooms || rooms.length === 0) {
-    console.log('🪟 No rooms available for window generation');
+    console.log('ðŸªŸ No rooms available for window generation');
     return windows;
   }
   
   // Early return if bounds are invalid
   if (!bounds || typeof bounds.minX === 'undefined') {
-    console.log('🪟 Invalid bounds for window generation');
+    console.log('ðŸªŸ Invalid bounds for window generation');
     return windows;
   }
   
-  console.log('🪟 Window generation with detected windows:', detectedWindows.length);
+  console.log('ðŸªŸ Window generation with detected windows:', detectedWindows.length);
   
   // Process detected windows from the 2D floor plan
   if (detectedWindows && detectedWindows.length > 0) {
     const wallThickness = 0.08; // Must match Room3D wall thickness
     
     detectedWindows.forEach((window, idx) => {
-      console.log(`🪟 Processing detected window ${idx}:`, window);
+      console.log(`ðŸªŸ Processing detected window ${idx}:`, window);
       
       // Convert window position to 3D world coordinates
       const x1 = window.x || 0;
@@ -1256,7 +1256,7 @@ const generateSmartWindows = (rooms, bounds, detectedWindows = []) => {
         }
       });
       
-      console.log(`🪟 Window ${idx} connects ${connectedRooms.length} rooms:`, 
+      console.log(`ðŸªŸ Window ${idx} connects ${connectedRooms.length} rooms:`, 
                   connectedRooms.map(cr => `${cr.room.name} (${cr.wall})`));
       
       // Position window at the exact wall boundary if between two rooms
@@ -1314,7 +1314,7 @@ const generateSmartWindows = (rooms, bounds, detectedWindows = []) => {
       
       windows.push(windowData);
       
-      console.log(`🪟 Added detected window with room positions:`, windowData);
+      console.log(`ðŸªŸ Added detected window with room positions:`, windowData);
     });
   }
   
@@ -1389,11 +1389,11 @@ const generateSmartWindows = (rooms, bounds, detectedWindows = []) => {
   });
   */
   
-  console.log('🪟 Generated windows:', windows);
+  console.log('ðŸªŸ Generated windows:', windows);
   return windows;
 };
 const analyzeFloorPlanData = (data) => {
-  console.log('🔍 Analyzing floor plan data:', data);
+  console.log('ðŸ” Analyzing floor plan data:', data);
   
   let rooms = [];
   let walls = [];
@@ -1403,7 +1403,7 @@ const analyzeFloorPlanData = (data) => {
   
   // First, check for direct rooms array (from 2D editor) - prioritize this
   if (data && data.rooms && Array.isArray(data.rooms) && data.rooms.length > 0) {
-    console.log('🏠 Found direct rooms array from 2D editor with', data.rooms.length, 'rooms');
+    console.log('ðŸ  Found direct rooms array from 2D editor with', data.rooms.length, 'rooms');
     rooms = data.rooms.map((room, index) => {
       const processedRoom = {
         id: room.id || `room-${index}`,
@@ -1415,14 +1415,14 @@ const analyzeFloorPlanData = (data) => {
         name: room.name || room.type || room.tag || 'Room',
         source: room.source || 'unknown'
       };
-      console.log(`  Processing room ${index}:`, room, '→', processedRoom);
+      console.log(`  Processing room ${index}:`, room, 'â†’', processedRoom);
       return processedRoom;
     });
   }
   
   // Then check if data has mapData array (genetic algorithm output)
   if (data && data.mapData && Array.isArray(data.mapData)) {
-    console.log('📊 Found mapData with', data.mapData.length, 'items');
+    console.log('ðŸ“Š Found mapData with', data.mapData.length, 'items');
     
     // Separate different types of elements (only if no direct rooms array found)
     data.mapData.forEach((item, index) => {
@@ -1460,7 +1460,7 @@ const analyzeFloorPlanData = (data) => {
           y2: parseFloat(item.y2 || 100)
         };
         walls.push(wallData);
-        console.log('🧱 Found wall:', wallData);
+        console.log('ðŸ§± Found wall:', wallData);
       } 
       // Extract door data - Enhanced to detect doors in multiple formats
       else if (item.type === 'door' || item.type === 'Door' || item.type === 'Wall') {
@@ -1499,7 +1499,7 @@ const analyzeFloorPlanData = (data) => {
             rotation: parseFloat(item.rotation || 0),
             type: 'door'
           });
-          console.log('🚪 Found door (line format) at center:', centerX, centerY, 'isHorizontal:', isHorizontal);
+          console.log('ðŸšª Found door (line format) at center:', centerX, centerY, 'isHorizontal:', isHorizontal);
         } else if (item.x !== undefined && item.width !== undefined && item.height !== undefined) {
           // Rectangle format - x,y is already center or top-left, keep as-is
           const doorX = parseFloat(item.x || 0);
@@ -1521,7 +1521,7 @@ const analyzeFloorPlanData = (data) => {
             rotation: parseFloat(item.rotation || 0),
             type: 'door'
           });
-          console.log('🚪 Found door (rect format):', doors[doors.length - 1]);
+          console.log('ðŸšª Found door (rect format):', doors[doors.length - 1]);
         }
       }
       // Extract window data
@@ -1542,7 +1542,7 @@ const analyzeFloorPlanData = (data) => {
             rotation: parseFloat(item.rotation || 0),
             type: 'window'
           });
-          console.log('🪟 Found window:', windows[windows.length - 1]);
+          console.log('ðŸªŸ Found window:', windows[windows.length - 1]);
         } else if (item.x !== undefined && item.width !== undefined && item.height !== undefined) {
           // Rectangle format
           windows.push({
@@ -1554,7 +1554,7 @@ const analyzeFloorPlanData = (data) => {
             rotation: parseFloat(item.rotation || 0),
             type: 'window'
           });
-          console.log('🪟 Found window (rect format):', windows[windows.length - 1]);
+          console.log('ðŸªŸ Found window (rect format):', windows[windows.length - 1]);
         }
       }
       // Extract stairs data
@@ -1569,7 +1569,7 @@ const analyzeFloorPlanData = (data) => {
           direction: item.direction || 'up', // Direction of stairs (up/down)
           type: 'stairs'
         });
-        console.log('🪄 Found stairs:', stairs[stairs.length - 1]);
+        console.log('ðŸª„ Found stairs:', stairs[stairs.length - 1]);
       }
       // Handle rooms without explicit type (legacy format) - only if no direct rooms
       else if (!item.type && item.x !== undefined && item.width !== undefined && rooms.length === 0) {
@@ -1707,7 +1707,7 @@ const analyzeFloorPlanData = (data) => {
   
   // Check for walls array (from 2D editor)
   if (data && data.walls && Array.isArray(data.walls)) {
-    console.log('🧱 Using direct walls array with', data.walls.length, 'walls:', data.walls);
+    console.log('ðŸ§± Using direct walls array with', data.walls.length, 'walls:', data.walls);
     walls = data.walls.map((wall, idx) => {
       if (wall.points && Array.isArray(wall.points) && wall.points.length >= 4) {
         const wallData = {
@@ -1717,7 +1717,7 @@ const analyzeFloorPlanData = (data) => {
           x2: parseFloat(wall.points[2]),
           y2: parseFloat(wall.points[3])
         };
-        console.log(`  Wall ${idx}:`, wall.points, '→', wallData);
+        console.log(`  Wall ${idx}:`, wall.points, 'â†’', wallData);
         return wallData;
       }
       return {
@@ -1732,8 +1732,8 @@ const analyzeFloorPlanData = (data) => {
   
   // Fallback 1: check for direct rooms array (from 2D editor)
   if (rooms.length === 0 && data && data.rooms && Array.isArray(data.rooms)) {
-    console.log('📋 Using direct rooms array from 2D editor with', data.rooms.length, 'rooms');
-    console.log('📋 Raw rooms data:', data.rooms);
+    console.log('ðŸ“‹ Using direct rooms array from 2D editor with', data.rooms.length, 'rooms');
+    console.log('ðŸ“‹ Raw rooms data:', data.rooms);
     rooms = data.rooms.map((room, index) => {
       const processedRoom = {
         id: room.id || `room-${index}`,
@@ -1745,14 +1745,14 @@ const analyzeFloorPlanData = (data) => {
         name: room.name || room.type || room.tag || 'Room',
         source: room.source || 'unknown' // Track room source
       };
-      console.log(`  Room ${index}:`, room, '→', processedRoom);
+      console.log(`  Room ${index}:`, room, 'â†’', processedRoom);
       return processedRoom;
     });
   }
   
   // Fallback 2: check if data is directly a rooms array
   if (rooms.length === 0 && Array.isArray(data)) {
-    console.log('📋 Data is directly a rooms array');
+    console.log('ðŸ“‹ Data is directly a rooms array');
     rooms = data.map((room, index) => ({
       id: room.id || `room-${index}`,
       x: parseFloat(room.x || 0),
@@ -1766,7 +1766,7 @@ const analyzeFloorPlanData = (data) => {
   
   // Create demo data if no rooms found
   if (rooms.length === 0) {
-    console.log('⚠️ No room data found, creating demo rooms');
+    console.log('âš ï¸ No room data found, creating demo rooms');
     rooms = [
       {
         id: 'demo-living',
@@ -1792,9 +1792,9 @@ const analyzeFloorPlanData = (data) => {
     ];
   }
   
-  console.log('✅ Final analysis:', { rooms: rooms.length, walls: walls.length, doors: doors.length });
-  console.log('🏠 Room details:', rooms);
-  console.log('🧱 Wall details:', walls);
+  console.log('âœ… Final analysis:', { rooms: rooms.length, walls: walls.length, doors: doors.length });
+  console.log('ðŸ  Room details:', rooms);
+  console.log('ðŸ§± Wall details:', walls);
   return { rooms, walls, doors, windows, stairs };
 };
 
@@ -1834,8 +1834,8 @@ const calculateBounds = (rooms) => {
     maxY: Math.max(...rooms.map(r => r.y + r.height))
   };
   
-  console.log('📏 Calculated bounds (no padding):', bounds);
-  console.log('📐 Room positions:', rooms.map(r => ({ 
+  console.log('ðŸ“ Calculated bounds (no padding):', bounds);
+  console.log('ðŸ“ Room positions:', rooms.map(r => ({ 
     name: r.name, 
     x: r.x, 
     y: r.y, 
@@ -1852,7 +1852,7 @@ const Wall3D = ({ wall, bounds, customColors }) => {
   const wallThickness = 0.08; // Match room boundary walls
   const wallColor = customColors?.walls || '#3C3534';
   
-  console.log('🧱 Rendering wall:', wall, 'bounds:', bounds);
+  console.log('ðŸ§± Rendering wall:', wall, 'bounds:', bounds);
   
   // Convert wall coordinates to 3D world space
   const start = convertToWorld3D(wall.x1, wall.y1, 0, 0, bounds);
@@ -1895,7 +1895,7 @@ const SimpleDoor3D = ({ door, bounds }) => {
   const rectWidth = door.width || 30;
   const rectHeight = door.height || 80;
   
-  console.log('🚪 Door input data:', { x, y, rectWidth, rectHeight });
+  console.log('ðŸšª Door input data:', { x, y, rectWidth, rectHeight });
   
   // Determine door orientation based on rectangle dimensions
   // If width > height, door is horizontal; if height > width, door is vertical
@@ -1935,9 +1935,9 @@ const SimpleDoor3D = ({ door, bounds }) => {
     angle = Math.atan2(dz, dx);
   }
   
-  console.log('🚪 SimpleDoor3D:', { 
+  console.log('ðŸšª SimpleDoor3D:', { 
     center: [centerX.toFixed(2), centerZ.toFixed(2)], 
-    angle: (angle * 180 / Math.PI).toFixed(1) + '°',
+    angle: (angle * 180 / Math.PI).toFixed(1) + 'Â°',
     doorWidth: doorWidth.toFixed(2),
     orientation: rectWidth > rectHeight ? 'horizontal' : 'vertical'
   });
@@ -2017,7 +2017,7 @@ const Room3D = ({ room, bounds, showLabels = true, doors = [], windows = [], wal
   
   // Normalize room type for color lookup
   const normalizedType = room.type?.toLowerCase()
-    .replace(/[-\d\s]/g, '') 
+    .replace(/[-https://nextgen-ta95.onrender.com/apidhttps://nextgen-ta95.onrender.com/apis]/g, '') 
     .replace('room', '') || 'room';
   
   const roomColor = floorColors[normalizedType] || '#F5F5F5';
@@ -2785,11 +2785,11 @@ const CameraController3D = ({ mode, bounds, rooms, onPlayerPositionChange }) => 
       camera.lookAt(worldCenterX, 2, worldCenterZ); // Look at building center, slightly above ground
       camera.updateMatrixWorld();
       
-      console.log('📷 Enhanced camera positioning:', {
+      console.log('ðŸ“· Enhanced camera positioning:', {
         buildingCenter: [worldCenterX, worldCenterZ],
         cameraPosition: [cameraX, cameraHeight, cameraZ],
         viewDistance,
-        angle: angle * (180 / Math.PI) + '°'
+        angle: angle * (180 / Math.PI) + 'Â°'
       });
     } else if (mode === 'walk') {
       // Position camera inside the first room at human height (on foundation)
@@ -2829,8 +2829,8 @@ const CameraController3D = ({ mode, bounds, rooms, onPlayerPositionChange }) => 
       enablePan={true}
       enableZoom={true}
       enableRotate={true}
-      minPolarAngle={Math.PI / 8} // 22.5° - prevent going too low (underground view)
-      maxPolarAngle={Math.PI / 2.2} // ~82° - prevent going completely overhead
+      minPolarAngle={Math.PI / 8} // 22.5Â° - prevent going too low (underground view)
+      maxPolarAngle={Math.PI / 2.2} // ~82Â° - prevent going completely overhead
       minAzimuthAngle={-Infinity} // Unlimited horizontal rotation
       maxAzimuthAngle={Infinity} // Unlimited horizontal rotation
       minDistance={viewDistance * 0.3} // Closer minimum for detail views
@@ -2863,21 +2863,21 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
   
   // Analyze and extract data - memoized to prevent infinite loops
   const analysisData = useMemo(() => {
-    console.log('🔍 Analyzing floor plan data for 3D rendering:', floorPlanData);
-    console.log('🔍 Data structure check - has rooms?:', floorPlanData?.rooms?.length || 0);
-    console.log('🔍 Data structure check - has walls?:', floorPlanData?.walls?.length || 0);
-    console.log('🔍 Data structure check - has doors?:', floorPlanData?.doors?.length || 0);
-    console.log('🔍 Data structure check - has mapData?:', floorPlanData?.mapData?.length || 0);
-    console.log('🔍 Update timestamp:', floorPlanData?._updateTimestamp);
+    console.log('ðŸ” Analyzing floor plan data for 3D rendering:', floorPlanData);
+    console.log('ðŸ” Data structure check - has rooms?:', floorPlanData?.rooms?.length || 0);
+    console.log('ðŸ” Data structure check - has walls?:', floorPlanData?.walls?.length || 0);
+    console.log('ðŸ” Data structure check - has doors?:', floorPlanData?.doors?.length || 0);
+    console.log('ðŸ” Data structure check - has mapData?:', floorPlanData?.mapData?.length || 0);
+    console.log('ðŸ” Update timestamp:', floorPlanData?._updateTimestamp);
     
     if (floorPlanData?.rooms) {
-      console.log('🏠 Direct rooms data for 3D:', floorPlanData.rooms.map(r => ({ id: r.id, name: r.name, source: r.source })));
+      console.log('ðŸ  Direct rooms data for 3D:', floorPlanData.rooms.map(r => ({ id: r.id, name: r.name, source: r.source })));
     }
     
     const result = analyzeFloorPlanData(floorPlanData);
-    console.log('🎯 Analysis result - rooms for 3D:', result.rooms.length, result.rooms.map(r => ({ id: r.id, name: r.name, source: r.source })));
-    console.log('🪟 Analysis result - windows for 3D:', result.windows?.length || 0);
-    console.log('🪄 Analysis result - stairs for 3D:', result.stairs?.length || 0);
+    console.log('ðŸŽ¯ Analysis result - rooms for 3D:', result.rooms.length, result.rooms.map(r => ({ id: r.id, name: r.name, source: r.source })));
+    console.log('ðŸªŸ Analysis result - windows for 3D:', result.windows?.length || 0);
+    console.log('ðŸª„ Analysis result - stairs for 3D:', result.stairs?.length || 0);
     return result;
   }, [floorPlanData]);
   
@@ -2890,7 +2890,7 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
     }
   }, [rooms, onRoomsAnalyzed]);
   
-  console.log('📊 Extracted data:', { 
+  console.log('ðŸ“Š Extracted data:', { 
     rooms: rooms.length, 
     walls: walls.length, 
     doors: doors.length,
@@ -2900,14 +2900,14 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
   
   // Calculate bounds - memoized
   const bounds = useMemo(() => {
-    console.log('📏 Calculating bounds for rooms:', rooms.length);
+    console.log('ðŸ“ Calculating bounds for rooms:', rooms.length);
     return calculateBounds(rooms);
   }, [rooms]);
   
   // Generate smart doors and windows using detected doors from 2D plan - memoized to prevent loops
   // Always generate smart doors for room connectivity
   const smartDoors = useMemo(() => {
-    console.log('🚪 Generating smart doors for', rooms.length, 'rooms, detected 2D doors:', doors.length);
+    console.log('ðŸšª Generating smart doors for', rooms.length, 'rooms, detected 2D doors:', doors.length);
     return generateSmartDoors(rooms, bounds, doors);
   }, [rooms, bounds, doors]);
   
@@ -2919,7 +2919,7 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
   }, [smartDoors, onDoorsAnalyzed]);
   
   const smartWindows = useMemo(() => {
-    console.log('🪟 Generating smart windows for', rooms.length, 'rooms, detected windows:', windows.length);
+    console.log('ðŸªŸ Generating smart windows for', rooms.length, 'rooms, detected windows:', windows.length);
     return generateSmartWindows(rooms, bounds, windows);
   }, [rooms, bounds, windows]);
   
@@ -2965,7 +2965,7 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
     };
   }, [bounds]);
   
-  console.log('🏗️ Building with doors and windows:', { 
+  console.log('ðŸ—ï¸ Building with doors and windows:', { 
     rooms: rooms.length,
     smartDoors: smartDoors.length,
     smartWindows: smartWindows.length,
@@ -3229,9 +3229,9 @@ const FloorPlan3DScene = ({ floorPlanData, mode, customColors, roomColors = {}, 
       
       {/* Render doors from 2D editor - DISABLED, using smart doors instead */}
       {/* SimpleDoor3D is only for user-placed doors in customization mode */}
-      {false && walls.length > 0 && console.log('🔧 About to render user doors:', doors?.length, doors)}
+      {false && walls.length > 0 && console.log('ðŸ”§ About to render user doors:', doors?.length, doors)}
       {false && walls.length > 0 && doors && doors.length > 0 && doors.map((door, index) => {
-        console.log(`🚪 Rendering user door ${index}:`, door);
+        console.log(`ðŸšª Rendering user door ${index}:`, door);
         return (
           <SimpleDoor3D 
             key={`2d-door-${index}`}
@@ -3698,7 +3698,7 @@ const FloorPlan3D = ({ floorPlanData, className = "", isVisible = true, setbacks
             setbacks={setbacks}
           />
 
-          {/* Subtle grounding shadows for a more realistic “anchored” look */}
+          {/* Subtle grounding shadows for a more realistic â€œanchoredâ€ look */}
           <ContactShadows
             position={[0, -0.04, 0]}
             opacity={0.3}

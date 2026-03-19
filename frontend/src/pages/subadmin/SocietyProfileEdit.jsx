@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Box, Grid, TextField, Button, Typography, Alert, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { getSocietyProfile, updateSocietyProfile } from '../../services/apiService';
@@ -621,7 +621,7 @@ const SocietyProfileEdit = () => {
                                 }}
                               >
                                 {profile.amenities[amenity.id] && (
-                                  <Typography sx={{ color: 'white', fontSize: 18, fontWeight: 700 }}>✓</Typography>
+                                  <Typography sx={{ color: 'white', fontSize: 18, fontWeight: 700 }}>âœ“</Typography>
                                 )}
                               </Box>
                               <Typography 

@@ -1,9 +1,9 @@
 import React, { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
-/* ═══════════════════════════════════════════════════════
-   MATERIALS – reusable PBR materials for realism
-   ═══════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   MATERIALS â€“ reusable PBR materials for realism
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const mat = {
   // Woods
   walnut:     { color: '#5C3317', roughness: 0.55, metalness: 0.05 },
@@ -66,7 +66,7 @@ const mat = {
   kitchenHandle:  { color: '#B8B8B8', roughness: 0.5, metalness: 0.3 },
   kitchenSink:    { color: '#D0D0D0', roughness: 0.4, metalness: 0.25 },
   kitchenBlack:   { color: '#2C2C2E', roughness: 0.75, metalness: 0.05 },
-  // ── Updated kitchen materials to match target design ──────────────────
+  // â”€â”€ Updated kitchen materials to match target design â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   darkWalnutWood:    { color: '#2C1A0E', roughness: 0.7,  metalness: 0.1  }, // Dining table & chair frame (Dark Walnut/Black Oak)
   tanLeather:        { color: '#caa472', roughness: 0.4,  metalness: 0.05 }, // Chair cushions (Tan/Beige Leather)
   matteGrayUpper:    { color: '#cfcfcf', roughness: 0.8,  metalness: 0    }, // Upper kitchen cabinets (Matte Grey Laminate)
@@ -77,9 +77,9 @@ const mat = {
 
 const M = (props) => <meshStandardMaterial {...props} />;
 
-/* ═══════════════════════════════════════════════════════
-   HELPER – small repeated sub-shapes
-   ═══════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   HELPER â€“ small repeated sub-shapes
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const Leg = ({ position, height = 0.12, radius = 0.025, material = mat.blackMetal }) => (
   <mesh position={position} castShadow>
     <cylinderGeometry args={[radius, radius, height, 8]} />
@@ -101,9 +101,9 @@ const CylPart = ({ position, args, material, rotation }) => (
   </mesh>
 );
 
-/* ═══════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    LIVING / DRAWING ROOM FURNITURE
-   ═══════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const Sofa = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
   <group position={position} rotation={rotation} scale={scale}>
     {/* Frame base */}
@@ -207,7 +207,7 @@ const TVUnit = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
 
 const Bookshelf = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
   <group position={position} rotation={rotation} scale={scale}>
-    {/* Main frame – back panel */}
+    {/* Main frame â€“ back panel */}
     <BoxPart position={[0, 0.9, -0.13]} args={[0.9, 1.8, 0.03]} material={mat.mahogany} />
     {/* Side panels */}
     <BoxPart position={[-0.44, 0.9, 0]}  args={[0.03, 1.8, 0.3]} material={mat.walnut} />
@@ -241,7 +241,7 @@ const FloorLamp = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
     {/* Pole sections */}
     <CylPart position={[0, 0.5, 0]}   args={[0.018, 0.018, 1.0, 8]} material={mat.brushedSteel} />
     <CylPart position={[0, 0.95, 0]}  args={[0.022, 0.022, 0.08, 8]} material={mat.brass} />
-    {/* Lamp shade – cone */}
+    {/* Lamp shade â€“ cone */}
     <mesh position={[0, 1.1, 0]} castShadow>
       <cylinderGeometry args={[0.06, 0.2, 0.28, 12, 1, true]} />
       <M {...mat.fabricCream} side={THREE.DoubleSide} />
@@ -648,9 +648,9 @@ const MagazineRack = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
   </group>
 );
 
-/* ═══════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    BEDROOM FURNITURE
-   ═══════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const Bed = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
   <group position={position} rotation={rotation} scale={scale}>
     {/* Bed frame feet */}
@@ -684,7 +684,7 @@ const Bed = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
     <BoxPart position={[0, 0.64, -0.65]} args={[1.9, 0.65, 0.03]} material={mat.fabricBeige} />
     {/* Footboard */}
     <BoxPart position={[0, 0.32, 0.68]}  args={[2.1, 0.32, 0.06]} material={mat.walnut} />
-    {/* Pillows – pair */}
+    {/* Pillows â€“ pair */}
     <mesh position={[-0.42, 0.44, -0.4]} rotation={[-0.15, 0, 0]} castShadow>
       <boxGeometry args={[0.55, 0.12, 0.35]} />
       <M {...mat.pillow} />
@@ -755,7 +755,7 @@ const Dresser = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
     <BoxPart position={[0, 0.42, 0]}   args={[1.0, 0.8, 0.45]} material={mat.walnut} />
     {/* Top surface */}
     <BoxPart position={[0, 0.83, 0]}   args={[1.04, 0.03, 0.48]} material={mat.darkWood} />
-    {/* Drawers (3 rows × 2 cols) */}
+    {/* Drawers (3 rows Ã— 2 cols) */}
     {[0.2, 0.45, 0.7].map(y =>
       [-0.26, 0.26].map(x => (
         <group key={`${x}-${y}`}>
@@ -773,10 +773,10 @@ const Dresser = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
   </group>
 );
 
-/* ═══════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    KITCHEN FURNITURE - Modern Low-Poly Isometric Style
    Minimalistic, flat colors, soft matte materials, rounded edges
-   ═══════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 // Rounded box helper for smooth edges (low-poly friendly)
 const RoundedBox = ({ position, args, material, radius = 0.02, rotation }) => {
@@ -1233,9 +1233,9 @@ const BarStool = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
   </group>
 );
 
-/* ═══════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    BATHROOM FURNITURE
-   ═══════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const Toilet = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
   <group position={position} rotation={rotation} scale={scale}>
     {/* Base pedestal */}
@@ -1379,18 +1379,18 @@ const TowelRack = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
   </group>
 );
 
-/* ═══════════════════════════════════════════════════════
-   CAR PORCH / GARAGE – Land Cruiser SUV Style
-   ═══════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   CAR PORCH / GARAGE â€“ Land Cruiser SUV Style
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const suvBody = { color: '#1C1C1C', roughness: 0.25, metalness: 0.75 };
 const suvTrim = { color: '#0F0F0F', roughness: 0.3, metalness: 0.6 };
 
 const Car = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
   <group position={position} rotation={rotation} scale={scale}>
-    {/* ── Chassis / underbody ── */}
+    {/* â”€â”€ Chassis / underbody â”€â”€ */}
     <BoxPart position={[0, 0.15, 0]}   args={[4.9, 0.12, 1.95]} material={mat.blackMetal} />
 
-    {/* ── Main body – tall SUV proportions ── */}
+    {/* â”€â”€ Main body â€“ tall SUV proportions â”€â”€ */}
     <mesh position={[0, 0.52, 0]} castShadow>
       <boxGeometry args={[4.85, 0.62, 1.95]} />
       <M {...suvBody} />
@@ -1401,7 +1401,7 @@ const Car = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
     <BoxPart position={[0, 0.42, 0.979]}  args={[4.6, 0.01, 0.002]} material={mat.chrome} />
     <BoxPart position={[0, 0.42, -0.979]} args={[4.6, 0.01, 0.002]} material={mat.chrome} />
 
-    {/* ── Cabin / roof – taller for SUV stance ── */}
+    {/* â”€â”€ Cabin / roof â€“ taller for SUV stance â”€â”€ */}
     <mesh position={[0.05, 1.0, 0]} castShadow>
       <boxGeometry args={[2.9, 0.65, 1.85]} />
       <M {...suvBody} />
@@ -1417,7 +1417,7 @@ const Car = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
       </group>
     ))}
 
-    {/* ── Windshield (raked) ── */}
+    {/* â”€â”€ Windshield (raked) â”€â”€ */}
     <mesh position={[-1.32, 0.98, 0]} rotation={[0, 0, 0.22]} castShadow>
       <boxGeometry args={[0.75, 0.58, 1.72]} />
       <M {...mat.carWindow} />
@@ -1426,7 +1426,7 @@ const Car = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
     <BoxPart position={[-1.32, 0.98, 0.87]}  args={[0.78, 0.04, 0.06]} material={suvBody} />
     <BoxPart position={[-1.32, 0.98, -0.87]} args={[0.78, 0.04, 0.06]} material={suvBody} />
 
-    {/* ── Rear window (slightly angled) ── */}
+    {/* â”€â”€ Rear window (slightly angled) â”€â”€ */}
     <mesh position={[1.38, 0.98, 0]} rotation={[0, 0, -0.15]}>
       <boxGeometry args={[0.55, 0.5, 1.68]} />
       <M {...mat.carWindow} />
@@ -1435,7 +1435,7 @@ const Car = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
     <BoxPart position={[1.38, 0.98, 0.85]}  args={[0.58, 0.04, 0.06]} material={suvBody} />
     <BoxPart position={[1.38, 0.98, -0.85]} args={[0.58, 0.04, 0.06]} material={suvBody} />
 
-    {/* ── Side windows (front + rear per side) ── */}
+    {/* â”€â”€ Side windows (front + rear per side) â”€â”€ */}
     {[0.93, -0.93].map(z => (
       <group key={`sw-${z}`}>
         {/* Front side window */}
@@ -1453,7 +1453,7 @@ const Car = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
       </group>
     ))}
 
-    {/* ── Front face – bold grille ── */}
+    {/* â”€â”€ Front face â€“ bold grille â”€â”€ */}
     <BoxPart position={[-2.43, 0.46, 0]} args={[0.04, 0.42, 1.55]} material={mat.chrome} />
     {/* Grille slats (horizontal) */}
     {[0.34, 0.40, 0.46, 0.52, 0.58].map(y => (
@@ -1465,7 +1465,7 @@ const Car = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
     {/* Toyota emblem placeholder */}
     <CylPart position={[-2.46, 0.48, 0]} args={[0.06, 0.06, 0.02, 10]} rotation={[0, Math.PI / 2, 0]} material={mat.chrome} />
 
-    {/* ── LED Headlights (modern split design) ── */}
+    {/* â”€â”€ LED Headlights (modern split design) â”€â”€ */}
     {[-0.72, 0.72].map(z => (
       <group key={`hl-${z}`}>
         {/* Main housing */}
@@ -1484,7 +1484,7 @@ const Car = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
       </group>
     ))}
 
-    {/* ── Front bumper (muscular) ── */}
+    {/* â”€â”€ Front bumper (muscular) â”€â”€ */}
     <BoxPart position={[-2.46, 0.22, 0]}  args={[0.1, 0.2, 1.9]} material={suvTrim} />
     {/* Bumper lower lip */}
     <BoxPart position={[-2.48, 0.14, 0]}  args={[0.06, 0.06, 1.6]} material={mat.blackMetal} />
@@ -1496,7 +1496,7 @@ const Car = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
     {/* Skid plate (silver) */}
     <BoxPart position={[-2.46, 0.1, 0]}   args={[0.06, 0.04, 1.0]} material={mat.brushedSteel} />
 
-    {/* ── Rear styling ── */}
+    {/* â”€â”€ Rear styling â”€â”€ */}
     {/* Rear bumper */}
     <BoxPart position={[2.44, 0.22, 0]}   args={[0.1, 0.2, 1.9]} material={suvTrim} />
     <BoxPart position={[2.46, 0.1, 0]}    args={[0.06, 0.04, 1.0]} material={mat.brushedSteel} />
@@ -1522,7 +1522,7 @@ const Car = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
     <CylPart position={[2.46, 0.14, -0.55]} args={[0.04, 0.035, 0.08, 8]} rotation={[0, Math.PI / 2, 0]} material={mat.chrome} />
     <CylPart position={[2.46, 0.14, 0.55]}  args={[0.04, 0.035, 0.08, 8]} rotation={[0, Math.PI / 2, 0]} material={mat.chrome} />
 
-    {/* ── Wheels – large SUV wheels with thick tires ── */}
+    {/* â”€â”€ Wheels â€“ large SUV wheels with thick tires â”€â”€ */}
     {[[-1.55, 0.24, 0.95], [1.55, 0.24, 0.95], [-1.55, 0.24, -0.95], [1.55, 0.24, -0.95]].map((p, i) => (
       <group key={i} position={p}>
         {/* Tire */}
@@ -1562,7 +1562,7 @@ const Car = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
       </mesh>
     ))}
 
-    {/* ── Side body details ── */}
+    {/* â”€â”€ Side body details â”€â”€ */}
     {/* Running boards / side steps */}
     <BoxPart position={[0, 0.12, 0.92]}  args={[2.6, 0.04, 0.12]} material={mat.brushedSteel} />
     <BoxPart position={[0, 0.12, -0.92]} args={[2.6, 0.04, 0.12]} material={mat.brushedSteel} />
@@ -1593,7 +1593,7 @@ const Car = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
       </mesh>
     </group>
 
-    {/* Door lines – front */}
+    {/* Door lines â€“ front */}
     {[0.979, -0.979].map(z => (
       <group key={`dl-${z}`}>
         <BoxPart position={[-0.5, 0.5, z]}  args={[1.0, 0.42, 0.002]} material={{color: '#141414', roughness: 0.3, metalness: 0.6}} />
@@ -1636,9 +1636,9 @@ const BikeStand = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
   </group>
 );
 
-/* ═══════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    GARDEN / OUTDOOR
-   ═══════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const PlantPot = ({ position, rotation = [0, 0, 0], scale = 1, variant = 0 }) => {
   const colors = [mat.plant, mat.plantDark, mat.plant, mat.plantDark];
   const potMats = [mat.terracotta, mat.ceramic, mat.darkWood, mat.terracotta];
@@ -1656,7 +1656,7 @@ const PlantPot = ({ position, rotation = [0, 0, 0], scale = 1, variant = 0 }) =>
       </mesh>
       {/* Soil */}
       <CylPart position={[0, 0.19, 0]} args={[0.12, 0.12, 0.02, 10]} material={mat.soil} />
-      {/* Foliage – layered spheres */}
+      {/* Foliage â€“ layered spheres */}
       <mesh position={[0, 0.36, 0]} castShadow>
         <sphereGeometry args={[0.18, 8, 6]} />
         <M {...colors[variant % 4]} />
@@ -1881,13 +1881,13 @@ const Fountain = ({ position, rotation = [0, 0, 0], scale = 1 }) => (
   </group>
 );
 
-/* ═══════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    ROOM ACCESSORY LAYOUTS
-   ═══════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 export const getRoomAccessories = (roomType, roomWidth, roomHeight) => {
   const accessories = [];
   // Normalize: lowercase, strip digits/dashes/spaces, then determine base type
-  const raw = roomType.toLowerCase().replace(/[-\d\s]/g, '');
+  const raw = roomType.toLowerCase().replace(/[-https://nextgen-ta95.onrender.com/apidhttps://nextgen-ta95.onrender.com/apis]/g, '');
   // Determine type by checking includes (order matters: check compound words first)
   let type = 'unknown';
   if (raw.includes('living') || raw.includes('drawing') || raw === 'lounge') type = 'living';
@@ -1909,32 +1909,32 @@ export const getRoomAccessories = (roomType, roomWidth, roomHeight) => {
     case 'living':
     case 'drawing':
       accessories.push(
-        // 🧶 Soft Furnishings
+        // ðŸ§¶ Soft Furnishings
         { component: Rug,       position: [0, 0, 0],              rotation: [0, 0, 0], scale },
         
-        // 🛋️ Basic Furniture - Seating
+        // ðŸ›‹ï¸ Basic Furniture - Seating
         { component: Sofa,      position: [0, 0, h * 0.22],       rotation: [0, Math.PI, 0], scale },
         { component: ArmChair,  position: [w * 0.3, 0, h * 0.08], rotation: [0, -Math.PI / 3, 0], scale: scale * 0.9 },
         { component: Recliner,  position: [-w * 0.32, 0, h * 0.15], rotation: [0, Math.PI / 6, 0], scale: scale * 0.85 },
         
-        // 🛋️ Tables
+        // ðŸ›‹ï¸ Tables
         { component: CoffeeTable, position: [0, 0, 0],            rotation: [0, 0, 0], scale },
         { component: SideTable, position: [w * 0.38, 0, h * 0.25], rotation: [0, -Math.PI / 2, 0], scale: scale * 0.8 },
         { component: SideTable, position: [-w * 0.25, 0, h * 0.35], rotation: [0, Math.PI / 4, 0], scale: scale * 0.7 },
         
-        // 🛋️ Storage & Display
+        // ðŸ›‹ï¸ Storage & Display
         { component: TVUnit,    position: [0, 0, -h * 0.38],      rotation: [0, 0, 0], scale },
         { component: Bookshelf, position: [-w * 0.38, 0, -h * 0.35], rotation: [0, Math.PI / 2, 0], scale: scale * 0.7 },
         { component: DisplayCabinet, position: [w * 0.35, 0, -h * 0.25], rotation: [0, -Math.PI / 2, 0], scale: scale * 0.6 },
         { component: StorageBench, position: [-w * 0.15, 0, h * 0.38], rotation: [0, 0, 0], scale: scale * 0.8 },
         { component: Ottoman,   position: [w * 0.15, 0, h * 0.12], rotation: [0, 0, 0], scale: scale * 0.8 },
         
-        // 💡 Lighting Accessories
+        // ðŸ’¡ Lighting Accessories
         { component: FloorLamp, position: [w * 0.35, 0, h * 0.32], rotation: [0, 0, 0], scale },
         { component: TableLamp, position: [w * 0.38, 0.42, h * 0.25], rotation: [0, 0, 0], scale: scale * 0.9 },
         { component: Chandelier, position: [0, 2.4, h * 0.05], rotation: [0, 0, 0], scale: scale * 0.8 },
         
-        // 🖼️ Wall Accessories
+        // ðŸ–¼ï¸ Wall Accessories
         { component: WallArt,   position: [0, 1.4, -h * 0.48],   rotation: [0, 0, 0], scale: scale * 0.8 },
         { component: WallClock, position: [w * 0.4, 1.6, -h * 0.45], rotation: [0, -Math.PI / 2, 0], scale: scale * 0.9 },
         { component: WallMirror, position: [-w * 0.4, 1.5, h * 0.45], rotation: [0, Math.PI / 2, 0], scale: scale * 0.7 },
@@ -1944,11 +1944,11 @@ export const getRoomAccessories = (roomType, roomWidth, roomHeight) => {
         { component: Vase,      position: [-w * 0.25, 0.42, h * 0.35], rotation: [0, 0, 0], scale: scale * 0.8, props: { variant: 1 } },
         { component: Vase,      position: [0, 0.33, 0], rotation: [0, Math.PI / 4, 0], scale: scale * 0.7, props: { variant: 2 } },
         
-        // 📺 Electronics
+        // ðŸ“º Electronics
         { component: Speakers,  position: [w * 0.28, 0, -h * 0.32], rotation: [0, Math.PI / 6, 0], scale: scale * 0.9 },
         { component: AirConditioner, position: [w * 0.45, 2.2, h * 0.15], rotation: [0, -Math.PI / 2, 0], scale: scale * 0.8 },
         
-        // 🗄️ Additional Storage & Utility
+        // ðŸ—„ï¸ Additional Storage & Utility
         { component: MagazineRack, position: [-w * 0.18, 0, -h * 0.32], rotation: [0, Math.PI / 8, 0], scale: scale * 0.9 },
       );
       break;
@@ -2066,7 +2066,7 @@ export const getRoomAccessories = (roomType, roomWidth, roomHeight) => {
       break;
 
     default:
-      // Generic room – add a small plant and rug
+      // Generic room â€“ add a small plant and rug
       if (w > 1.5 && h > 1.5) {
         accessories.push(
           { component: PlantPot, position: [w * 0.3, 0, -h * 0.3], rotation: [0, 0, 0], scale: scale * 0.6, props: { variant: 0 } },
@@ -2078,9 +2078,9 @@ export const getRoomAccessories = (roomType, roomWidth, roomHeight) => {
   return accessories;
 };
 
-/* ═══════════════════════════════════════════════════════
-   MAIN EXPORT – Render all accessories for a room
-   ═══════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   MAIN EXPORT â€“ Render all accessories for a room
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 export const RoomAccessories = ({ roomType, roomWidth, roomHeight, roomDoors, roomId }) => {
   const accessories = useMemo(() => {
     let items = getRoomAccessories(roomType, roomWidth, roomHeight);

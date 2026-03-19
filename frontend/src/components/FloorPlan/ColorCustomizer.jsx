@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 
 const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -140,7 +140,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
   const getDoorDisplayName = (door) => {
     // Generate display name for door based on connected rooms
     if (door.connectedRooms && door.connectedRooms.length > 0) {
-      return `Door (${door.connectedRooms.join(' ↔ ')})`;
+      return `Door (${door.connectedRooms.join(' â†” ')})`;
     }
     return `Door ${door.id}`;
   };
@@ -157,7 +157,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
         className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2 font-semibold"
         title="Customize 3D Colors"
       >
-        <span className="text-xl">🎨</span>
+        <span className="text-xl">ðŸŽ¨</span>
         <span>{isOpen ? 'Hide' : 'Customize Colors'}</span>
       </button>
 
@@ -168,7 +168,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
             {/* Header */}
             <div className="border-b border-gray-200 pb-3">
               <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-                <span className="text-2xl">🎨</span>
+                <span className="text-2xl">ðŸŽ¨</span>
                 <span>3D Color Customizer</span>
               </h3>
               <p className="text-xs text-slate-600 mt-1">
@@ -179,7 +179,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
             {/* Color Presets */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
-                🌟 Quick Presets
+                ðŸŒŸ Quick Presets
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {colorPresets.map((preset, index) => (
@@ -202,13 +202,13 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
             {/* Individual Color Controls */}
             <div className="space-y-3 pt-2 border-t border-gray-200">
               <label className="block text-sm font-semibold text-slate-700 mb-2">
-                🎯 Custom Colors
+                ðŸŽ¯ Custom Colors
               </label>
 
               {/* Walls Color */}
               <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <div className="flex items-center space-x-3">
-                  <span className="text-2xl">🏠</span>
+                  <span className="text-2xl">ðŸ </span>
                   <div>
                     <div className="text-sm font-semibold text-slate-900">Walls</div>
                     <div className="text-xs text-slate-500">Interior walls color</div>
@@ -226,7 +226,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
               {/* Windows Color */}
               <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <div className="flex items-center space-x-3">
-                  <span className="text-2xl">🪟</span>
+                  <span className="text-2xl">ðŸªŸ</span>
                   <div>
                     <div className="text-sm font-semibold text-slate-900">Windows</div>
                     <div className="text-xs text-slate-500">Window frames color</div>
@@ -244,7 +244,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
               {/* Ground Color */}
               <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <div className="flex items-center space-x-3">
-                  <span className="text-2xl">🌿</span>
+                  <span className="text-2xl">ðŸŒ¿</span>
                   <div>
                     <div className="text-sm font-semibold text-slate-900">Ground</div>
                     <div className="text-xs text-slate-500">Outdoor ground color</div>
@@ -262,7 +262,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
               {/* Foundation Color */}
               <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
                 <div className="flex items-center space-x-3">
-                  <span className="text-2xl">🏗️</span>
+                  <span className="text-2xl">ðŸ—ï¸</span>
                   <div>
                     <div className="text-sm font-medium text-gray-800">Foundation</div>
                     <div className="text-xs text-gray-500">Building base color</div>
@@ -280,7 +280,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
               {/* Doors Color */}
               <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
                 <div className="flex items-center space-x-3">
-                  <span className="text-2xl">🚪</span>
+                  <span className="text-2xl">ðŸšª</span>
                   <div>
                     <div className="text-sm font-medium text-gray-800">Doors</div>
                     <div className="text-xs text-gray-500">All doors color</div>
@@ -301,13 +301,13 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
               <div className="space-y-3 pt-2 border-t border-gray-300">
                 <div className="flex items-center justify-between">
                   <label className="block text-sm font-semibold text-gray-700">
-                    🏠 Room-Specific Colors
+                    ðŸ  Room-Specific Colors
                   </label>
                   <button
                     onClick={() => setShowRoomColors(!showRoomColors)}
                     className="text-xs text-orange-600 hover:text-orange-700 font-medium"
                   >
-                    {showRoomColors ? '▼ Hide' : '▶ Show'}
+                    {showRoomColors ? 'â–¼ Hide' : 'â–¶ Show'}
                   </button>
                 </div>
                 
@@ -318,7 +318,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
                       return (
                         <div key={room.id} className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-200">
                           <div className="flex items-center space-x-2 flex-1 min-w-0">
-                            <span className="text-lg">🚪</span>
+                            <span className="text-lg">ðŸšª</span>
                             <div className="flex-1 min-w-0">
                               <div className="text-xs font-medium text-gray-800 truncate">
                                 {getRoomDisplayName(room)}
@@ -342,7 +342,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
                                 className="p-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
                                 title="Reset to global color"
                               >
-                                ✕
+                                âœ•
                               </button>
                             )}
                           </div>
@@ -367,13 +367,13 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
               <div className="space-y-3 pt-2 border-t border-gray-300">
                 <div className="flex items-center justify-between">
                   <label className="block text-sm font-semibold text-gray-700">
-                    🚪 Door-Specific Colors
+                    ðŸšª Door-Specific Colors
                   </label>
                   <button
                     onClick={() => setShowDoorColors(!showDoorColors)}
                     className="text-xs text-orange-600 hover:text-orange-700 font-medium"
                   >
-                    {showDoorColors ? '▼ Hide' : '▶ Show'}
+                    {showDoorColors ? 'â–¼ Hide' : 'â–¶ Show'}
                   </button>
                 </div>
                 
@@ -384,7 +384,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
                       return (
                         <div key={door.id} className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-200">
                           <div className="flex items-center space-x-2 flex-1 min-w-0">
-                            <span className="text-lg">🚪</span>
+                            <span className="text-lg">ðŸšª</span>
                             <div className="flex-1 min-w-0">
                               <div className="text-xs font-medium text-gray-800 truncate">
                                 {getDoorDisplayName(door)}
@@ -408,7 +408,7 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
                                 className="p-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
                                 title="Reset to global color"
                               >
-                                ✕
+                                âœ•
                               </button>
                             )}
                           </div>
@@ -433,14 +433,14 @@ const ColorCustomizer = ({ onColorsChange, rooms = [], doors = [] }) => {
               onClick={resetColors}
               className="w-full bg-linear-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center space-x-2"
             >
-              <span>🔄</span>
+              <span>ðŸ”„</span>
               <span>Reset to Default</span>
             </button>
 
             {/* Info */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
               <p className="text-xs text-blue-800">
-                <strong>💡 Tip:</strong> Changes apply instantly to your 3D view. 
+                <strong>ðŸ’¡ Tip:</strong> Changes apply instantly to your 3D view. 
                 Experiment with different colors to find your perfect design!
               </p>
             </div>

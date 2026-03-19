@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 import React, { useState, useEffect, useMemo } from "react";
 import useSWR from "swr";
 import debounce from "lodash.debounce";
+=======
+﻿import React, { useState, useEffect } from "react";
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
 import { 
   Edit2, 
   Trash2, 
@@ -27,7 +31,7 @@ import {
 } from "lucide-react";
 
 //
-// 🔹 Add User Modal Component
+// Ã°Å¸â€Â¹ Add User Modal Component
 //
 function AddUserModal({ isOpen, onClose, onUserAdded }) {
   const [formData, setFormData] = useState({
@@ -87,7 +91,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }) {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/register', {
+      const response = await fetch('https://nextgen-ta95.onrender.com/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -286,7 +290,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }) {
 }
 
 //
-// 🔹 View User Modal Component
+// Ã°Å¸â€Â¹ View User Modal Component
 //
 function ViewUserModal({ isOpen, onClose, user }) {
   if (!isOpen || !user) return null;
@@ -364,7 +368,7 @@ function ViewUserModal({ isOpen, onClose, user }) {
 }
 
 //
-// 🔹 Edit User Modal Component
+// Ã°Å¸â€Â¹ Edit User Modal Component
 //
 function EditUserModal({ isOpen, onClose, user, onUserUpdated }) {
   const [formData, setFormData] = useState({
@@ -418,7 +422,7 @@ function EditUserModal({ isOpen, onClose, user, onUserUpdated }) {
         updateData.password = formData.password;
       }
 
-      const response = await fetch(`http://localhost:5000/api/users/${user._id}`, {
+      const response = await fetch(`https://nextgen-ta95.onrender.com/api/users/${user._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -584,7 +588,7 @@ function EditUserModal({ isOpen, onClose, user, onUserUpdated }) {
 }
 
 //
-// 🔹 Delete Confirmation Modal
+// Ã°Å¸â€Â¹ Delete Confirmation Modal
 //
 function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
   const [loading, setLoading] = useState(false);
@@ -595,7 +599,7 @@ function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
     setError('');
 
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${user._id}`, {
+      const response = await fetch(`https://nextgen-ta95.onrender.com/api/users/${user._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': 'Bearer ' + localStorage.getItem('token')
@@ -656,8 +660,13 @@ function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
           </p>
           
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+<<<<<<< HEAD
             <p className="text-xs text-yellow-800">
               ⚠️ This will permanently remove the user and all associated data.
+=======
+            <p className="text-sm text-yellow-800">
+              Ã¢Å¡Â Ã¯Â¸Â This will permanently remove the user and all associated data.
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
             </p>
           </div>
 
@@ -693,7 +702,7 @@ function DeleteConfirmModal({ isOpen, onClose, user, onUserDeleted }) {
 }
 
 //
-// 🔹 Avatar Component
+// Ã°Å¸â€Â¹ Avatar Component
 //
 function Avatar({ name, avatar, role }) {
   const getRoleColor = (role) => {
@@ -735,7 +744,7 @@ function Avatar({ name, avatar, role }) {
 }
 
 //
-// 🔹 Status Badge Component
+// Ã°Å¸â€Â¹ Status Badge Component
 //
 function StatusBadge({ status }) {
   const colors = {
@@ -750,13 +759,13 @@ function StatusBadge({ status }) {
         colors[status] || "bg-gray-100 text-gray-700 border border-gray-200"
       }`}
     >
-      • {status}
+      Ã¢â‚¬Â¢ {status}
     </span>
   );
 }
 
 //
-// 🔹 Role Badge Component
+// Ã°Å¸â€Â¹ Role Badge Component
 //
 function RoleBadge({ role }) {
   const colors = {
@@ -784,7 +793,7 @@ function RoleBadge({ role }) {
 }
 
 //
-// 🔹 User Row Component
+// Ã°Å¸â€Â¹ User Row Component
 //
 function UserRow({ user, index, selectedUsers, onSelectUser, onViewUser, onEditUser, onDeleteUser }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -876,7 +885,7 @@ function UserRow({ user, index, selectedUsers, onSelectUser, onViewUser, onEditU
 }
 
 //
-// 🔹 Stats Card Component
+// Ã°Å¸â€Â¹ Stats Card Component
 //
 function StatsCard({ icon: Icon, title, value, change, color = "blue" }) {
   const colorClasses = {
@@ -902,7 +911,7 @@ function StatsCard({ icon: Icon, title, value, change, color = "blue" }) {
 }
 
 //
-// 🔹 Dashboard Component
+// Ã°Å¸â€Â¹ Dashboard Component
 //
 export default function UserManagementDashboard() {
   const [search, setSearch] = useState("");
@@ -951,10 +960,42 @@ export default function UserManagementDashboard() {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
+<<<<<<< HEAD
   // ✅ Refresh wrapped for callbacks
   const fetchUsers = () => refreshUsers();
+=======
+  // Ã°Å¸â€Â¹ Fetch users from backend
+  const fetchUsers = async () => {
+    try {
+      setRefreshing(true);
+      const res = await fetch("https://nextgen-ta95.onrender.com/api/users", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+      });
 
-  // 🔹 CRUD Handlers
+      const data = await res.json();
+
+      if (data.success && Array.isArray(data.users)) {
+        setUsers(data.users);
+      } else {
+        console.error("Failed:", data.message);
+      }
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
+
+  // Ã°Å¸â€Â¹ CRUD Handlers
   const handleViewUser = (user) => {
     setSelectedUser(user);
     setIsViewModalOpen(true);
@@ -970,7 +1011,7 @@ export default function UserManagementDashboard() {
     setIsDeleteModalOpen(true);
   };
 
-  // 🔹 Bulk Selection Handlers
+  // Ã°Å¸â€Â¹ Bulk Selection Handlers
   const handleSelectUser = (userId) => {
     setSelectedUsers(prev => {
       if (prev.includes(userId)) {
@@ -995,7 +1036,7 @@ export default function UserManagementDashboard() {
     
     if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) {
       try {
-        const response = await fetch('http://localhost:5000/api/users/bulk-delete', {
+        const response = await fetch('https://nextgen-ta95.onrender.com/api/users/bulk-delete', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -1020,7 +1061,7 @@ export default function UserManagementDashboard() {
     }
   };
 
-  // 🔹 Modal Callbacks
+  // Ã°Å¸â€Â¹ Modal Callbacks
   const handleUserAdded = () => {
     fetchUsers(); // Refresh the user list
     setIsAddUserModalOpen(false);
@@ -1038,7 +1079,7 @@ export default function UserManagementDashboard() {
     setSelectedUser(null);
   };
 
-  // 🔹 Search + Filter + Pagination
+  // Ã°Å¸â€Â¹ Search + Filter + Pagination
   const filteredUsers = users.filter((u) => {
     const matchesSearch = 
       u.username?.toLowerCase().includes(search.toLowerCase()) ||
@@ -1054,7 +1095,7 @@ export default function UserManagementDashboard() {
     currentPage * usersPerPage
   );
 
-  // 🔹 Calculate stats
+  // Ã°Å¸â€Â¹ Calculate stats
   const totalUsers = users.length;
   const adminCount = users.filter(u => u.role === 'admin').length;
   const societyCount = users.filter(u => u.role === 'society').length;
@@ -1063,7 +1104,7 @@ export default function UserManagementDashboard() {
   return (
     <div className="min-min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto">
-        {/* 🔹 Header */}
+        {/* Ã°Å¸â€Â¹ Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -1098,7 +1139,7 @@ export default function UserManagementDashboard() {
             </div>
           </div>
 
-          {/* 🔹 Stats Cards */}
+          {/* Ã°Å¸â€Â¹ Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <StatsCard
               icon={Users}
@@ -1130,9 +1171,15 @@ export default function UserManagementDashboard() {
           </div>
         </div>
 
+<<<<<<< HEAD
         {/* 🔹 Main Content */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
           {/* 🔹 Filters */}
+=======
+        {/* Ã°Å¸â€Â¹ Main Content */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* Ã°Å¸â€Â¹ Filters */}
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
           <div className="p-6 border-b border-gray-100 bg-gray-50">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
               <div className="flex flex-wrap items-center gap-4">
@@ -1166,9 +1213,15 @@ export default function UserManagementDashboard() {
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* 🔹 Table */}
           <div className="overflow-x-auto w-full max-w-full">
             <table className="w-full min-w-[900px] max-w-none text-left ">
+=======
+          {/* Ã°Å¸â€Â¹ Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -1231,7 +1284,7 @@ export default function UserManagementDashboard() {
             </table>
           </div>
 
-          {/* 🔹 Pagination */}
+          {/* Ã°Å¸â€Â¹ Pagination */}
           {filteredUsers.length > 0 && (
             <div className="p-6 bg-gray-50 border-t border-gray-100">
               <div className="flex items-center justify-between">
@@ -1292,7 +1345,7 @@ export default function UserManagementDashboard() {
         </div>
       </div>
 
-      {/* 🔹 Modals */}
+      {/* Ã°Å¸â€Â¹ Modals */}
       <AddUserModal
         isOpen={isAddUserModalOpen}
         onClose={() => setIsAddUserModalOpen(false)}
@@ -1321,3 +1374,5 @@ export default function UserManagementDashboard() {
     </div>
   );
 }
+
+

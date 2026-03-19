@@ -1,5 +1,5 @@
 // frontend/src/services/paymentAPI.js
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://nextgen-ta95.onrender.com/api';
 
 const getAuthToken = () => {
   return localStorage.getItem('token');

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   FiActivity, 
   FiClock, 
@@ -171,7 +171,7 @@ const Activity = () => {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-2xl font-bold text-gray-800">
-                  {progressSummary?.profile_completed ? '✓' : '○'}
+                  {progressSummary?.profile_completed ? 'âœ“' : 'â—‹'}
                 </div>
                 <div className="text-sm text-gray-600">Profile Status</div>
               </div>

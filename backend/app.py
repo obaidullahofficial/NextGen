@@ -18,12 +18,23 @@ load_dotenv()
 
 app = Flask(__name__)
 
+<<<<<<< HEAD
 # Apply GZIP Compression for Admin performance optimizations
 Compress(app)
 
 # Configure CORS - Allow all localhost ports for development
+=======
+# Configure CORS - Allow frontend domains
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
 CORS(app, 
-     origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"], 
+     origins=[
+         "http://localhost:5173", 
+         "http://localhost:5174", 
+         "http://localhost:5175", 
+         "http://localhost:5176",
+         os.getenv("FRONTEND_URL", "http://localhost:5173"),
+         "https://next-gen-silk.vercel.app"
+     ],
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"],
@@ -204,7 +215,9 @@ def shutdown_handler():
 atexit.register(shutdown_handler)
 
 if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 5000))
     # Python 3.14 + Werkzeug on Windows has a WinError 10038 (socket selector bug).
     # use_reloader=False + threaded=False avoids the broken selector paths.
-    app.run(debug=True, use_reloader=False, threaded=False)
+    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False, threaded=False)
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userProfileAPI, createProfileFormData } from '../../services/userProfileAPI';
 import { useAuth } from '../../context/AuthContext';
@@ -146,7 +146,7 @@ const PersonalInfoForm = () => {
                     ? 'text-green-700' 
                     : 'text-orange-700'
                 }`}>
-                  {existingProfile.is_verified ? '✓ Verified Account' : '⏳ Pending Verification'}
+                  {existingProfile.is_verified ? 'Ã¢Å“â€œ Verified Account' : 'Ã¢ÂÂ³ Pending Verification'}
                 </p>
                 <p className="text-xs text-gray-600 mt-1">
                   {existingProfile.is_verified 
@@ -246,7 +246,7 @@ const PersonalInfoForm = () => {
                     name="phone"
                     value={form.phone}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, ''); 
+                      const value = e.target.value.replace(/https://nextgen-ta95.onrender.com/apiD/g, ''); 
                       if (value.length <= 11 && (value === '' || value.startsWith('0'))) {
                         setForm((prev) => ({ ...prev, phone: value }));
                       }
@@ -289,7 +289,7 @@ const PersonalInfoForm = () => {
                 name="cnic"
                 value={form.cnic}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, ''); // remove non-digits
+                  const value = e.target.value.replace(/https://nextgen-ta95.onrender.com/apiD/g, ''); // remove non-digits
                   if (value.length <= 13) {
                     setForm((prev) => ({ ...prev, cnic: value }));
                   }
@@ -318,7 +318,7 @@ const PersonalInfoForm = () => {
                       />
                     ) : existingProfile?.profile_image_url ? (
                       <img
-                        src={`http://localhost:5000/api/file/${existingProfile.profile_image_url.replace(/^\//, '')}`}
+                          src={`https://nextgen-ta95.onrender.com/api/file/${existingProfile.profile_image_url.replace(/^\//, '')}`}
                         alt="Profile"
                         className="w-full h-full object-cover"
                         onError={(e) => {

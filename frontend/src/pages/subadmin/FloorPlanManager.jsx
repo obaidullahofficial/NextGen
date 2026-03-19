@@ -8,7 +8,7 @@ import { useConfirm } from '../../hooks/useConfirm';
 import jsPDF from 'jspdf';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://nextgen-ta95.onrender.com/api';
 
 // Remove the SaveFloorPlanModal component as it's not needed anymore
 
@@ -30,10 +30,10 @@ const FloorPlanCard = ({ plan, onView, onDelete, onDownload, onApproveTemplate, 
           <div className="text-center p-4">
             <div className="text-gray-400 mb-2">
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>🛏️ {plan.bedrooms || 0} BR</div>
-                <div>🛁 {plan.bathrooms || 0} Bath</div>
-                <div>🛋️ {plan.living_rooms || 0} Living</div>
-                <div>🍳 {plan.kitchens || 0} Kitchen</div>
+                <div>ðŸ›ï¸ {plan.bedrooms || 0} BR</div>
+                <div>ðŸ› {plan.bathrooms || 0} Bath</div>
+                <div>ðŸ›‹ï¸ {plan.living_rooms || 0} Living</div>
+                <div>ðŸ³ {plan.kitchens || 0} Kitchen</div>
               </div>
             </div>
           </div>
@@ -42,7 +42,7 @@ const FloorPlanCard = ({ plan, onView, onDelete, onDownload, onApproveTemplate, 
       <div className="p-4">
         <h3 className="font-semibold text-lg text-[#2F3D57] mb-2">{plan.name}</h3>
         <div className="text-sm text-gray-600 mb-3">
-          <div>📐 Plot: {plan.plot_x}' × {plan.plot_y}'</div>
+          <div>ðŸ“ Plot: {plan.plot_x}' Ã— {plan.plot_y}'</div>
           <div className="text-xs text-gray-400 mt-1">
             Created: {new Date(plan.created_at).toLocaleDateString()}
           </div>
@@ -108,7 +108,7 @@ const FloorPlanManager = () => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log('🔄 Page visible, refreshing floor plans...');
+        console.log('ðŸ”„ Page visible, refreshing floor plans...');
         fetchFloorPlans();
       }
     };
@@ -122,32 +122,32 @@ const FloorPlanManager = () => {
     const userId = user?.user_id || user?.id;
     
     if (!user || !userId) {
-      console.warn('⚠️ No user or user_id found', { user });
+      console.warn('âš ï¸ No user or user_id found', { user });
       setLoading(false);
       return;
     }
     
     try {
       setLoading(true);
-      console.log('🔍 Fetching floor plans for subadmin user_id:', userId);
-      console.log('👤 User object:', user);
+      console.log('ðŸ” Fetching floor plans for subadmin user_id:', userId);
+      console.log('ðŸ‘¤ User object:', user);
       
       // Use society endpoint for subadmins to get all floor plans in their society
-      const response = await fetch(`http://localhost:5000/api/floorplan/society/${userId}`, {
+        const response = await fetch(`https://nextgen-ta95.onrender.com/api/floorplan/society/${userId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
       });
       
-      console.log('📡 Response status:', response.status);
+      console.log('ðŸ“¡ Response status:', response.status);
       
       const data = await response.json();
-      console.log('📊 Floor plans data received:', data);
-      console.log('🏠 Number of floor plans:', data.floorplans?.length || 0);
+      console.log('ðŸ“Š Floor plans data received:', data);
+      console.log('ðŸ  Number of floor plans:', data.floorplans?.length || 0);
       
       setFloorPlans(data.floorplans || []);
     } catch (error) {
-      console.error('❌ Error fetching floor plans:', error);
+      console.error('âŒ Error fetching floor plans:', error);
       setFloorPlans([]); // Set empty array on error
     } finally {
       setLoading(false);
@@ -188,7 +188,7 @@ const FloorPlanManager = () => {
         
         pdf.addImage(plan.image_data, 'PNG', 0, 0, pdfWidth, pdfHeight);
         pdf.save(`${plan.name || 'floor-plan'}.pdf`);
-        showNotification('📥 Floor plan downloaded successfully!', 'success');
+        showNotification('ðŸ“¥ Floor plan downloaded successfully!', 'success');
       } else {
         showNotification('No preview image available for download', 'error');
       }
@@ -214,7 +214,7 @@ const FloorPlanManager = () => {
     try {
       const userId = user?.user_id || user?.id;
       await floorplanAPI.deleteFloorplan(planId, userId);
-      showNotification('🗑️ Floor plan deleted successfully!', 'success');
+      showNotification('ðŸ—‘ï¸ Floor plan deleted successfully!', 'success');
       fetchFloorPlans();
     } catch (error) {
       console.error('Error deleting floor plan:', error);
@@ -262,7 +262,7 @@ const FloorPlanManager = () => {
         }
       );
 
-      showNotification('✅ Floor plan approved as template!', 'success');
+      showNotification('âœ… Floor plan approved as template!', 'success');
       setShowTemplateModal(false);
       fetchFloorPlans();
     } catch (error) {
@@ -273,7 +273,7 @@ const FloorPlanManager = () => {
 
   const handleView = (plan) => {
     // Navigate to customization page with floor plan data using navigation state
-    console.log('🔍 Subadmin viewing floor plan:', plan);
+    console.log('ðŸ” Subadmin viewing floor plan:', plan);
     navigate('/floor-plan/customize', {
       state: {
         floorPlan: {

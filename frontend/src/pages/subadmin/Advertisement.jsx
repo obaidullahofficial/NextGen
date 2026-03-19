@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import advertisementAPI from '../../services/advertisementAPI';
 import advertisementPlanAPI from '../../services/advertisementPlanAPI';
@@ -245,14 +245,14 @@ const Advertisement = () => {
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-300 rounded-lg flex items-center gap-3 text-red-800">
-            <span className="text-2xl">⚠</span>
+            <span className="text-2xl">âš </span>
             <span>{error}</span>
           </div>
         )}
 
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-300 rounded-lg flex items-center gap-3 text-green-800">
-            <span className="text-2xl">✓</span>
+            <span className="text-2xl">âœ“</span>
             <span>{success}</span>
           </div>
         )}
@@ -283,7 +283,7 @@ const Advertisement = () => {
                   <div className="flex items-center justify-between">
                     <p className="text-gray-600"><strong className="text-gray-900">{plan.duration_days}</strong> days</p>
                     {selectedPlan?._id === plan._id && (
-                      <span className="bg-[#ED7600] text-white px-3 py-1 rounded-full text-sm font-semibold">✓ Selected</span>
+                      <span className="bg-[#ED7600] text-white px-3 py-1 rounded-full text-sm font-semibold">âœ“ Selected</span>
                     )}
                   </div>
                 </div>
@@ -338,7 +338,7 @@ const Advertisement = () => {
                       setFormData(prev => ({ ...prev, featured_image: '' }));
                     }}
                   >
-                    ✕ Remove
+                    âœ• Remove
                   </button>
                 </div>
               )}
@@ -362,7 +362,7 @@ const Advertisement = () => {
 
             {!selectedPlan && (
               <p className="text-yellow-400 flex items-center gap-2 bg-yellow-500/10 p-3 rounded-lg border border-yellow-500">
-                <span>⚠</span> Please select a plan first
+                <span>âš </span> Please select a plan first
               </p>
             )}
 
@@ -418,7 +418,7 @@ const Advertisement = () => {
                       <td className="py-4 px-4 text-gray-700">{formatDate(ad.end_date)}</td>
                       <td className="py-4 px-4">
                         <div className="flex gap-3 text-gray-600">
-                          <span title="Views">👁 {ad.impressions || 0}</span>
+                          <span title="Views">ðŸ‘ {ad.impressions || 0}</span>
                         </div>
                       </td>
                     </tr>

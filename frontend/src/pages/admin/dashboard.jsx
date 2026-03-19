@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 import useSWR from 'swr';
 import debounce from 'lodash.debounce';
 import React, { useState, useEffect } from "react";
+=======
+﻿import React, { useState, useEffect } from "react";
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
 import { 
   Users, 
   Building, 
@@ -84,7 +88,7 @@ const Dashboard = () => {
       const reviewDate = new Date(review.created_at || review.createdAt);
       const timeDiff = Math.floor((currentTime - reviewDate) / (1000 * 60));
       activities.push({
-        message: `New review (${review.rating}⭐): ${review.comment?.substring(0, 50) || 'Review submitted'}...`,
+        message: `New review (${review.rating}â­): ${review.comment?.substring(0, 50) || 'Review submitted'}...`,
         time: timeDiff < 60 ? `${timeDiff} min ago` : `${Math.floor(timeDiff / 60)} hours ago`,
         user: review.user_email || 'Anonymous User',
         type: 'review',
@@ -271,8 +275,13 @@ const Card = ({ title, value, change, icon: Icon, color, subtitle }) => (
     </div>
     {change && (
       <p style={{ 
+<<<<<<< HEAD
         color: change.startsWith("+") ? "#4CAF50" : change.includes("⭐") ? "#FF9800" : "#666",
         fontSize: "13px",
+=======
+        color: change.startsWith("+") ? "#4CAF50" : change.includes("â­") ? "#FF9800" : "#666",
+        fontSize: "14px",
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
         margin: "8px 0 0 0"
       }}>
         {change}

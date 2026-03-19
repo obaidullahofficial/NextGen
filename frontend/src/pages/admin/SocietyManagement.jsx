@@ -5,7 +5,7 @@ import { Search, Filter, Edit2, Trash2, CheckCircle, RefreshCw, X, Save, MapPin,
 import { getSocietyRegistrations, getPendingSocietyRegistrations } from "../../services/authService";
 import { societyProfileAPI } from "../../services/societyProfileAPI";
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://nextgen-ta95.onrender.com/api';
 
 // API Functions for Society Registration Management
 const societyRegistrationAPI = {
@@ -424,6 +424,7 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
                     <Shield className="mr-2 text-indigo-600" size={20} />
                     Compliance Information
                   </h3>
+<<<<<<< HEAD
                   <div className="bg-indigo-50 p-4 rounded-lg space-y-3">
                     <div>
                       <label className="text-xs font-medium text-indigo-700">NOC Status</label>
@@ -466,6 +467,13 @@ function SocietyDetailsModal({ isOpen, onClose, society }) {
                         NOC is marked as issued, but no document is attached for this request.
                       </p>
                     )}
+=======
+                  <div className="bg-indigo-50 p-4 rounded-lg">
+                    <label className="text-sm font-medium text-indigo-700">NOC Status</label>
+                    <p className="text-indigo-900 font-medium">
+                      {society.noc_issued ? 'âœ… NOC Issued' : 'âŒ NOC Not Issued'}
+                    </p>
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
                   </div>
                 </div>
               </div>
@@ -922,10 +930,10 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
 
   const getAuthorityIcon = (authority) => {
     switch(authority?.toLowerCase()) {
-      case 'lda': return '🏛️';
-      case 'cda': return '🏢';
-      case 'bahria group': return '🏰';
-      default: return '🏛️';
+      case 'lda': return 'ðŸ›ï¸';
+      case 'cda': return 'ðŸ¢';
+      case 'bahria group': return 'ðŸ°';
+      default: return 'ðŸ›ï¸';
     }
   };
 
@@ -1051,7 +1059,7 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
                 className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
                 title="Approve"
               >
-                ✓ Approve
+                âœ“ Approve
               </button>
             )}
             {society.status !== 'rejected' && (
@@ -1060,7 +1068,7 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
                 className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
                 title="Reject"
               >
-                ✗ Reject
+                âœ— Reject
               </button>
             )}
             {society.status !== 'pending' && (
@@ -1069,7 +1077,7 @@ function SocietyRow({ society, onDelete, onEdit, onView, onStatusUpdate, isSelec
                 className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors"
                 title="Mark Pending"
               >
-                ⏳ Pending
+                â³ Pending
               </button>
             )}
           </div>
@@ -1499,25 +1507,25 @@ export default function SocietyVerificationDashboard() {
                 onClick={() => handleBulkStatusUpdate('approved')}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-xs font-medium"
               >
-                ✓ Approve Selected
+                âœ“ Approve Selected
               </button>
               <button
                 onClick={() => handleBulkStatusUpdate('rejected')}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-xs font-medium"
               >
-                ✗ Reject Selected
+                âœ— Reject Selected
               </button>
               <button
                 onClick={() => handleBulkStatusUpdate('pending')}
                 className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200 text-xs font-medium"
               >
-                ⏳ Mark Pending
+                â³ Mark Pending
               </button>
               <button
                 onClick={handleBulkDelete}
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 text-xs font-medium"
               >
-                🗑️ Delete Selected
+                ðŸ—‘ï¸ Delete Selected
               </button>
             </div>
           </div>

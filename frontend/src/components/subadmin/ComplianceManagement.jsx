@@ -12,7 +12,7 @@ import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX, FiCheckCircle, FiAlertCircle } 
 import { getDimensionsForPlotSize, getAvailablePlotSizes } from '../../utils/marlaCalculator';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://nextgen-ta95.onrender.com/api';
 
 const ComplianceManagement = () => {
   const { user } = useAuth();
@@ -369,67 +369,67 @@ const ComplianceManagement = () => {
     
     // Check required fields
     if (!formData.marla_size) {
-      errors.push('📐 Plot Size is required');
+      errors.push('ðŸ“ Plot Size is required');
     }
     
     if (!formData.max_ground_coverage || formData.max_ground_coverage <= 0) {
-      errors.push('🏗️ Maximum Ground Coverage must be greater than 0');
+      errors.push('ðŸ—ï¸ Maximum Ground Coverage must be greater than 0');
     }
     
     if (formData.max_ground_coverage < 30 || formData.max_ground_coverage > 80) {
-      errors.push('🏗️ Ground Coverage must be between 30% and 80%');
+      errors.push('ðŸ—ï¸ Ground Coverage must be between 30% and 80%');
     }
     
     // Validate setbacks
     if (formData.front_setback < 3 || formData.front_setback > 20) {
-      errors.push('📏 Front Setback must be between 3 and 20 feet');
+      errors.push('ðŸ“ Front Setback must be between 3 and 20 feet');
     }
     
     if (formData.rear_setback < 3 || formData.rear_setback > 20) {
-      errors.push('📏 Rear Setback must be between 3 and 20 feet');
+      errors.push('ðŸ“ Rear Setback must be between 3 and 20 feet');
     }
     
     if (formData.side_setback_left < 2 || formData.side_setback_left > 15) {
-      errors.push('📏 Left Side Setback must be between 2 and 15 feet');
+      errors.push('ðŸ“ Left Side Setback must be between 2 and 15 feet');
     }
     
     if (formData.side_setback_right < 2 || formData.side_setback_right > 15) {
-      errors.push('📏 Right Side Setback must be between 2 and 15 feet');
+      errors.push('ðŸ“ Right Side Setback must be between 2 and 15 feet');
     }
     
     // Validate room areas (optional but if provided should be reasonable)
     if (formData.bedroom_area < 0 || formData.bedroom_area > 500) {
-      errors.push('🛏️ Bedroom area must be between 0 and 500 sq ft');
+      errors.push('ðŸ›ï¸ Bedroom area must be between 0 and 500 sq ft');
     }
     
     if (formData.bathroom_area < 0 || formData.bathroom_area > 200) {
-      errors.push('🚿 Bathroom area must be between 0 and 200 sq ft');
+      errors.push('ðŸš¿ Bathroom area must be between 0 and 200 sq ft');
     }
     
     if (formData.livingroom_area < 0 || formData.livingroom_area > 800) {
-      errors.push('🛋️ Living room area must be between 0 and 800 sq ft');
+      errors.push('ðŸ›‹ï¸ Living room area must be between 0 and 800 sq ft');
     }
     
     if (formData.kitchen_area < 0 || formData.kitchen_area > 400) {
-      errors.push('🍳 Kitchen area must be between 0 and 400 sq ft');
+      errors.push('ðŸ³ Kitchen area must be between 0 and 400 sq ft');
     }
     
     if (formData.drawingroom_area < 0 || formData.drawingroom_area > 600) {
-      errors.push('🎨 Drawing room area must be between 0 and 600 sq ft');
+      errors.push('ðŸŽ¨ Drawing room area must be between 0 and 600 sq ft');
     }
     
     if (formData.garden_area < 0 || formData.garden_area > 1000) {
-      errors.push('🌳 Garden area must be between 0 and 1000 sq ft');
+      errors.push('ðŸŒ³ Garden area must be between 0 and 1000 sq ft');
     }
     
     if (formData.carporch_area < 0 || formData.carporch_area > 500) {
-      errors.push('🚗 Car porch area must be between 0 and 500 sq ft');
+      errors.push('ðŸš— Car porch area must be between 0 and 500 sq ft');
     }
 
     // Validate total area coverage
     const breakdown = calculateAreaBreakdown();
     if (breakdown && breakdown.utilizationPercentage > 100) {
-      errors.push('🚨 Total area of all rooms exceeds the maximum allowed ground coverage!');
+      errors.push('ðŸš¨ Total area of all rooms exceeds the maximum allowed ground coverage!');
     }
     
     return errors;
@@ -442,7 +442,7 @@ const ComplianceManagement = () => {
     const validationErrors = validateForm();
     
     if (validationErrors.length > 0) {
-      const errorMessage = 'Please fix the following:\n\n' + validationErrors.join('\n');
+      const errorMessage = 'Please fix the following:https://nextgen-ta95.onrender.com/apinhttps://nextgen-ta95.onrender.com/apin' + validationErrors.join('https://nextgen-ta95.onrender.com/apin');
       showAlert(errorMessage, 'error');
       return;
     }
@@ -451,11 +451,11 @@ const ComplianceManagement = () => {
       if (editingId) {
         const response = await updateCompliance(editingId, formData);
         console.log('[Compliance] Update response:', response);
-        showAlert('Compliance rules updated successfully! ✅', 'success');
+        showAlert('Compliance rules updated successfully! âœ…', 'success');
       } else {
         const response = await createCompliance(formData);
         console.log('[Compliance] Create response:', response);
-        showAlert('Compliance rules created successfully! ✅', 'success');
+        showAlert('Compliance rules created successfully! âœ…', 'success');
       }
       
       setShowForm(false);
@@ -740,7 +740,7 @@ const ComplianceManagement = () => {
                     <strong>{societyPlots.length}</strong> total plots in your society
                     {marlaOptions.length > 0 && (
                       <span className="ml-2">
-                        • <strong>{marlaOptions.length}</strong> unique plot sizes: <span className="font-semibold text-blue-600">{marlaOptions.join(', ')}</span>
+                        â€¢ <strong>{marlaOptions.length}</strong> unique plot sizes: <span className="font-semibold text-blue-600">{marlaOptions.join(', ')}</span>
                       </span>
                     )}
                   </p>
@@ -749,24 +749,24 @@ const ComplianceManagement = () => {
                       <strong>{compliances.length} of {marlaOptions.length}</strong> plot sizes have compliance rules
                       {getAvailablePlotSizes().length > 0 && (
                         <span className="ml-2">
-                          • Pending: <span className="font-semibold text-orange-600">{getAvailablePlotSizes().join(', ')}</span>
+                          â€¢ Pending: <span className="font-semibold text-orange-600">{getAvailablePlotSizes().join(', ')}</span>
                         </span>
                       )}
                       {getAvailablePlotSizes().length === 0 && marlaOptions.length > 0 && (
                         <span className="ml-2 text-green-600 font-semibold">
-                          • All configured! ✅
+                          â€¢ All configured! âœ…
                         </span>
                       )}
                     </p>
                   )}
                   {compliances.length === 0 && marlaOptions.length > 0 && (
                     <p className="text-sm text-orange-600 font-medium">
-                      ⚠️ No compliance rules configured yet. Click "Add Compliance Rules" to get started.
+                      âš ï¸ No compliance rules configured yet. Click "Add Compliance Rules" to get started.
                     </p>
                   )}
                   {marlaOptions.length === 0 && (
                     <p className="text-sm text-red-600 font-medium">
-                      ⚠️ No plots found in your society. Please add plots in Plot Management first.
+                      âš ï¸ No plots found in your society. Please add plots in Plot Management first.
                     </p>
                   )}
                 </>
@@ -798,7 +798,7 @@ const ComplianceManagement = () => {
             {/* Plot Size */}
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <label className="block text-sm font-semibold text-gray-800 mb-2">
-                📐 Plot Size *
+                ðŸ“ Plot Size *
               </label>
               <select
                 name="marla_size"
@@ -815,17 +815,17 @@ const ComplianceManagement = () => {
               </select>
               {!editingId && getAvailablePlotSizes().length === 0 && (
                 <p className="text-xs text-red-600 mt-2 font-medium">
-                  ⚠️ All plot sizes have been configured. Edit existing rules to make changes.
+                  âš ï¸ All plot sizes have been configured. Edit existing rules to make changes.
                 </p>
               )}
               {!editingId && getAvailablePlotSizes().length > 0 && (
                 <p className="text-xs text-blue-700 mt-2 font-medium">
-                  ✨ Auto-fills recommended values based on Pakistani building standards
+                  âœ¨ Auto-fills recommended values based on Pakistani building standards
                 </p>
               )}
               {editingId && (
                 <p className="text-xs text-gray-500 mt-2 font-medium">
-                  📝 Editing existing compliance rules for this plot size
+                  ðŸ“ Editing existing compliance rules for this plot size
                 </p>
               )}
             </div>
@@ -834,7 +834,11 @@ const ComplianceManagement = () => {
             {formData.marla_size && (
               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                 <h3 className="text-sm font-semibold text-gray-800 mb-3">
+<<<<<<< HEAD
                   📐 Plot Size Information
+=======
+                  ðŸ“ Plot Dimensions (Auto-filled)
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -860,11 +864,16 @@ const ComplianceManagement = () => {
                     />
                   </div>
                 </div>
+<<<<<<< HEAD
                 <p className="text-xs text-green-700 mt-3 font-medium">
                   ✅ These compliance rules apply to <strong>ALL {formData.marla_size} plots</strong> in your society, 
                   regardless of their specific dimensions (X, Y). 
                   If society wants to change plot dimensions, the total area ({formData.total_plot_area} sq ft) remains constant, 
                   and the same compliance rules will apply automatically.
+=======
+                <p className="text-xs text-green-700 mt-2 font-medium">
+                  âœ… These dimensions are automatically filled based on standard {formData.marla_size} specifications
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
                 </p>
               </div>
             )}
@@ -872,7 +881,7 @@ const ComplianceManagement = () => {
             {/* Room Requirements */}
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <h3 className="text-sm font-semibold text-gray-800 mb-3">
-                🏠 Room Count Requirements
+                ðŸ  Room Count Requirements
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
@@ -968,21 +977,21 @@ const ComplianceManagement = () => {
                 </div>
               </div>
               <p className="text-xs text-blue-700 mt-2">
-                ℹ️ Specify minimum room count requirements for this plot size
+                â„¹ï¸ Specify minimum room count requirements for this plot size
               </p>
             </div>
 
             {/* Room Area Requirements */}
             <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
               <h3 className="text-sm font-semibold text-gray-800 mb-3">
-                📐 Room Area Requirements
+                ðŸ“ Room Area Requirements
               </h3>
               
               {/* Bedrooms */}
               {formData.bedrooms > 0 && (
                 <div className="bg-white rounded-lg p-4 mb-3 border border-indigo-200">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-800">🛏️ Bedrooms ({formData.bedrooms})</h4>
+                    <h4 className="font-semibold text-gray-800">ðŸ›ï¸ Bedrooms ({formData.bedrooms})</h4>
                     {calculateAreaBreakdown()?.roomPercentages && (
                       <span className="text-sm font-bold text-indigo-600">
                         Total: {calculateAreaBreakdown().roomPercentages.bedrooms.toFixed(1)}%
@@ -1026,7 +1035,7 @@ const ComplianceManagement = () => {
               {formData.bathrooms > 0 && (
                 <div className="bg-white rounded-lg p-4 mb-3 border border-indigo-200">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-800">🚿 Bathrooms ({formData.bathrooms})</h4>
+                    <h4 className="font-semibold text-gray-800">ðŸš¿ Bathrooms ({formData.bathrooms})</h4>
                     {calculateAreaBreakdown()?.roomPercentages && (
                       <span className="text-sm font-bold text-indigo-600">
                         Total: {calculateAreaBreakdown().roomPercentages.bathrooms.toFixed(1)}%
@@ -1070,7 +1079,7 @@ const ComplianceManagement = () => {
               {formData.livingRooms > 0 && (
                 <div className="bg-white rounded-lg p-4 mb-3 border border-indigo-200">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-800">🛋️ Living Rooms ({formData.livingRooms})</h4>
+                    <h4 className="font-semibold text-gray-800">ðŸ›‹ï¸ Living Rooms ({formData.livingRooms})</h4>
                     {calculateAreaBreakdown()?.roomPercentages && (
                       <span className="text-sm font-bold text-indigo-600">
                         Total: {calculateAreaBreakdown().roomPercentages.livingRooms.toFixed(1)}%
@@ -1114,7 +1123,7 @@ const ComplianceManagement = () => {
               {formData.kitchens > 0 && (
                 <div className="bg-white rounded-lg p-4 mb-3 border border-indigo-200">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-800">🍳 Kitchens ({formData.kitchens})</h4>
+                    <h4 className="font-semibold text-gray-800">ðŸ³ Kitchens ({formData.kitchens})</h4>
                     {calculateAreaBreakdown()?.roomPercentages && (
                       <span className="text-sm font-bold text-indigo-600">
                         Total: {calculateAreaBreakdown().roomPercentages.kitchens.toFixed(1)}%
@@ -1158,7 +1167,7 @@ const ComplianceManagement = () => {
               {formData.drawingrooms > 0 && (
                 <div className="bg-white rounded-lg p-4 mb-3 border border-indigo-200">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-800">🎨 Drawing Rooms ({formData.drawingrooms})</h4>
+                    <h4 className="font-semibold text-gray-800">ðŸŽ¨ Drawing Rooms ({formData.drawingrooms})</h4>
                     {calculateAreaBreakdown()?.roomPercentages && (
                       <span className="text-sm font-bold text-indigo-600">
                         Total: {calculateAreaBreakdown().roomPercentages.drawingrooms.toFixed(1)}%
@@ -1202,7 +1211,7 @@ const ComplianceManagement = () => {
               {formData.carporches > 0 && (
                 <div className="bg-white rounded-lg p-4 mb-3 border border-indigo-200">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-800">🚗 Car Porches ({formData.carporches})</h4>
+                    <h4 className="font-semibold text-gray-800">ðŸš— Car Porches ({formData.carporches})</h4>
                     {calculateAreaBreakdown()?.roomPercentages && (
                       <span className="text-sm font-bold text-indigo-600">
                         Total: {calculateAreaBreakdown().roomPercentages.carporches.toFixed(1)}%
@@ -1246,7 +1255,7 @@ const ComplianceManagement = () => {
               {formData.gardens > 0 && (
                 <div className="bg-white rounded-lg p-4 mb-3 border border-indigo-200">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-800">🌳 Gardens ({formData.gardens})</h4>
+                    <h4 className="font-semibold text-gray-800">ðŸŒ³ Gardens ({formData.gardens})</h4>
                     {calculateAreaBreakdown()?.roomPercentages && (
                       <span className="text-sm font-bold text-indigo-600">
                         Total: {calculateAreaBreakdown().roomPercentages.gardens.toFixed(1)}%
@@ -1287,14 +1296,14 @@ const ComplianceManagement = () => {
               )}
 
               <p className="text-xs text-indigo-700 mt-2">
-                ℹ️ Use sliders to adjust room areas. Percentages update automatically based on ground coverage.
+                â„¹ï¸ Use sliders to adjust room areas. Percentages update automatically based on ground coverage.
               </p>
             </div>
 
             {/* Room Connections */}
             <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
               <h3 className="text-sm font-semibold text-gray-800 mb-3">
-                🔗 Room Connection Requirements
+                ðŸ”— Room Connection Requirements
               </h3>
               <div className="space-y-3">
                 {formData.roomConnections.length === 0 && getSelectedRooms().length >= 2 && (
@@ -1306,7 +1315,7 @@ const ComplianceManagement = () => {
                 
                 {getSelectedRooms().length < 2 && (
                   <div className="text-center py-4 text-amber-600 bg-amber-50 rounded-md">
-                    <p className="text-sm font-medium">⚠️ Need at least 2 rooms to create connections</p>
+                    <p className="text-sm font-medium">âš ï¸ Need at least 2 rooms to create connections</p>
                     <p className="text-xs mt-1">Add room counts above to enable connections</p>
                   </div>
                 )}
@@ -1325,7 +1334,7 @@ const ComplianceManagement = () => {
                         </option>
                       ))}
                     </select>
-                    <span className="text-gray-500">→</span>
+                    <span className="text-gray-500">â†’</span>
                     <select
                       value={connection.to}
                       onChange={(e) => updateRoomConnection(index, 'to', e.target.value)}
@@ -1362,7 +1371,7 @@ const ComplianceManagement = () => {
                 </button>
               </div>
               <div className="flex items-center justify-between text-xs text-purple-700 mt-2">
-                <span>ℹ️ Define which rooms must be connected (for doorways/passages)</span>
+                <span>â„¹ï¸ Define which rooms must be connected (for doorways/passages)</span>
                 {getSelectedRooms().length >= 2 && (
                   <span className="font-medium">
                     Available: {getSelectedRooms().length} rooms | 
@@ -1378,7 +1387,7 @@ const ComplianceManagement = () => {
               return areaBreakdown && (
                 <div className="bg-gradient-to-r from-teal-50 to-cyan-50 p-6 rounded-lg border border-teal-200">
                   <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    📊 Area Utilization Analysis
+                    ðŸ“Š Area Utilization Analysis
                   </h3>
                   
                   {/* Summary Cards */}
@@ -1403,7 +1412,7 @@ const ComplianceManagement = () => {
                       </div>
                       <div className="text-xs text-gray-600 font-medium">Remaining Area (sq ft)</div>
                       {areaBreakdown.remainingArea < 0 && (
-                        <div className="text-xs text-red-600 font-medium">⚠️ Over capacity!</div>
+                        <div className="text-xs text-red-600 font-medium">âš ï¸ Over capacity!</div>
                       )}
                     </div>
                   </div>
@@ -1415,13 +1424,13 @@ const ComplianceManagement = () => {
                       {Object.entries(areaBreakdown.roomAreas).map(([roomType, area]) => {
                         if (area === 0) return null;
                         const roomNames = {
-                          bedrooms: '🛏️ Bedrooms',
-                          bathrooms: '🚿 Bathrooms', 
-                          livingRooms: '🛋️ Living Rooms',
-                          kitchens: '🍴 Kitchens',
-                          drawingrooms: '🎨 Drawing Rooms',
-                          carporches: '🚗 Car Porches',
-                          gardens: '🌳 Gardens'
+                          bedrooms: 'ðŸ›ï¸ Bedrooms',
+                          bathrooms: 'ðŸš¿ Bathrooms', 
+                          livingRooms: 'ðŸ›‹ï¸ Living Rooms',
+                          kitchens: 'ðŸ´ Kitchens',
+                          drawingrooms: 'ðŸŽ¨ Drawing Rooms',
+                          carporches: 'ðŸš— Car Porches',
+                          gardens: 'ðŸŒ³ Gardens'
                         };
                         return (
                           <div key={roomType} className="flex justify-between items-center p-2 bg-gray-50 rounded">
@@ -1437,7 +1446,7 @@ const ComplianceManagement = () => {
                   <div className="bg-white p-4 rounded-lg border border-gray-200 mt-4">
                     <h4 className="font-semibold text-gray-700 mb-2">Setback Area Analysis:</h4>
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">📏 Total Setback Area:</span>
+                      <span className="text-gray-600">ðŸ“ Total Setback Area:</span>
                       <span className="font-bold text-indigo-600">{areaBreakdown.setbackArea.toLocaleString()} sq ft</span>
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
@@ -1449,7 +1458,7 @@ const ComplianceManagement = () => {
                   {areaBreakdown.remainingArea < 0 && (
                     <div className="bg-red-50 border border-red-200 p-4 rounded-lg mt-4">
                       <div className="flex items-center gap-2 text-red-700 font-medium">
-                        ⚠️ Area Exceeded!
+                        âš ï¸ Area Exceeded!
                       </div>
                       <div className="text-sm text-red-600 mt-1">
                         Room allocations exceed available buildable area by {Math.abs(areaBreakdown.remainingArea).toLocaleString()} sq ft. 
@@ -1461,7 +1470,7 @@ const ComplianceManagement = () => {
                   {areaBreakdown.remainingArea > 0 && areaBreakdown.utilizationPercentage < 50 && (
                     <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mt-4">
                       <div className="flex items-center gap-2 text-blue-700 font-medium">
-                        💡 Optimization Opportunity
+                        ðŸ’¡ Optimization Opportunity
                       </div>
                       <div className="text-sm text-blue-600 mt-1">
                         You're using only {areaBreakdown.utilizationPercentage.toFixed(1)}% of buildable area. 
@@ -1476,7 +1485,7 @@ const ComplianceManagement = () => {
             {/* Ground Floor Coverage */}
             <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-200">
               <label className="block text-sm font-semibold text-gray-800 mb-2">
-                🏗️ Maximum Ground Coverage (%) *
+                ðŸ—ï¸ Maximum Ground Coverage (%) *
               </label>
               <input
                 type="number"
@@ -1490,7 +1499,7 @@ const ComplianceManagement = () => {
                 className="w-full px-4 py-3 border-2 border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-lg font-semibold"
               />
               <p className="text-xs text-gray-600 mt-2">
-                💡 <strong>Pakistani Standards:</strong> 5 Marla=75%, 7 Marla=72%, 10 Marla=70%, 1 Kanal=65%, 2 Kanal=60%
+                ðŸ’¡ <strong>Pakistani Standards:</strong> 5 Marla=75%, 7 Marla=72%, 10 Marla=70%, 1 Kanal=65%, 2 Kanal=60%
               </p>
               <p className="text-xs text-gray-500 mt-1">
                 This ensures mandatory open spaces for setbacks, garden, and parking
@@ -1500,12 +1509,12 @@ const ComplianceManagement = () => {
             {/* Mandatory Setbacks */}
             <div className="border-t pt-6">
               <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-                📏 Mandatory Setback Requirements (feet)
+                ðŸ“ Mandatory Setback Requirements (feet)
               </h3>
               <p className="text-sm text-gray-600 mb-4">Empty space that must be left from plot boundaries</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">🔼 Front *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">ðŸ”¼ Front *</label>
                   <input
                     type="number"
                     name="front_setback"
@@ -1518,7 +1527,7 @@ const ComplianceManagement = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">🔽 Rear *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">ðŸ”½ Rear *</label>
                   <input
                     type="number"
                     name="rear_setback"
@@ -1531,7 +1540,7 @@ const ComplianceManagement = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">◀️ Left Side *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">â—€ï¸ Left Side *</label>
                   <input
                     type="number"
                     name="side_setback_left"
@@ -1544,7 +1553,7 @@ const ComplianceManagement = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">▶️ Right Side *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">â–¶ï¸ Right Side *</label>
                   <input
                     type="number"
                     name="side_setback_right"
@@ -1679,42 +1688,42 @@ const ComplianceManagement = () => {
 
             <div className="space-y-3 text-sm">
               <div className="flex justify-between items-center p-2 bg-orange-50 rounded">
-                <span className="text-gray-700 font-medium">🏗️ Ground Coverage:</span>
+                <span className="text-gray-700 font-medium">ðŸ—ï¸ Ground Coverage:</span>
                 <span className="font-bold text-orange-600">{compliance.max_ground_coverage}%</span>
               </div>
               
               {/* Room Count Requirements */}
               {(compliance.bedrooms > 0 || compliance.bathrooms > 0 || compliance.livingRooms > 0 || compliance.kitchens > 0) && (
                 <div className="p-2 bg-purple-50 rounded">
-                  <div className="text-gray-600 font-medium mb-2">🏠 Room Requirements:</div>
+                  <div className="text-gray-600 font-medium mb-2">ðŸ  Room Requirements:</div>
                   <div className="grid grid-cols-2 gap-1 text-xs">
                     {compliance.bedrooms > 0 && (
                       <div className="flex justify-between">
-                        <span>🛏️ Bedrooms:</span>
+                        <span>ðŸ›ï¸ Bedrooms:</span>
                         <span className="font-bold text-purple-600">{compliance.bedrooms} ({compliance.bedroom_area || 0} sq ft each)</span>
                       </div>
                     )}
                     {compliance.bathrooms > 0 && (
                       <div className="flex justify-between">
-                        <span>🚿 Bathrooms:</span>
+                        <span>ðŸš¿ Bathrooms:</span>
                         <span className="font-bold text-purple-600">{compliance.bathrooms} ({compliance.bathroom_area || 0} sq ft each)</span>
                       </div>
                     )}
                     {compliance.livingRooms > 0 && (
                       <div className="flex justify-between">
-                        <span>🛋️ Living Rooms:</span>
+                        <span>ðŸ›‹ï¸ Living Rooms:</span>
                         <span className="font-bold text-purple-600">{compliance.livingRooms} ({compliance.livingroom_area || 0} sq ft each)</span>
                       </div>
                     )}
                     {compliance.kitchens > 0 && (
                       <div className="flex justify-between">
-                        <span>🍴 Kitchens:</span>
+                        <span>ðŸ´ Kitchens:</span>
                         <span className="font-bold text-purple-600">{compliance.kitchens} ({compliance.kitchen_area || 0} sq ft each)</span>
                       </div>
                     )}
                     {compliance.drawingrooms > 0 && (
                       <div className="flex justify-between">
-                        <span>🎨 Drawing Rooms:</span>
+                        <span>ðŸŽ¨ Drawing Rooms:</span>
                         <span className="font-bold text-purple-600">{compliance.drawingrooms} ({compliance.drawingroom_area || 0} sq ft each)</span>
                       </div>
                     )}
@@ -1725,17 +1734,17 @@ const ComplianceManagement = () => {
               {/* Outdoor Spaces */}
               {(compliance.gardens > 0 || compliance.carporches > 0) && (
                 <div className="p-2 bg-green-50 rounded">
-                  <div className="text-gray-600 font-medium mb-2">🌿 Outdoor Spaces:</div>
+                  <div className="text-gray-600 font-medium mb-2">ðŸŒ¿ Outdoor Spaces:</div>
                   <div className="space-y-1 text-xs">
                     {compliance.gardens > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-gray-700">🌳 Gardens:</span>
+                        <span className="text-gray-700">ðŸŒ³ Gardens:</span>
                         <span className="font-bold text-green-600">{compliance.gardens} ({compliance.garden_area || 0} sq ft each)</span>
                       </div>
                     )}
                     {compliance.carporches > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-gray-700">🚗 Car Porches:</span>
+                        <span className="text-gray-700">ðŸš— Car Porches:</span>
                         <span className="font-bold text-blue-600">{compliance.carporches} ({compliance.carporch_area || 0} sq ft each)</span>
                       </div>
                     )}
@@ -1746,11 +1755,11 @@ const ComplianceManagement = () => {
               {/* Room Connections */}
               {compliance.roomConnections && compliance.roomConnections.length > 0 && (
                 <div className="p-2 bg-indigo-50 rounded">
-                  <div className="text-gray-600 font-medium mb-2">🔗 Room Connections:</div>
+                  <div className="text-gray-600 font-medium mb-2">ðŸ”— Room Connections:</div>
                   <div className="space-y-1 text-xs">
                     {compliance.roomConnections.slice(0, 3).map((connection, index) => (
                       <div key={index} className="text-indigo-600">
-                        {connection.from?.replace('-', ' ').toUpperCase()} → {connection.to?.replace('-', ' ').toUpperCase()}
+                        {connection.from?.replace('-', ' ').toUpperCase()} â†’ {connection.to?.replace('-', ' ').toUpperCase()}
                       </div>
                     ))}
                     {compliance.roomConnections.length > 3 && (
@@ -1763,7 +1772,7 @@ const ComplianceManagement = () => {
               )}
               
               <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                <span className="text-gray-700 font-medium">📏 Setbacks:</span>
+                <span className="text-gray-700 font-medium">ðŸ“ Setbacks:</span>
                 <span className="font-bold text-gray-700">{compliance.front_setback}' / {compliance.rear_setback}' / {compliance.side_setback_left}'</span>
               </div>
               

@@ -1,4 +1,4 @@
-// Centralized service exports for the NextGenArchitect application
+﻿// Centralized service exports for the NextGenArchitect application
 // This file provides all API functions organized by domain/model
 
 // Base API utilities (for advanced usage)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSocietyProfile } from '../../services/apiService';
 import { FiMapPin, FiHome, FiDollarSign, FiEdit2, FiCheckCircle, FiAlertCircle, FiBuilding, FiClock } from 'react-icons/fi';
@@ -194,7 +194,7 @@ const SocietyProfile = () => {
                       )}
                     </p>
                     <p className="text-xs text-gray-500 ml-8 sm:ml-10 mt-1">
-                      💡 This name is locked from your approved registration and ensures security.
+                      ðŸ’¡ This name is locked from your approved registration and ensures security.
                     </p>
                   </div>
                   

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import { FaHome, FaBuilding, FaBook, FaMapMarkerAlt, FaCube, FaPhone, FaEnvelope, FaMapPin } from 'react-icons/fa';
 import { HiOutlineBuildingLibrary } from 'react-icons/hi2';
 import logo from '../../assets/logo2.png';
@@ -72,7 +72,7 @@ const Footer = () => {
 
         {/* Copyright */}
         <div className="border-t border-[#2F3D57] mt-8 pt-8 text-center text-gray-400">
-          <p>© {new Date().getFullYear()} NextGenArchitect. All rights reserved.</p>
+          <p>Â© {new Date().getFullYear()} NextGenArchitect. All rights reserved.</p>
         </div>
       </div>
     </footer>

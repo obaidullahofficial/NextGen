@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import ReactFlow, {
   addEdge,
   MiniMap,
   Controls,
   Background,
-} from "reactflow"; // ✅ updated import
-import "reactflow/dist/style.css"; // ✅ required for styles
+} from "reactflow"; // âœ… updated import
+import "reactflow/dist/style.css"; // âœ… required for styles
 
 const initialNodes = [];
 const initialEdges = [];

@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 import useSWR from 'swr';
 import debounce from 'lodash.debounce';
 import React, { useState, useRef } from "react";
+=======
+﻿import React, { useState, useRef } from "react";
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import {
@@ -470,13 +474,13 @@ const ReportManagement = () => {
       addKeyValue('Total Reviews', safeReviews.length, true);
       addKeyValue('Average Rating', `${avgRating} / 5.0`);
       addKeyValue('Positive Reviews (4+ stars)', safeReviews.filter(r => (r.rating || 0) >= 4).length);
-      addKeyValue('Negative Reviews (≤2 stars)', safeReviews.filter(r => (r.rating || 0) <= 2).length);
+      addKeyValue('Negative Reviews (â‰¤2 stars)', safeReviews.filter(r => (r.rating || 0) <= 2).length);
       
       yPosition += 5;
 
       // Rating distribution chart
       const ratingDist = [1, 2, 3, 4, 5].map(rating => ({
-        label: `${rating}★`,
+        label: `${rating}â˜…`,
         value: safeReviews.filter(r => Math.round(r.rating || 0) === rating).length
       }));
 
@@ -1019,9 +1023,15 @@ const ReportManagement = () => {
                   <div className="text-xs text-blue-600 mt-1">{(overviewStats.societyApprovalRate || 0).toFixed(0)}% approved</div>
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
+<<<<<<< HEAD
                   <div className="text-xl font-bold text-gray-900">{overviewStats.totalReviews.toLocaleString()}</div>
                   <div className="text-xs text-gray-600 mt-1">Reviews</div>
                   <div className="text-xs text-yellow-600 mt-1">{(overviewStats.avgRating || 0).toFixed(1)} ⭐ average</div>
+=======
+                  <div className="text-2xl font-bold text-gray-900">{overviewStats.totalReviews.toLocaleString()}</div>
+                  <div className="text-sm text-gray-600 mt-1">Reviews</div>
+                  <div className="text-xs text-yellow-600 mt-1">{(overviewStats.avgRating || 0).toFixed(1)} â­ average</div>
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
                 </div>
                 <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
                   <div className="text-xl font-bold text-gray-900">{overviewStats.totalPlots.toLocaleString()}</div>
@@ -1235,9 +1245,9 @@ const ReportManagement = () => {
                 <h3 className="text-base font-semibold text-gray-900 mb-6">Review Sentiment</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={[
-                    { label: "Positive (4-5★)", count: overviewStats.positiveReviews },
-                    { label: "Neutral (3★)", count: safeReviews.filter(r => (Number(r.rating) || 0) === 3).length },
-                    { label: "Negative (1-2★)", count: overviewStats.negativeReviews }
+                    { label: "Positive (4-5â˜…)", count: overviewStats.positiveReviews },
+                    { label: "Neutral (3â˜…)", count: safeReviews.filter(r => (Number(r.rating) || 0) === 3).length },
+                    { label: "Negative (1-2â˜…)", count: overviewStats.negativeReviews }
                   ]}>
                     <XAxis dataKey="label" />
                     <YAxis />
@@ -1252,7 +1262,11 @@ const ReportManagement = () => {
                 <div className="space-y-4">
                   <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-amber-50 rounded-xl">
                     <span className="font-medium text-gray-700">Average Rating</span>
+<<<<<<< HEAD
                     <span className="text-lg font-bold text-amber-600">{(overviewStats.avgRating || 0).toFixed(1)} ⭐</span>
+=======
+                    <span className="text-xl font-bold text-amber-600">{(overviewStats.avgRating || 0).toFixed(1)} â­</span>
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
                   </div>
                   <div className="flex flex-wrap justify-between items-center gap-4 p-4 bg-emerald-50 rounded-xl">
                     <span className="font-medium text-gray-700">Total Reviews</span>

@@ -8,7 +8,7 @@ import plotImage from '../../assets/plot.png';
 import Navbar from '../../components/user/Navbar';
 import Footer from '../../components/user/Footer';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://nextgen-ta95.onrender.com/api';
 
 // Helper to get auth headers
 const getAuthHeaders = () => {
@@ -193,7 +193,7 @@ const PlotDetail = () => {
     location: 'Bahria Town, Islamabad',
     description: [
       'Located in Bahria Enclave Sector P',
-      '10 Marla Residential Plot – Street 13',
+      '10 Marla Residential Plot â€“ Street 13',
       'Possession & Utility Charges Paid',
       'Beautiful View & Prime Location',
       'Reasonable Price & Investment Opportunity',
@@ -338,6 +338,7 @@ const PlotDetail = () => {
         
         {/* Debug indicator */}
         {!plotData && (
+<<<<<<< HEAD
            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 flex items-center gap-3">
              <span className="text-xl">⚠️</span> 
              <span className="font-medium">Displaying sample data - unable to load plot details from server.</span>
@@ -424,6 +425,34 @@ const PlotDetail = () => {
                   </div>
                 </div>
               </div>
+=======
+          <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 rounded text-sm text-yellow-800">
+            âš ï¸ Displaying sample data - unable to load plot details
+          </div>
+        )}
+        
+        <button 
+          onClick={() => navigate(-1)} 
+          className="mb-6 flex items-center text-[#ED7600] hover:text-[#d46000]"
+        >
+          <span className="mr-2">â†</span> Back to Plots
+        </button>
+        
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Left Column */}
+          <div className="md:col-span-2 bg-[#F9FAFB] rounded-xl shadow-md p-6 space-y-6">
+            {/* Image */}
+            <div className="h-[280px] rounded-md overflow-hidden bg-gray-200">
+              <img
+                src={displayData.image || plotImage}
+                alt={`Plot ${displayData.plot_number || plotId}`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = plotImage;
+                }}
+              />
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
             </div>
 
             {/* Description Card */}
@@ -442,6 +471,7 @@ const PlotDetail = () => {
                   ))}
                 </ul>
               </div>
+<<<<<<< HEAD
             )}
 
             {/* Compliance Rules Dashboard Style */}
@@ -449,6 +479,32 @@ const PlotDetail = () => {
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="bg-[#2F3D57] p-5 text-white flex items-center gap-3">
                   <FiShield className="text-orange-400 text-2xl" />
+=======
+              <div className="text-sm text-gray-600 space-y-4">
+                <div>
+                  <p className="uppercase text-xs font-medium">Status</p>
+                  <p className={`font-semibold text-base ${
+                    displayData.status === 'Available' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {displayData.status}
+                  </p>
+                </div>
+                <div>
+                  <p className="uppercase text-xs font-medium">Type</p>
+                  <p className="font-semibold text-base text-[#2F3D57]">{displayData.type}</p>
+                </div>
+                <div>
+                  <p className="uppercase text-xs font-medium">Plot Size</p>
+                  <p className="font-semibold text-base text-[#2F3D57]">{displayData.marla_size || displayData.area}</p>
+                </div>
+                <div>
+                  <p className="uppercase text-xs font-medium">Dimensions</p>
+                  <p className="font-semibold text-base text-[#2F3D57]">
+                    {displayData.dimension_x} ft Ã— {displayData.dimension_y} ft
+                  </p>
+                </div>
+                {societyData && (
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
                   <div>
                     <h3 className="text-lg font-semibold">Building Regulations</h3>
                     <p className="text-xs text-gray-300 mt-0.5">Official construction constraints for {complianceRules.marla_size} plots</p>
@@ -552,7 +608,105 @@ const PlotDetail = () => {
               </div>
             </div>
 
+<<<<<<< HEAD
             {/* Society Details Card */}
+=======
+            {/* Description */}
+            <div className="bg-white rounded-lg p-5 text-[#2F3D57]">
+              <h3 className="text-[#ED7600] text-xl font-semibold mb-2">Description</h3>
+              <ul className="text-sm space-y-2 list-disc list-inside leading-6">
+                {(displayData.description || []).map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Compliance Rules Section */}
+            {complianceRules && (
+              <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-5 border-l-4 border-orange-500">
+                <div className="flex items-center gap-2 mb-4">
+                  <FiShield className="text-orange-600 text-2xl" />
+                  <h3 className="text-xl font-semibold text-gray-800">Building Guidelines & Instructions</h3>
+                </div>
+                <p className="text-sm text-gray-600 mb-6">
+                  Official building compliance requirements for <span className="font-bold text-orange-600">{complianceRules.marla_size}</span> plots in this society
+                </p>
+                
+                {/* Building Instructions */}
+                <div className="bg-white rounded-lg p-5 mb-4">
+                  <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <HiOutlineDocumentText className="text-orange-600" />
+                    Instructions for Building Construction
+                  </h4>
+                  <ul className="space-y-2 text-sm leading-relaxed">
+                    {generateComplianceInstructions(complianceRules).map((instruction, index) => (
+                      <li key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-orange-50 transition-colors">
+                        <span className="text-orange-600 flex-shrink-0 mt-1">â€¢</span>
+                        <div className="flex-1">
+                          <p className="text-gray-700 leading-relaxed">
+                            {instruction.split('**').map((part, i) => 
+                              i % 2 === 1 ? (
+                                <span key={i} className="font-bold text-orange-600">{part}</span>
+                              ) : (
+                                part
+                              )
+                            )}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Quick Reference Cards */}
+                <div className="bg-white rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <FiCheckCircle className="text-green-600" />
+                    Quick Reference - Key Requirements
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 text-xs">
+                    <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+                      <p className="text-orange-600 font-semibold mb-1">Ground Coverage</p>
+                      <p className="text-gray-700 font-bold">{complianceRules.max_ground_coverage}% Max</p>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                      <p className="text-blue-600 font-semibold mb-1">Front Setback</p>
+                      <p className="text-gray-700 font-bold">{complianceRules.front_setback}' Min</p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                      <p className="text-green-600 font-semibold mb-1">Rear Setback</p>
+                      <p className="text-gray-700 font-bold">{complianceRules.rear_setback}' Min</p>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                      <p className="text-purple-600 font-semibold mb-1">Building Type</p>
+                      <p className="text-gray-700 font-bold">{complianceRules.building_type_allowed}</p>
+                    </div>
+                    {(complianceRules.bedrooms > 0 || complianceRules.bathrooms > 0) && (
+                      <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
+                        <p className="text-indigo-600 font-semibold mb-1">Rooms Required</p>
+                        <p className="text-gray-700 font-bold">
+                          {[complianceRules.bedrooms > 0 && `${complianceRules.bedrooms}BR`, 
+                            complianceRules.bathrooms > 0 && `${complianceRules.bathrooms}BA`
+                          ].filter(Boolean).join(', ')}
+                        </p>
+                      </div>
+                    )}
+                    {complianceRules.roomConnections && complianceRules.roomConnections.length > 0 && (
+                      <div className="bg-pink-50 rounded-lg p-3 border border-pink-200">
+                        <p className="text-pink-600 font-semibold mb-1">Connections</p>
+                        <p className="text-gray-700 font-bold">{complianceRules.roomConnections.length} Rules</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column - Sidebar */}
+          <div className="space-y-6">
+            {/* Society Contact */}
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
             {societyData && (
               <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
                 <h3 className="text-base font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">

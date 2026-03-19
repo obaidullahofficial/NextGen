@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
@@ -22,7 +22,7 @@ const EmailVerification = () => {
     setMessage('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/verify-email', {
+      const response = await axios.post('https://nextgen-ta95.onrender.com/api/verify-email', {
         code: codeToVerify || code
       });
 
@@ -81,7 +81,7 @@ const EmailVerification = () => {
     setMessage('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/resend-verification-email', {
+      const response = await axios.post('https://nextgen-ta95.onrender.com/api/resend-verification-email', {
         email: email
       });
 
@@ -100,7 +100,7 @@ const EmailVerification = () => {
     return (
       <div style={styles.container}>
         <div style={styles.card}>
-          <div style={styles.loader}>⏳</div>
+          <div style={styles.loader}>Ã¢ÂÂ³</div>
           <h2 style={styles.title}>Verifying Your Email...</h2>
           <p style={styles.text}>Please wait while we verify your email address.</p>
         </div>
@@ -112,7 +112,7 @@ const EmailVerification = () => {
     return (
       <div style={styles.container}>
         <div style={styles.card}>
-          <div style={styles.successIcon}>✅</div>
+          <div style={styles.successIcon}>Ã¢Å“â€¦</div>
           <h2 style={styles.title}>Email Verified Successfully!</h2>
           <p style={styles.successText}>{message}</p>
           <p style={styles.text}>
@@ -139,14 +139,14 @@ const EmailVerification = () => {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.header}>
-          <div style={styles.logo}>📧</div>
+          <div style={styles.logo}>Ã°Å¸â€œÂ§</div>
           <h1 style={styles.title}>Email Verification</h1>
           <p style={styles.subtitle}>NextGen Architect</p>
         </div>
 
         {error && (
           <div style={styles.errorBox}>
-            <span style={styles.errorIcon}>❌</span>
+            <span style={styles.errorIcon}>Ã¢ÂÅ’</span>
             <div>
               <strong>Verification Failed</strong>
               <p style={styles.errorText}>{error}</p>
@@ -156,7 +156,7 @@ const EmailVerification = () => {
 
         {message && !error && (
           <div style={styles.successBox}>
-            <span style={styles.successIcon}>✅</span>
+            <span style={styles.successIcon}>Ã¢Å“â€¦</span>
             <p style={styles.successText}>{message}</p>
           </div>
         )}
@@ -169,7 +169,7 @@ const EmailVerification = () => {
             placeholder="Enter 6-digit code"
             value={code}
             onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+              const value = e.target.value.replace(/https://nextgen-ta95.onrender.com/apiD/g, '').slice(0, 6);
               setCode(value);
             }}
             maxLength="6"
@@ -183,7 +183,7 @@ const EmailVerification = () => {
               ...(!code || code.length !== 6 ? styles.buttonDisabled : {})
             }}
           >
-            {verifying ? '⏳ Verifying...' : 'Verify Email'}
+            {verifying ? 'Ã¢ÂÂ³ Verifying...' : 'Verify Email'}
           </button>
         </div>
 
@@ -205,13 +205,13 @@ const EmailVerification = () => {
               ...(!email ? styles.buttonDisabled : {})
             }}
           >
-            {loading ? '⏳ Sending...' : '📧 Resend Verification Email'}
+            {loading ? 'Ã¢ÂÂ³ Sending...' : 'Ã°Å¸â€œÂ§ Resend Verification Email'}
           </button>
         </div>
 
         {/* Help Section */}
         <div style={styles.helpBox}>
-          <div style={styles.helpIcon}>📬</div>
+          <div style={styles.helpIcon}>Ã°Å¸â€œÂ¬</div>
           <h4 style={styles.helpTitle}>Email Verification Help</h4>
           <ul style={styles.helpList}>
             <li>Check your Gmail inbox for the verification email</li>
@@ -227,7 +227,7 @@ const EmailVerification = () => {
             onClick={() => navigate('/login')}
             style={styles.linkButton}
           >
-            ← Back to Login
+            Ã¢â€ Â Back to Login
           </button>
         </div>
       </div>
@@ -407,3 +407,4 @@ const styles = {
 };
 
 export default EmailVerification;
+

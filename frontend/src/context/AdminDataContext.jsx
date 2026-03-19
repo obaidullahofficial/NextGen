@@ -9,7 +9,7 @@ const societyRegistrationAPI = {
   getAll: async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/society-registrations', {
+      const response = await fetch('https://nextgen-ta95.onrender.com/api/society-registrations', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
 import { Box, Grid, TextField, Button, MenuItem, Typography, Alert, Paper, Divider, InputAdornment, FormControlLabel, Checkbox, CircularProgress } from "@mui/material";
+=======
+﻿import React, { useState, useEffect } from "react";
+import { Box, Grid, TextField, Button, MenuItem, Typography, Alert, Paper, Divider, Card, CardContent, InputAdornment, FormControlLabel, Checkbox } from "@mui/material";
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
 import { useLocation, useNavigate } from "react-router-dom";
 import PopupModal from '../../components/common/PopupModal';
 import { societySignup } from '../../services/authService.js';
@@ -146,7 +151,7 @@ const RegistrationForm = () => {
     // Phone number validation and formatting
     if (name === 'contact') {
       // Remove all non-digit characters
-      const cleaned = value.replace(/\D/g, '');
+      const cleaned = value.replace(/https://nextgen-ta95.onrender.com/apiD/g, '');
       
       // Limit to 10 digits
       const limited = cleaned.substring(0, 10);
@@ -171,7 +176,7 @@ const RegistrationForm = () => {
     // Website URL validation
     else if (name === 'website') {
       // Validate URL format: https://www.domain.com
-      const urlPattern = /^https:\/\/www\..+\..+$/;
+      const urlPattern = /^https:\/\/.+$/;
       
       if (value.length > 0 && !urlPattern.test(value)) {
         setWebsiteError('Website must be in format: https://www.example.com');
@@ -280,7 +285,7 @@ const RegistrationForm = () => {
     }
 
     // Check if phone number has correct length
-    const phoneDigits = form.contact.replace(/\D/g, '');
+    const phoneDigits = form.contact.replace(/https://nextgen-ta95.onrender.com/apiD/g, '');
     if (phoneDigits.length !== 10) {
       showPopup(
         'Validation Error',
@@ -302,7 +307,7 @@ const RegistrationForm = () => {
 
     // Check if website URL is provided and valid
     if (form.website && form.website.trim().length > 0) {
-      const urlPattern = /^https:\/\/www\..+\..+$/;
+      const urlPattern = /^https:\/\/.+$/;
       if (!urlPattern.test(form.website)) {
         showPopup(
           'Validation Error',
@@ -434,7 +439,7 @@ const RegistrationForm = () => {
             position: 'relative',
             zIndex: 1
           }}>
-            🏢 Society Registration
+            Ã°Å¸ÂÂ¢ Society Registration
           </Typography>
           <Typography sx={{ 
             color: "#fff", 
@@ -464,12 +469,93 @@ const RegistrationForm = () => {
                 fontWeight: 600, 
                 fontSize: 14 
               }}>
-                📧 {userData.userEmail}
+                Ã°Å¸â€œÂ§ {userData.userEmail}
               </Typography>
             </Box>
           )}
         </Box>
 
+<<<<<<< HEAD
+=======
+        {/* Instructions Card */}
+        <Box sx={{ p: 4, pb: 2, background: '#f8f9fa' }}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%)', 
+            borderRadius: 2,
+            border: '2px solid #ED7600',
+            boxShadow: '0 4px 12px rgba(237, 118, 0, 0.15)'
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ 
+                color: '#2F3D57', 
+                fontWeight: 700,
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}>
+                Ã°Å¸â€œâ€¹ How to Fill This Form
+              </Typography>
+              <Divider sx={{ mb: 2, borderColor: '#ED7600', opacity: 0.3 }} />
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
+                      Ã°Å¸ÂÂ·Ã¯Â¸Â Society Name
+                    </Typography>
+                    <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
+                      Enter the official registered name of your society
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
+                      Ã°Å¸Ââ€ºÃ¯Â¸Â Type & Authority
+                    </Typography>
+                    <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
+                      Select society type (Private/Public) and regulatory authority
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
+                      Ã°Å¸â€Â¢ Registration Number
+                    </Typography>
+                    <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
+                      Your official society registration number
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
+                      Ã°Å¸â€œâ€¦ Established Date
+                    </Typography>
+                    <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
+                      Select when your society was officially established
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
+                      Ã°Å¸â€œÅ¾ Contact & Website
+                    </Typography>
+                    <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
+                      Primary contact number and official website URL
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography sx={{ color: '#2F3D57', fontSize: 14, fontWeight: 600, mb: 0.5 }}>
+                      Ã°Å¸Ââ„¢Ã¯Â¸Â City Location
+                    </Typography>
+                    <Typography sx={{ color: '#666', fontSize: 13, pl: 2.5 }}>
+                      Select the city where society is located
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Box>
+
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7
         {/* Form Section */}
         <Box sx={{
           px: 4,
@@ -1017,7 +1103,7 @@ const RegistrationForm = () => {
                           borderRadius: 1,
                           border: '1px solid #e0e0e0'
                         }}>
-                          <Typography sx={{ fontSize: 18 }}>🇵🇰</Typography>
+                          <Typography sx={{ fontSize: 18 }}>Ã°Å¸â€¡ÂµÃ°Å¸â€¡Â°</Typography>
                           <Typography sx={{ 
                             fontWeight: 700, 
                             color: '#2F3D57',
@@ -1132,7 +1218,7 @@ const RegistrationForm = () => {
                   fontSize: 13,
                   fontStyle: 'italic' 
                 }}>
-                  * All fields are required • Your registration will be reviewed by admin
+                  * All fields are required Ã¢â‚¬Â¢ Your registration will be reviewed by admin
                 </Typography>
               </Grid>
             </Grid>
@@ -1153,3 +1239,4 @@ const RegistrationForm = () => {
 };
 
 export default RegistrationForm;
+

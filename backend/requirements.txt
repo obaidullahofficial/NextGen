@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿aiohappyeyeballs==2.6.1
 aiohttp==3.13.3
 aiosignal==1.4.0
@@ -56,3 +57,18 @@ urllib3==2.6.3
 websockets==15.0.1
 Werkzeug==3.1.6
 yarl==1.22.0
+=======
+flask
+flask-cors
+pymongo[srv]
+flask-jwt-extended
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+python-dotenv
+numpy
+stripe
+requests
+werkzeug
+google-genai
+>>>>>>> b2ed8bccabc69ee9803e8cc84be9d77832f9cba7

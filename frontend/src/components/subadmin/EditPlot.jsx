@@ -155,8 +155,8 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
         
         // Try multiple possible URL patterns for filename-based images
         return [
-          `http://localhost:5000/uploads/${imageData}`,
-          `http://localhost:5000/images/${imageData}`,
+          `https://nextgen-ta95.onrender.com/uploads/${imageData}`,
+          `https://nextgen-ta95.onrender.com/images/${imageData}`,
           `http://localhost:3000/uploads/${imageData}`,
           `http://localhost:8000/uploads/${imageData}`,
           `/uploads/${imageData}`, // Relative path
@@ -228,7 +228,7 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
     // Plot number validation - only numbers allowed
     if (name === 'plot_number') {
       // Remove all non-digit characters
-      const cleaned = value.replace(/\D/g, '');
+      const cleaned = value.replace(/https://nextgen-ta95.onrender.com/apiD/g, '');
       
       if (value !== '' && value !== cleaned) {
         setPlotNumberError('Plot number must contain only digits');
@@ -607,7 +607,7 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
                   className="w-full border border-gray-300 rounded-md p-2 bg-gray-100 text-gray-600 cursor-not-allowed"
                   placeholder="Auto-calculated"
                 />
-                <p className="text-gray-500 text-xs mt-1">Auto-calculated from X × Y</p>
+                <p className="text-gray-500 text-xs mt-1">Auto-calculated from X Ã— Y</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Dimension X (ft)</label>
@@ -644,7 +644,7 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
               <div className="space-y-2">
                 {form.description.map((item, index) => (
                   <div key={index} className="flex items-center">
-                    <span className="mr-2">•</span>
+                    <span className="mr-2">â€¢</span>
                     <input
                       type="text"
                       value={item}
@@ -843,7 +843,7 @@ const EditPlotForm = ({ plot, onSubmit, onCancel }) => {
                               className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors shadow-lg"
                               title="Remove image"
                             >
-                              ×
+                              Ã—
                             </button>
                           </div>
                           

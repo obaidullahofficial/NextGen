@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaChartLine, FaFilter, FaSpinner } from "react-icons/fa";
 import AddPlot from "../../components/subadmin/AddPlot";
 import EditPlot from "../../components/subadmin/EditPlot";
@@ -266,7 +266,7 @@ const PlotManager = () => {
             onClick={() => setError(null)} 
             className="text-red-500 hover:text-red-700 font-bold"
           >
-            ×
+            Ã—
           </button>
         </div>
       )}

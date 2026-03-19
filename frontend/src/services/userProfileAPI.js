@@ -1,7 +1,7 @@
 // User Profile API Service
 // This file contains all API calls for user profile functionality
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://nextgen-ta95.onrender.com/api';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {

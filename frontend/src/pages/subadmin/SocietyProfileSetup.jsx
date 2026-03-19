@@ -573,7 +573,7 @@ const SocietyProfileSetup = () => {
                             }}
                           >
                             {profile.available_plots.includes(plotSize) && (
-                              <Typography sx={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>✓</Typography>
+                              <Typography sx={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>Ã¢Å“â€œ</Typography>
                             )}
                           </Box>
                           <Typography sx={{ fontSize: '14px', color: '#2F3D57', fontWeight: 500, whiteSpace: 'nowrap' }}>
@@ -782,7 +782,7 @@ const SocietyProfileSetup = () => {
                         }}
                       >
                         {profile.amenities[amenity.id] && (
-                          <Typography sx={{ color: 'white', fontSize: 18, fontWeight: 700 }}>✓</Typography>
+                          <Typography sx={{ color: 'white', fontSize: 18, fontWeight: 700 }}>Ã¢Å“â€œ</Typography>
                         )}
                       </Box>
                       <Typography 
@@ -855,7 +855,7 @@ const SocietyProfileSetup = () => {
                     }}
                   />
                   <Typography variant="body2" sx={{ mt: 1, color: '#2F3D57', fontWeight: 500 }}>
-                    ✅ Logo Preview - Ready for submission
+                    Ã¢Å“â€¦ Logo Preview - Ready for submission
                   </Typography>
                 </Box>
               )}
@@ -900,3 +900,4 @@ const SocietyProfileSetup = () => {
 };
 
 export default SocietyProfileSetup;
+

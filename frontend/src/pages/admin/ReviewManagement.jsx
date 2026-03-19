@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { FaThumbsUp, FaThumbsDown, FaTrash, FaFlag, FaEdit, FaPlus } from "react-icons/fa";
 import { Search, Filter, X, Save, MapPin, User, Calendar, Star, Eye, Building } from "lucide-react";
 import reviewAPI from "../../services/reviewAPI";
@@ -164,11 +164,11 @@ function ReviewModal({ isOpen, onClose, review, onSave, isEdit = false }) {
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               >
-                <option value={5}>⭐⭐⭐⭐⭐ Excellent (5)</option>
-                <option value={4}>⭐⭐⭐⭐☆ Good (4)</option>
-                <option value={3}>⭐⭐⭐☆☆ Average (3)</option>
-                <option value={2}>⭐⭐☆☆☆ Poor (2)</option>
-                <option value={1}>⭐☆☆☆☆ Terrible (1)</option>
+                <option value={5}>â­â­â­â­â­ Excellent (5)</option>
+                <option value={4}>â­â­â­â­â˜† Good (4)</option>
+                <option value={3}>â­â­â­â˜†â˜† Average (3)</option>
+                <option value={2}>â­â­â˜†â˜†â˜† Poor (2)</option>
+                <option value={1}>â­â˜†â˜†â˜†â˜† Terrible (1)</option>
               </select>
             </div>
 

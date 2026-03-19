@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import Logo from '../../assets/Logo.png';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { signupUser, loginUser, checkEmail, googleLogin } from '../../services/apiService';
@@ -767,7 +767,7 @@ const Login = () => {
                                 disabled={isLoading}
                                 title="Close"
                             >
-                                ×
+                                Ãƒâ€”
                             </button>
                             <h2 className="text-4xl font-bold mb-6 text-[#2F3D57] tracking-wide text-center">Choose Account Type</h2>
                             <p className="text-lg text-gray-600 text-center mb-10">
@@ -791,7 +791,7 @@ const Login = () => {
                                     onClick={() => handleSignupType('society')}
                                     disabled={isLoading}
                                 >
-                                    <span role="img" aria-label="Society" className="mr-3 text-2xl">🏢</span>
+                                    <span role="img" aria-label="Society" className="mr-3 text-2xl">Ã°Å¸ÂÂ¢</span>
                                     <span>Society</span>
                                 </button>
                                 <button 
@@ -799,7 +799,7 @@ const Login = () => {
                                     onClick={() => handleSignupType('user')}
                                     disabled={isLoading}
                                 >
-                                    <span role="img" aria-label="User" className="mr-3 text-2xl">👤</span>
+                                    <span role="img" aria-label="User" className="mr-3 text-2xl">Ã°Å¸â€˜Â¤</span>
                                     <span>User</span>
                                 </button>
                             </div>
@@ -839,3 +839,4 @@ const Login = () => {
 };
 
 export default Login;
+
